@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   calculateLoanPayment,
+  calculateLoanWithPrepayment,
+  calculateRealPurchasingPower,
   calculateSavingsGrowth,
   calculateCompoundInterest,
   calculateInvestment,
@@ -201,3 +203,45 @@ describe('Formatters & Currencies', () => {
     expect(formatDurationMonths(5)).toBe('5 months');
   });
 });
+
+describe('Loan Prepayments & Lump Sums', () => {
+  it('calculates savings when extra monthly payments are added', () => {
+    // 5M loan at 15% for 5 years with 50k extra monthly payment
+    const standard = calculateLoanPayment(5_000_000, 15, 5, 'monthly');
+    const accelerated = calculateLoanWithPrepayment(5_000_000, 15, 5, 'monthly', 50_000, 0, 1);
+
+    expect(accelerated.acceleratedPeriods).toBeLessThan(standard.amortizationSchedule.length);
+    expect(accelerated.interestSaved).toBeGreaterThan(0);
+    expect(accelerated.periodsSaved).toBeGreaterThan(0);
+    expect(accelerated.acceleratedTotalInterest).toBeLessThan(standard.totalInterest);
+  });
+
+  it('calculates savings from a one-time lump-sum prepayment', () => {
+    // 5M loan at 15% for 5 years with 1M lump sum in year 1
+    const standard = calculateLoanPayment(5_000_000, 15, 5, 'monthly');
+    const accelerated = calculateLoanWithPrepayment(5_000_000, 15, 5, 'monthly', 0, 1_000_000, 1);
+
+    expect(accelerated.acceleratedPeriods).toBeLessThan(standard.amortizationSchedule.length);
+    expect(accelerated.interestSaved).toBeGreaterThan(100_000);
+  });
+});
+
+describe('Inflation Adjuster & Real Purchasing Power', () => {
+  it('correctly discounts nominal value over time', () => {
+    // 1,000,000 discounted over 1 year at 10% inflation -> 1,000,000 / 1.10 ≈ 909,090.9
+    const realVal = calculateRealPurchasingPower(1_000_000, 10, 1);
+    expect(realVal).toBeCloseTo(909090.9, 0);
+  });
+
+  it('returns exact nominal value when inflation is 0%', () => {
+    expect(calculateRealPurchasingPower(500_000, 0, 5)).toBe(500_000);
+  });
+
+  it('calculates real purchasing power in savings growth points', () => {
+    const res = calculateSavingsGrowth(100_000, 10_000, 10, 2, 'monthly', 5);
+    const lastPoint = res.growthTimeline[res.growthTimeline.length - 1];
+    expect(lastPoint.realPurchasingPower).toBeDefined();
+    expect(lastPoint.realPurchasingPower!).toBeLessThan(lastPoint.totalBalance);
+  });
+});
+

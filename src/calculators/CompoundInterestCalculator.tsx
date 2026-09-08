@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { TrendingUp, RotateCcw, Zap } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { TrendingUp, RotateCcw, Zap, Sparkles } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
 import { calculateCompoundInterest } from '../utils/financialMath';
 import { CompoundingFrequency } from '../types/calculators';
@@ -9,17 +9,74 @@ import { MetricCard } from '../components/common/MetricCard';
 import { InsightBanner } from '../components/common/InsightBanner';
 import { GrowthAreaChart } from '../components/charts/GrowthAreaChart';
 import { DonutChart } from '../components/charts/DonutChart';
+import { ShareButton, PrintButton } from '../components/common/ShareButton';
+import { useShareableState } from '../hooks/useShareableState';
 
 export const CompoundInterestCalculator: React.FC = () => {
   const { currencyConfig, format } = useCurrency();
+  const { updateUrlParams, getUrlParams, copyShareableLink, copied } = useShareableState();
+
+  const initialParams = useMemo(() => getUrlParams(), []);
 
   // State
-  const [principal, setPrincipal] = useState<number>(1_000_000);
-  const [interestRate, setInterestRate] = useState<number>(11.5);
-  const [additionalContribution, setAdditionalContribution] = useState<number>(100_000);
-  const [contributionFrequency, setContributionFrequency] = useState<'monthly' | 'annually'>('monthly');
-  const [investmentPeriodYears, setInvestmentPeriodYears] = useState<number>(10);
-  const [compoundingFrequency, setCompoundingFrequency] = useState<CompoundingFrequency>('monthly');
+  const [principal, setPrincipal] = useState<number>(() => {
+    const val = initialParams.get('principal');
+    return val ? parseFloat(val) : 1_000_000;
+  });
+  const [interestRate, setInterestRate] = useState<number>(() => {
+    const val = initialParams.get('rate');
+    return val ? parseFloat(val) : 11.5;
+  });
+  const [additionalContribution, setAdditionalContribution] = useState<number>(() => {
+    const val = initialParams.get('contrib');
+    return val ? parseFloat(val) : 100_000;
+  });
+  const [contributionFrequency, setContributionFrequency] = useState<'monthly' | 'annually'>(() => {
+    const val = initialParams.get('freq') as 'monthly' | 'annually';
+    return val === 'annually' ? 'annually' : 'monthly';
+  });
+  const [investmentPeriodYears, setInvestmentPeriodYears] = useState<number>(() => {
+    const val = initialParams.get('years');
+    return val ? parseFloat(val) : 10;
+  });
+  const [compoundingFrequency, setCompoundingFrequency] = useState<CompoundingFrequency>(() => {
+    const val = initialParams.get('compound') as CompoundingFrequency;
+    return val === 'daily' || val === 'quarterly' || val === 'annually' ? val : 'monthly';
+  });
+
+  // Inflation State
+  const [adjustInflation, setAdjustInflation] = useState<boolean>(() => {
+    return initialParams.get('inflation') !== null && initialParams.get('inflation') !== '0';
+  });
+  const [inflationRate, setInflationRate] = useState<number>(() => {
+    const val = initialParams.get('inflationRate');
+    return val ? parseFloat(val) : 7.0;
+  });
+
+  // Sync state to URL
+  useEffect(() => {
+    updateUrlParams({
+      calc: 'compound',
+      principal,
+      rate: interestRate,
+      contrib: additionalContribution,
+      freq: contributionFrequency,
+      years: investmentPeriodYears,
+      compound: compoundingFrequency,
+      inflation: adjustInflation ? '1' : '',
+      inflationRate: adjustInflation ? inflationRate : '',
+    });
+  }, [
+    principal,
+    interestRate,
+    additionalContribution,
+    contributionFrequency,
+    investmentPeriodYears,
+    compoundingFrequency,
+    adjustInflation,
+    inflationRate,
+    updateUrlParams,
+  ]);
 
   // Calculation
   const results = useMemo(() => {
@@ -29,7 +86,8 @@ export const CompoundInterestCalculator: React.FC = () => {
       additionalContribution,
       contributionFrequency,
       investmentPeriodYears,
-      compoundingFrequency
+      compoundingFrequency,
+      adjustInflation ? inflationRate : 0
     );
   }, [
     principal,
@@ -38,7 +96,15 @@ export const CompoundInterestCalculator: React.FC = () => {
     contributionFrequency,
     investmentPeriodYears,
     compoundingFrequency,
+    adjustInflation,
+    inflationRate,
   ]);
+
+  const finalRealPower = useMemo(() => {
+    if (!adjustInflation) return results.futureValue;
+    const lastPoint = results.growthTimeline[results.growthTimeline.length - 1];
+    return lastPoint?.realPurchasingPower ?? results.futureValue;
+  }, [results, adjustInflation]);
 
   // Donut chart
   const donutData = useMemo(() => {
@@ -53,23 +119,18 @@ export const CompoundInterestCalculator: React.FC = () => {
   const insights = useMemo(() => {
     const list: string[] = [];
     list.push(
-      `Your investment is projected to reach ${format(results.futureValue)} in ${investmentPeriodYears} years.`
+      `Your investment is projected to reach a nominal ${format(results.futureValue)} in ${investmentPeriodYears} years.`
     );
     list.push(
       `Compound interest generates ${format(results.interestEarned)} in pure growth—surpassing or multiplying your out-of-pocket deposits.`
     );
-    const totalOutPocket = results.principal + results.totalContributions;
-    if (totalOutPocket > 0 && results.interestEarned > totalOutPocket) {
+    if (adjustInflation && inflationRate > 0) {
       list.push(
-        `Milestone reached: Your compound interest earnings exceed the total money you deposited!`
-      );
-    } else {
-      list.push(
-        `Compounding frequency is set to ${compoundingFrequency}. The more frequent the compounding, the faster your interest yields more interest.`
+        `Inflation Outlook: At ${inflationRate}% annual inflation, your real purchasing power will equal ${format(finalRealPower)} in current-day terms.`
       );
     }
     return list;
-  }, [results, investmentPeriodYears, compoundingFrequency, format]);
+  }, [results, investmentPeriodYears, adjustInflation, inflationRate, finalRealPower, format]);
 
   const resetDefaults = () => {
     setPrincipal(1_000_000);
@@ -78,6 +139,8 @@ export const CompoundInterestCalculator: React.FC = () => {
     setContributionFrequency('monthly');
     setInvestmentPeriodYears(10);
     setCompoundingFrequency('monthly');
+    setAdjustInflation(false);
+    setInflationRate(7.0);
   };
 
   return (
@@ -89,16 +152,21 @@ export const CompoundInterestCalculator: React.FC = () => {
             Compound Interest Calculator
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Simulate the exponential growth of your capital through compound interest and recurring contributions.
+            Simulate the exponential growth of your capital through compound interest, recurring contributions, and inflation tracking.
           </p>
         </div>
-        <button
-          onClick={resetDefaults}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-800"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Reset Defaults
-        </button>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <ShareButton onShare={copyShareableLink} copied={copied} />
+          <PrintButton />
+          <button
+            onClick={resetDefaults}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-800"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -202,6 +270,42 @@ export const CompoundInterestCalculator: React.FC = () => {
             </div>
           </Card>
 
+          {/* Inflation Adjuster Card */}
+          <Card className="space-y-4 bg-gradient-to-b from-white to-amber-50/20 dark:from-slate-900 dark:to-amber-950/10 border-amber-500/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Inflation Adjustment
+                </h3>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={adjustInflation}
+                  onChange={(e) => setAdjustInflation(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500" />
+              </label>
+            </div>
+
+            {adjustInflation && (
+              <div className="pt-3 border-t border-slate-200/60 dark:border-slate-800/60">
+                <SliderField
+                  label="Assumed Annual Inflation Rate (%)"
+                  value={inflationRate}
+                  onChange={setInflationRate}
+                  min={1}
+                  max={25}
+                  step={0.5}
+                  suffix="%"
+                  helperText="Calculates real purchasing power"
+                />
+              </div>
+            )}
+          </Card>
+
           <Card>
             <DonutChart
               data={donutData}
@@ -216,7 +320,7 @@ export const CompoundInterestCalculator: React.FC = () => {
           {/* Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <MetricCard
-              label="Future Value"
+              label="Future Nominal Value"
               value={format(results.futureValue)}
               subValue={`After ${investmentPeriodYears} years`}
               variant="primary"
@@ -227,12 +331,21 @@ export const CompoundInterestCalculator: React.FC = () => {
               subValue="Principal + Contributions"
               variant="info"
             />
-            <MetricCard
-              label="Compound Interest"
-              value={format(results.interestEarned)}
-              subValue="Total interest earned"
-              variant="success"
-            />
+            {adjustInflation ? (
+              <MetricCard
+                label="Real Purchasing Power"
+                value={format(finalRealPower)}
+                subValue={`Discounted at ${inflationRate}% inflation`}
+                variant="warning"
+              />
+            ) : (
+              <MetricCard
+                label="Compound Interest"
+                value={format(results.interestEarned)}
+                subValue="Total interest earned"
+                variant="success"
+              />
+            )}
           </div>
 
           {/* Insights */}
@@ -246,6 +359,8 @@ export const CompoundInterestCalculator: React.FC = () => {
               height={320}
               principalLabel="Total Invested"
               interestLabel="Compound Interest"
+              showInflation={adjustInflation}
+              inflationLabel={`Real Power (${inflationRate}% Inflation)`}
             />
           </Card>
         </div>

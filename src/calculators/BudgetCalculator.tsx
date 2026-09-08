@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Wallet, RotateCcw, PieChart as PieIcon, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
 import { calculateBudget } from '../utils/financialMath';
@@ -9,22 +9,80 @@ import { MetricCard } from '../components/common/MetricCard';
 import { InsightBanner } from '../components/common/InsightBanner';
 import { DonutChart } from '../components/charts/DonutChart';
 import { ComparisonBarChart } from '../components/charts/ComparisonBarChart';
+import { ShareButton, PrintButton } from '../components/common/ShareButton';
+import { useShareableState } from '../hooks/useShareableState';
 
 export const BudgetCalculator: React.FC = () => {
   const { currencyConfig, format } = useCurrency();
+  const { updateUrlParams, getUrlParams, copyShareableLink, copied } = useShareableState();
+
+  const initialParams = useMemo(() => getUrlParams(), []);
 
   // Income state
-  const [salary, setSalary] = useState<number>(650_000);
-  const [otherIncome, setOtherIncome] = useState<number>(100_000);
+  const [salary, setSalary] = useState<number>(() => {
+    const val = initialParams.get('salary');
+    return val ? parseFloat(val) : 650_000;
+  });
+  const [otherIncome, setOtherIncome] = useState<number>(() => {
+    const val = initialParams.get('other');
+    return val ? parseFloat(val) : 100_000;
+  });
 
   // Expense state
-  const [housing, setHousing] = useState<number>(200_000);
-  const [food, setFood] = useState<number>(110_000);
-  const [transportation, setTransportation] = useState<number>(55_000);
-  const [utilities, setUtilities] = useState<number>(40_000);
-  const [debtPayments, setDebtPayments] = useState<number>(35_000);
-  const [entertainment, setEntertainment] = useState<number>(45_000);
-  const [otherExpenses, setOtherExpenses] = useState<number>(30_000);
+  const [housing, setHousing] = useState<number>(() => {
+    const val = initialParams.get('housing');
+    return val ? parseFloat(val) : 200_000;
+  });
+  const [food, setFood] = useState<number>(() => {
+    const val = initialParams.get('food');
+    return val ? parseFloat(val) : 110_000;
+  });
+  const [transportation, setTransportation] = useState<number>(() => {
+    const val = initialParams.get('transport');
+    return val ? parseFloat(val) : 55_000;
+  });
+  const [utilities, setUtilities] = useState<number>(() => {
+    const val = initialParams.get('utils');
+    return val ? parseFloat(val) : 40_000;
+  });
+  const [debtPayments, setDebtPayments] = useState<number>(() => {
+    const val = initialParams.get('debt');
+    return val ? parseFloat(val) : 35_000;
+  });
+  const [entertainment, setEntertainment] = useState<number>(() => {
+    const val = initialParams.get('fun');
+    return val ? parseFloat(val) : 45_000;
+  });
+  const [otherExpenses, setOtherExpenses] = useState<number>(() => {
+    const val = initialParams.get('misc');
+    return val ? parseFloat(val) : 30_000;
+  });
+
+  useEffect(() => {
+    updateUrlParams({
+      calc: 'budget',
+      salary,
+      other: otherIncome,
+      housing,
+      food,
+      transport: transportation,
+      utils: utilities,
+      debt: debtPayments,
+      fun: entertainment,
+      misc: otherExpenses,
+    });
+  }, [
+    salary,
+    otherIncome,
+    housing,
+    food,
+    transportation,
+    utilities,
+    debtPayments,
+    entertainment,
+    otherExpenses,
+    updateUrlParams,
+  ]);
 
   // Calculation
   const results = useMemo(() => {
@@ -123,13 +181,17 @@ export const BudgetCalculator: React.FC = () => {
             Map out monthly income and expenses, calculate your true savings rate, and optimize your financial balance.
           </p>
         </div>
-        <button
-          onClick={resetDefaults}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-800"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Reset Defaults
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <ShareButton onShare={copyShareableLink} copied={copied} />
+          <PrintButton />
+          <button
+            onClick={resetDefaults}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-800"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

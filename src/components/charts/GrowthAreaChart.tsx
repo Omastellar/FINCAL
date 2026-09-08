@@ -2,6 +2,7 @@ import React from 'react';
 import {
   AreaChart,
   Area,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -18,6 +19,8 @@ interface GrowthAreaChartProps {
   height?: number;
   principalLabel?: string;
   interestLabel?: string;
+  showInflation?: boolean;
+  inflationLabel?: string;
 }
 
 export const GrowthAreaChart: React.FC<GrowthAreaChartProps> = ({
@@ -26,27 +29,35 @@ export const GrowthAreaChart: React.FC<GrowthAreaChartProps> = ({
   height = 300,
   principalLabel = 'Total Contributions',
   interestLabel = 'Interest / Growth',
+  showInflation = false,
+  inflationLabel = 'Real Purchasing Power (Adjusted)',
 }) => {
-  const { format, currencyConfig } = useCurrency();
+  const { format } = useCurrency();
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const point = payload[0].payload as GrowthPoint;
       return (
-        <div className="bg-slate-900 text-white dark:bg-slate-800 p-3 rounded-xl text-xs shadow-xl border border-slate-700 min-w-44">
+        <div className="bg-slate-900 text-white dark:bg-slate-800 p-3 rounded-xl text-xs shadow-xl border border-slate-700 min-w-48">
           <div className="font-semibold text-slate-300 mb-2 border-b border-slate-700 pb-1">
             Year {label}
           </div>
           <div className="space-y-1">
             <div className="flex justify-between items-center text-emerald-400">
-              <span className="font-medium">Total Balance:</span>
+              <span className="font-medium">Nominal Balance:</span>
               <span className="font-mono font-bold">{format(point.totalBalance)}</span>
             </div>
+            {showInflation && point.realPurchasingPower !== undefined && (
+              <div className="flex justify-between items-center text-amber-400 font-semibold">
+                <span>Real Power:</span>
+                <span className="font-mono">{format(point.realPurchasingPower)}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center text-blue-400">
               <span>{principalLabel}:</span>
               <span className="font-mono">{format(point.principalInvested)}</span>
             </div>
-            <div className="flex justify-between items-center text-amber-400">
+            <div className="flex justify-between items-center text-teal-300">
               <span>{interestLabel}:</span>
               <span className="font-mono">{format(point.totalInterest)}</span>
             </div>
@@ -128,6 +139,17 @@ export const GrowthAreaChart: React.FC<GrowthAreaChartProps> = ({
               fillOpacity={1}
               fill="url(#colorInterest)"
             />
+            {showInflation && (
+              <Line
+                type="monotone"
+                dataKey="realPurchasingPower"
+                name={inflationLabel}
+                stroke="#f59e0b"
+                strokeWidth={2.5}
+                strokeDasharray="4 4"
+                dot={false}
+              />
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </div>

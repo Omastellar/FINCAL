@@ -24,11 +24,30 @@ interface CalculatorsPageProps {
 export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
   initialCalculatorId = 'loan',
 }) => {
-  const [activeCalcId, setActiveCalcId] = useState<CalculatorId>(initialCalculatorId);
+  const getCalcFromUrl = (): CalculatorId => {
+    try {
+      const search = new URLSearchParams(window.location.search);
+      const param = search.get('calc');
+      if (param === 'loan') return 'loan';
+      if (param === 'savings') return 'savings';
+      if (param === 'compound' || param === 'compound-interest') return 'compound-interest';
+      if (param === 'investment') return 'investment';
+      if (param === 'debt' || param === 'debt-payoff') return 'debt-payoff';
+      if (param === 'budget') return 'budget';
+    } catch {
+      // ignore
+    }
+    return initialCalculatorId;
+  };
+
+  const [activeCalcId, setActiveCalcId] = useState<CalculatorId>(getCalcFromUrl);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   useEffect(() => {
-    if (initialCalculatorId) {
+    const fromUrl = getCalcFromUrl();
+    if (fromUrl) {
+      setActiveCalcId(fromUrl);
+    } else if (initialCalculatorId) {
       setActiveCalcId(initialCalculatorId);
     }
   }, [initialCalculatorId]);

@@ -10,8 +10,25 @@ import { PageView } from './types/navigation';
 import { CalculatorId } from './types/calculators';
 
 export const AppContent: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<PageView>('home');
-  const [selectedCalcId, setSelectedCalcId] = useState<CalculatorId>('loan');
+  const [currentPage, setCurrentPage] = useState<PageView>(() => {
+    try {
+      const search = new URLSearchParams(window.location.search);
+      if (search.get('calc')) return 'calculators';
+    } catch {
+      // ignore
+    }
+    return 'home';
+  });
+  const [selectedCalcId, setSelectedCalcId] = useState<CalculatorId>(() => {
+    try {
+      const search = new URLSearchParams(window.location.search);
+      const calc = search.get('calc') as CalculatorId;
+      if (calc) return calc;
+    } catch {
+      // ignore
+    }
+    return 'loan';
+  });
 
   const handleNavigate = (page: PageView, calcId?: CalculatorId) => {
     setCurrentPage(page);

@@ -1,66 +1,166 @@
-import React, { useState, useMemo } from 'react';
-import { Download, Calendar, Percent, CreditCard, RotateCcw } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+  Download,
+  Calendar,
+  CreditCard,
+  RotateCcw,
+  Zap,
+  TrendingDown,
+  Clock,
+  Sparkles,
+} from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
-import { calculateLoanPayment } from '../utils/financialMath';
+import { calculateLoanPayment, calculateLoanWithPrepayment } from '../utils/financialMath';
 import { exportAmortizationCSV } from '../utils/exportUtils';
 import { PaymentFrequency } from '../types/calculators';
 import { Card } from '../components/common/Card';
-import { InputField } from '../components/common/InputField';
 import { SliderField } from '../components/common/SliderField';
 import { MetricCard } from '../components/common/MetricCard';
 import { InsightBanner } from '../components/common/InsightBanner';
 import { DonutChart } from '../components/charts/DonutChart';
+import { ShareButton, PrintButton } from '../components/common/ShareButton';
+import { useShareableState } from '../hooks/useShareableState';
 
 export const LoanCalculator: React.FC = () => {
   const { currency, currencyConfig, format } = useCurrency();
+  const { updateUrlParams, getUrlParams, copyShareableLink, copied } = useShareableState();
+
+  // Load initial params from URL if present
+  const initialParams = useMemo(() => getUrlParams(), []);
 
   // State
-  const [loanAmount, setLoanAmount] = useState<number>(5_000_000);
-  const [interestRate, setInterestRate] = useState<number>(14.5);
-  const [loanTermYears, setLoanTermYears] = useState<number>(5);
-  const [paymentFrequency, setPaymentFrequency] = useState<PaymentFrequency>('monthly');
+  const [loanAmount, setLoanAmount] = useState<number>(() => {
+    const val = initialParams.get('amount');
+    return val ? parseFloat(val) : 5_000_000;
+  });
+  const [interestRate, setInterestRate] = useState<number>(() => {
+    const val = initialParams.get('rate');
+    return val ? parseFloat(val) : 14.5;
+  });
+  const [loanTermYears, setLoanTermYears] = useState<number>(() => {
+    const val = initialParams.get('term');
+    return val ? parseFloat(val) : 5;
+  });
+  const [paymentFrequency, setPaymentFrequency] = useState<PaymentFrequency>(() => {
+    const val = initialParams.get('freq') as PaymentFrequency;
+    return val === 'bi-weekly' || val === 'weekly' ? val : 'monthly';
+  });
+
+  // Prepayment Simulator State
+  const [showPrepayment, setShowPrepayment] = useState<boolean>(() => {
+    return !!(initialParams.get('extra') || initialParams.get('lump'));
+  });
+  const [extraPayment, setExtraPayment] = useState<number>(() => {
+    const val = initialParams.get('extra');
+    return val ? parseFloat(val) : 0;
+  });
+  const [lumpSumAmount, setLumpSumAmount] = useState<number>(() => {
+    const val = initialParams.get('lump');
+    return val ? parseFloat(val) : 0;
+  });
+  const [lumpSumYear, setLumpSumYear] = useState<number>(() => {
+    const val = initialParams.get('lumpYear');
+    return val ? parseFloat(val) : 1;
+  });
+
   const [scheduleView, setScheduleView] = useState<'annual' | 'periodic'>('annual');
+  const [activePlan, setActivePlan] = useState<'standard' | 'accelerated'>('standard');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const rowsPerPage = 12;
 
-  // Calculation
-  const results = useMemo(() => {
+  // Sync state to URL
+  useEffect(() => {
+    updateUrlParams({
+      calc: 'loan',
+      amount: loanAmount,
+      rate: interestRate,
+      term: loanTermYears,
+      freq: paymentFrequency,
+      extra: extraPayment > 0 ? extraPayment : '',
+      lump: lumpSumAmount > 0 ? lumpSumAmount : '',
+      lumpYear: lumpSumAmount > 0 ? lumpSumYear : '',
+    });
+  }, [
+    loanAmount,
+    interestRate,
+    loanTermYears,
+    paymentFrequency,
+    extraPayment,
+    lumpSumAmount,
+    lumpSumYear,
+    updateUrlParams,
+  ]);
+
+  // Standard calculation
+  const standardResults = useMemo(() => {
     return calculateLoanPayment(loanAmount, interestRate, loanTermYears, paymentFrequency);
   }, [loanAmount, interestRate, loanTermYears, paymentFrequency]);
 
+  // Accelerated calculation with prepayments
+  const prepaymentResults = useMemo(() => {
+    return calculateLoanWithPrepayment(
+      loanAmount,
+      interestRate,
+      loanTermYears,
+      paymentFrequency,
+      extraPayment,
+      lumpSumAmount,
+      lumpSumYear
+    );
+  }, [loanAmount, interestRate, loanTermYears, paymentFrequency, extraPayment, lumpSumAmount, lumpSumYear]);
+
+  const hasActivePrepayment = extraPayment > 0 || lumpSumAmount > 0;
+
+  // Choose schedule to display
+  const currentSchedule = useMemo(() => {
+    if (hasActivePrepayment && activePlan === 'accelerated') {
+      return {
+        amortization: prepaymentResults.amortizationSchedule,
+        annual: prepaymentResults.annualSchedule,
+      };
+    }
+    return {
+      amortization: standardResults.amortizationSchedule,
+      annual: standardResults.annualSchedule,
+    };
+  }, [hasActivePrepayment, activePlan, prepaymentResults, standardResults]);
+
   // Donut chart data
   const chartData = useMemo(() => {
+    const totalInt = hasActivePrepayment
+      ? prepaymentResults.acceleratedTotalInterest
+      : standardResults.totalInterest;
     return [
       { name: 'Principal Loan', value: loanAmount, color: '#3b82f6' },
-      { name: 'Total Interest', value: results.totalInterest, color: '#10b981' },
+      { name: 'Total Interest', value: totalInt, color: '#10b981' },
     ];
-  }, [loanAmount, results.totalInterest]);
+  }, [loanAmount, hasActivePrepayment, prepaymentResults, standardResults]);
 
   // Insights
   const insights = useMemo(() => {
     const list: string[] = [];
-    if (results.periodicPayment > 0) {
+    if (standardResults.periodicPayment > 0) {
       list.push(
-        `Your estimated ${paymentFrequency} loan payment is ${format(results.periodicPayment)}.`
+        `Your standard ${paymentFrequency} loan payment is ${format(standardResults.periodicPayment)}.`
       );
-      list.push(
-        `You will pay approximately ${format(results.totalInterest)} in total interest over the ${loanTermYears}-year term.`
-      );
-      if (results.interestRatio > 30) {
+      if (hasActivePrepayment && prepaymentResults.interestSaved > 0) {
         list.push(
-          `Interest accounts for ${results.interestRatio.toFixed(1)}% of your total repayment. Making extra principal payments or securing a lower rate will reduce this significantly.`
+          `Accelerated strategy saves you ${format(prepaymentResults.interestSaved)} in total interest charges!`
+        );
+        list.push(
+          `You will become completely debt-free ${prepaymentResults.yearsSaved.toFixed(1)} years sooner than the standard schedule.`
         );
       } else {
         list.push(
-          `Principal represents ${results.principalRatio.toFixed(1)}% of total payments.`
+          `You will pay approximately ${format(standardResults.totalInterest)} in total interest over the ${loanTermYears}-year term.`
         );
       }
     }
     return list;
-  }, [results, paymentFrequency, format, loanTermYears]);
+  }, [standardResults, hasActivePrepayment, prepaymentResults, paymentFrequency, loanTermYears, format]);
 
   const handleExportCSV = () => {
-    exportAmortizationCSV(results.amortizationSchedule, loanAmount, interestRate, currency);
+    exportAmortizationCSV(currentSchedule.amortization, loanAmount, interestRate, currency);
   };
 
   const resetDefaults = () => {
@@ -68,11 +168,14 @@ export const LoanCalculator: React.FC = () => {
     setInterestRate(14.5);
     setLoanTermYears(5);
     setPaymentFrequency('monthly');
+    setExtraPayment(0);
+    setLumpSumAmount(0);
+    setLumpSumYear(1);
+    setShowPrepayment(false);
   };
 
-  // Pagination for periodic schedule
-  const totalPeriodicPages = Math.ceil(results.amortizationSchedule.length / rowsPerPage);
-  const paginatedPeriodicRows = results.amortizationSchedule.slice(
+  const totalPeriodicPages = Math.ceil(currentSchedule.amortization.length / rowsPerPage);
+  const paginatedPeriodicRows = currentSchedule.amortization.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
@@ -86,16 +189,22 @@ export const LoanCalculator: React.FC = () => {
             Loan Calculator
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Calculate accurate repayments, interest charges, and review complete amortization schedules.
+            Calculate accurate repayments, explore prepayment savings, and review complete amortization schedules.
           </p>
         </div>
-        <button
-          onClick={resetDefaults}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-800"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Reset Defaults
-        </button>
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <ShareButton onShare={copyShareableLink} copied={copied} />
+          <PrintButton />
+          <button
+            onClick={resetDefaults}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-800"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -168,11 +277,70 @@ export const LoanCalculator: React.FC = () => {
             </div>
           </Card>
 
+          {/* Prepayment & Lump-Sum Simulator Panel */}
+          <Card className="space-y-4 border-emerald-500/20 bg-gradient-to-b from-white to-emerald-50/20 dark:from-slate-900 dark:to-emerald-950/10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-emerald-500" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Prepayment Simulator
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPrepayment(!showPrepayment)}
+                className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+              >
+                {showPrepayment ? 'Hide Options' : '+ Add Prepayments'}
+              </button>
+            </div>
+
+            {showPrepayment && (
+              <div className="space-y-5 pt-3 border-t border-slate-200/60 dark:border-slate-800/60">
+                {/* Extra Periodic Payment */}
+                <SliderField
+                  label={`Extra ${paymentFrequency} Principal Payment`}
+                  value={extraPayment}
+                  onChange={setExtraPayment}
+                  min={0}
+                  max={500_000}
+                  step={5_000}
+                  prefix={currencyConfig.symbol}
+                  helperText="Reduces principal each period"
+                />
+
+                {/* Lump Sum Amount */}
+                <SliderField
+                  label="One-Time Lump-Sum Payment"
+                  value={lumpSumAmount}
+                  onChange={setLumpSumAmount}
+                  min={0}
+                  max={10_000_000}
+                  step={25_000}
+                  prefix={currencyConfig.symbol}
+                  helperText="e.g. bonus, dividend, or inheritance"
+                />
+
+                {lumpSumAmount > 0 && (
+                  <SliderField
+                    label="Apply Lump-Sum in Year"
+                    value={lumpSumYear}
+                    onChange={setLumpSumYear}
+                    min={1}
+                    max={loanTermYears}
+                    step={1}
+                    suffix=" yr"
+                  />
+                )}
+              </div>
+            )}
+          </Card>
+
           {/* Donut Chart Card */}
           <Card>
             <DonutChart
               data={chartData}
-              title="Repayment Breakdown (Principal vs Interest)"
+              title={`Repayment Breakdown (${hasActivePrepayment ? 'Accelerated' : 'Standard'})`}
               height={230}
             />
           </Card>
@@ -180,35 +348,101 @@ export const LoanCalculator: React.FC = () => {
 
         {/* Right Results Column */}
         <div className="lg:col-span-7 space-y-6">
+          {/* Prepayment Milestone Callout if active */}
+          {hasActivePrepayment && prepaymentResults.interestSaved > 0 && (
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-emerald-500/5 border border-emerald-500/30 flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-emerald-600 text-white shadow-xs">
+                  <TrendingDown className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Prepayment Impact: Save {format(prepaymentResults.interestSaved)}!
+                  </h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-300">
+                    Your loan will be paid off <strong>{prepaymentResults.yearsSaved.toFixed(1)} years</strong> earlier than scheduled.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-1.5 bg-white/80 dark:bg-slate-800 p-1 rounded-xl text-xs">
+                <button
+                  onClick={() => setActivePlan('accelerated')}
+                  className={`px-2.5 py-1 rounded-lg font-semibold transition-colors ${
+                    activePlan === 'accelerated'
+                      ? 'bg-emerald-600 text-white'
+                      : 'text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  Accelerated Plan
+                </button>
+                <button
+                  onClick={() => setActivePlan('standard')}
+                  className={`px-2.5 py-1 rounded-lg font-semibold transition-colors ${
+                    activePlan === 'standard'
+                      ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white'
+                      : 'text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  Standard Plan
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Hero Metrics Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <MetricCard
               label={`${paymentFrequency} Payment`}
-              value={format(results.periodicPayment)}
+              value={format(
+                hasActivePrepayment
+                  ? standardResults.periodicPayment + extraPayment
+                  : standardResults.periodicPayment
+              )}
               subValue={
-                paymentFrequency !== 'monthly'
-                  ? `≈ ${format(results.monthlyEquivalentPayment)} / month`
+                hasActivePrepayment && extraPayment > 0
+                  ? `Includes ${format(extraPayment)} extra principal`
                   : undefined
               }
               variant="primary"
             />
             <MetricCard
               label="Total Interest"
-              value={format(results.totalInterest)}
-              subValue={`${results.interestRatio.toFixed(1)}% of total repayment`}
-              variant="warning"
+              value={format(
+                hasActivePrepayment
+                  ? prepaymentResults.acceleratedTotalInterest
+                  : standardResults.totalInterest
+              )}
+              subValue={
+                hasActivePrepayment && prepaymentResults.interestSaved > 0
+                  ? `Saved ${format(prepaymentResults.interestSaved)}`
+                  : `${standardResults.interestRatio.toFixed(1)}% of total repayment`
+              }
+              variant={hasActivePrepayment ? 'success' : 'warning'}
             />
             <MetricCard
               label="Total Repayment"
-              value={format(results.totalRepayment)}
+              value={format(
+                hasActivePrepayment
+                  ? prepaymentResults.acceleratedTotalRepayment
+                  : standardResults.totalRepayment
+              )}
               subValue="Principal + Interest"
               variant="info"
             />
             <MetricCard
-              label="Loan Term"
-              value={`${loanTermYears} Years`}
-              subValue={`${results.amortizationSchedule.length} total payments`}
+              label="Payoff Timeline"
+              value={
+                hasActivePrepayment
+                  ? `${(prepaymentResults.acceleratedPeriods / (paymentFrequency === 'monthly' ? 12 : paymentFrequency === 'bi-weekly' ? 26 : 52)).toFixed(1)} Years`
+                  : `${loanTermYears} Years`
+              }
+              subValue={
+                hasActivePrepayment
+                  ? `${prepaymentResults.acceleratedPeriods} total payments`
+                  : `${standardResults.amortizationSchedule.length} total payments`
+              }
               variant="default"
+              icon={<Clock className="w-4 h-4 text-emerald-500" />}
             />
           </div>
 
@@ -221,7 +455,7 @@ export const LoanCalculator: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-emerald-500" />
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Amortization Schedule
+                  Amortization Schedule {hasActivePrepayment && `(${activePlan === 'accelerated' ? 'Accelerated' : 'Standard'})`}
                 </h3>
               </div>
 
@@ -236,7 +470,7 @@ export const LoanCalculator: React.FC = () => {
                         : 'text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    Annual Summary
+                    Annual
                   </button>
                   <button
                     onClick={() => {
@@ -279,7 +513,7 @@ export const LoanCalculator: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
-                    {results.annualSchedule.map((row) => (
+                    {currentSchedule.annual.map((row) => (
                       <tr key={row.year} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
                         <td className="py-2 px-3 font-sans font-medium text-slate-900 dark:text-slate-200">
                           Year {row.year}
@@ -331,7 +565,6 @@ export const LoanCalculator: React.FC = () => {
                     </tbody>
                   </table>
 
-                  {/* Periodic Pagination Controls */}
                   {totalPeriodicPages > 1 && (
                     <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
                       <span className="text-slate-500">

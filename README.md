@@ -12,21 +12,26 @@ A modern, responsive fintech web application built with **React**, **TypeScript*
 1. **Loan Calculator**
    - Monthly, bi-weekly, and weekly payment calculations
    - Complete amortization schedule (both annual and periodic breakdown)
+   - **Prepayment Simulator**: Extra periodic principal payments & one-time lump sums
+   - Calculates exact **interest saved** and **years eliminated** from loans
    - Principal vs. Interest donut chart
-   - Export amortization schedule to CSV
+   - Export amortization schedule to CSV & executive Print/PDF view
 
 2. **Savings Calculator**
    - Project wealth accumulation from starting deposit and monthly additions
    - Compounding frequency options (Monthly, Quarterly, Annually)
-   - Interactive cumulative growth area chart
+   - **Inflation Adjustment Engine**: Toggle real purchasing power vs. nominal future value
+   - Interactive cumulative growth area chart with inflation overlay
 
 3. **Compound Interest Calculator**
    - Demonstrates the exponential power of compound interest
    - Support for daily, monthly, quarterly, and annual compounding schedules
+   - **Inflation Adjustment**: Real purchasing power discounting
    - Split view of Principal vs. Contributions vs. Interest
 
 4. **Investment Calculator**
    - Capital growth forecasts based on expected annual market returns
+   - Real purchasing power inflation adjustments
    - Transparent regulatory disclaimer: projections are estimates and never guaranteed
    - Portfolio growth trajectory visualization
 
@@ -42,6 +47,14 @@ A modern, responsive fintech web application built with **React**, **TypeScript*
    - Monthly surplus/deficit calculation & savings rate
    - 50/30/20 guideline benchmark analyzer with visual progress indicators
    - Expense breakdown donut chart & monthly cash-flow comparison bar chart
+
+### 🔗 Deep-Linking & Shareable URLs
+- Share calculation scenarios via URL query parameters
+- 1-click **Share Scenario** button with instant clipboard copy and toast notifications
+- Print & PDF-ready stylesheets for client-ready reports
+
+### ⚙️ Automated CI/CD
+- GitHub Actions pipeline runs Vitest unit tests and builds on every push and PR to `main`
 
 ---
 

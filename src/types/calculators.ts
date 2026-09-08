@@ -24,6 +24,24 @@ export interface GrowthPoint {
   principalInvested: number;
   totalInterest: number;
   totalBalance: number;
+  realPurchasingPower?: number;
+}
+
+export interface LoanPrepaymentInputs {
+  extraPayment: number;
+  lumpSumAmount: number;
+  lumpSumYear: number;
+}
+
+export interface LoanPrepaymentResults {
+  acceleratedTotalRepayment: number;
+  acceleratedTotalInterest: number;
+  acceleratedPeriods: number;
+  interestSaved: number;
+  periodsSaved: number;
+  yearsSaved: number;
+  amortizationSchedule: AmortizationRow[];
+  annualSchedule: AmortizationYearSummary[];
 }
 
 // 1. Loan Calculator

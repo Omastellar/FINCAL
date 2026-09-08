@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ShieldAlert, RotateCcw, Flame, CheckCircle2, Clock, DollarSign } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
 import { calculateDebtPayoff } from '../utils/financialMath';
@@ -18,14 +18,42 @@ import {
   Legend,
 } from 'recharts';
 
+import { ShareButton, PrintButton } from '../components/common/ShareButton';
+import { useShareableState } from '../hooks/useShareableState';
+
 export const DebtPayoffCalculator: React.FC = () => {
   const { currencyConfig, format } = useCurrency();
+  const { updateUrlParams, getUrlParams, copyShareableLink, copied } = useShareableState();
+
+  const initialParams = useMemo(() => getUrlParams(), []);
 
   // State
-  const [currentDebt, setCurrentDebt] = useState<number>(2_500_000);
-  const [interestRate, setInterestRate] = useState<number>(18.0);
-  const [monthlyPayment, setMonthlyPayment] = useState<number>(75_000);
-  const [additionalMonthlyPayment, setAdditionalMonthlyPayment] = useState<number>(25_000);
+  const [currentDebt, setCurrentDebt] = useState<number>(() => {
+    const val = initialParams.get('debt');
+    return val ? parseFloat(val) : 2_500_000;
+  });
+  const [interestRate, setInterestRate] = useState<number>(() => {
+    const val = initialParams.get('rate');
+    return val ? parseFloat(val) : 18.0;
+  });
+  const [monthlyPayment, setMonthlyPayment] = useState<number>(() => {
+    const val = initialParams.get('payment');
+    return val ? parseFloat(val) : 75_000;
+  });
+  const [additionalMonthlyPayment, setAdditionalMonthlyPayment] = useState<number>(() => {
+    const val = initialParams.get('extra');
+    return val ? parseFloat(val) : 25_000;
+  });
+
+  useEffect(() => {
+    updateUrlParams({
+      calc: 'debt',
+      debt: currentDebt,
+      rate: interestRate,
+      payment: monthlyPayment,
+      extra: additionalMonthlyPayment,
+    });
+  }, [currentDebt, interestRate, monthlyPayment, additionalMonthlyPayment, updateUrlParams]);
 
   // Calculation
   const results = useMemo(() => {
@@ -106,13 +134,17 @@ export const DebtPayoffCalculator: React.FC = () => {
             Compare standard payoff against accelerated strategies to calculate interest savings and time shaved off debt.
           </p>
         </div>
-        <button
-          onClick={resetDefaults}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-800"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Reset Defaults
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <ShareButton onShare={copyShareableLink} copied={copied} />
+          <PrintButton />
+          <button
+            onClick={resetDefaults}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-800"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

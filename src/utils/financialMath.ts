@@ -156,6 +156,137 @@ export function calculateLoanPayment(
 }
 
 // -------------------------------------------------------------
+// 1B. LOAN PREPAYMENT & LUMP-SUM SIMULATOR
+// -------------------------------------------------------------
+export function calculateLoanWithPrepayment(
+  principal: number,
+  annualRatePct: number,
+  termYears: number,
+  frequency: PaymentFrequency = 'monthly',
+  extraPeriodicPayment: number = 0,
+  lumpSumAmount: number = 0,
+  lumpSumYear: number = 1
+) {
+  const standard = calculateLoanPayment(principal, annualRatePct, termYears, frequency);
+  const safeExtra = sanitizeNumber(extraPeriodicPayment, 0, 0);
+  const safeLumpSum = sanitizeNumber(lumpSumAmount, 0, 0);
+  const safeLumpYear = sanitizeNumber(lumpSumYear, 1, 1);
+
+  if (standard.periodicPayment <= 0 || (safeExtra <= 0 && safeLumpSum <= 0)) {
+    return {
+      acceleratedTotalRepayment: standard.totalRepayment,
+      acceleratedTotalInterest: standard.totalInterest,
+      acceleratedPeriods: standard.amortizationSchedule.length,
+      interestSaved: 0,
+      periodsSaved: 0,
+      yearsSaved: 0,
+      amortizationSchedule: standard.amortizationSchedule,
+      annualSchedule: standard.annualSchedule,
+    };
+  }
+
+  const periodsPerYear = getPeriodsPerYear(frequency);
+  const periodicRate = (sanitizeNumber(annualRatePct, 0, 0) / 100) / periodsPerYear;
+  const lumpSumPeriod = Math.round(safeLumpYear * periodsPerYear);
+
+  const acceleratedSchedule: AmortizationRow[] = [];
+  let remainingBalance = sanitizeNumber(principal, 0, 0);
+  let cumulativeInterest = 0;
+  let period = 0;
+  const maxPeriodCap = Math.round(termYears * periodsPerYear);
+
+  while (remainingBalance > 0.01 && period < maxPeriodCap) {
+    period++;
+    const interestForPeriod = periodicRate === 0 ? 0 : remainingBalance * periodicRate;
+    let scheduledPayment = standard.periodicPayment + safeExtra;
+
+    // Apply lump sum in the designated period
+    if (period === lumpSumPeriod && safeLumpSum > 0) {
+      scheduledPayment += safeLumpSum;
+    }
+
+    let principalPaid = scheduledPayment - interestForPeriod;
+
+    if (remainingBalance <= principalPaid || period === maxPeriodCap) {
+      principalPaid = remainingBalance;
+      scheduledPayment = principalPaid + interestForPeriod;
+      remainingBalance = 0;
+    } else {
+      remainingBalance -= principalPaid;
+    }
+
+    cumulativeInterest += interestForPeriod;
+
+    acceleratedSchedule.push({
+      period,
+      payment: scheduledPayment,
+      principalPaid,
+      interestPaid: interestForPeriod,
+      remainingBalance,
+      totalInterestPaid: cumulativeInterest,
+    });
+
+    if (remainingBalance <= 0) break;
+  }
+
+  const acceleratedTotalRepayment = sanitizeNumber(principal, 0, 0) + cumulativeInterest;
+  const interestSaved = Math.max(0, standard.totalInterest - cumulativeInterest);
+  const periodsSaved = Math.max(0, standard.amortizationSchedule.length - period);
+  const yearsSaved = periodsSaved / periodsPerYear;
+
+  // Build annual schedule for accelerated plan
+  const annualSchedule: AmortizationYearSummary[] = [];
+  const totalYears = Math.ceil(acceleratedSchedule.length / periodsPerYear);
+
+  for (let yr = 1; yr <= totalYears; yr++) {
+    const startIdx = (yr - 1) * periodsPerYear;
+    const endIdx = Math.min(startIdx + periodsPerYear, acceleratedSchedule.length);
+    const chunk = acceleratedSchedule.slice(startIdx, endIdx);
+
+    const yearPayment = chunk.reduce((sum, row) => sum + row.payment, 0);
+    const yearPrincipal = chunk.reduce((sum, row) => sum + row.principalPaid, 0);
+    const yearInterest = chunk.reduce((sum, row) => sum + row.interestPaid, 0);
+    const endingBalance = chunk.length > 0 ? chunk[chunk.length - 1].remainingBalance : 0;
+
+    annualSchedule.push({
+      year: yr,
+      payment: yearPayment,
+      principalPaid: yearPrincipal,
+      interestPaid: yearInterest,
+      endingBalance,
+    });
+  }
+
+  return {
+    acceleratedTotalRepayment,
+    acceleratedTotalInterest: cumulativeInterest,
+    acceleratedPeriods: period,
+    interestSaved,
+    periodsSaved,
+    yearsSaved,
+    amortizationSchedule: acceleratedSchedule,
+    annualSchedule,
+  };
+}
+
+// -------------------------------------------------------------
+// INFLATION DISCOUNT FORMULA
+// -------------------------------------------------------------
+export function calculateRealPurchasingPower(
+  nominalValue: number,
+  annualInflationRatePct: number,
+  years: number
+): number {
+  const safeVal = sanitizeNumber(nominalValue, 0, 0);
+  const safeRate = sanitizeNumber(annualInflationRatePct, 0, 0);
+  const safeYears = sanitizeNumber(years, 0, 0);
+
+  if (safeVal <= 0 || safeYears <= 0 || safeRate <= 0) return safeVal;
+  const discountFactor = Math.pow(1 + safeRate / 100, safeYears);
+  return safeVal / discountFactor;
+}
+
+// -------------------------------------------------------------
 // 2. SAVINGS CALCULATOR
 // -------------------------------------------------------------
 export function calculateSavingsGrowth(
@@ -163,11 +294,13 @@ export function calculateSavingsGrowth(
   monthlyContribution: number,
   annualRatePct: number,
   savingsPeriodYears: number,
-  compoundingFrequency: 'monthly' | 'quarterly' | 'annually' = 'monthly'
+  compoundingFrequency: 'monthly' | 'quarterly' | 'annually' = 'monthly',
+  annualInflationRatePct: number = 0
 ): SavingsResults {
   const initial = sanitizeNumber(initialDeposit, 0, 0);
   const monthly = sanitizeNumber(monthlyContribution, 0, 0);
   const rate = sanitizeNumber(annualRatePct, 0, 0);
+  const inflation = sanitizeNumber(annualInflationRatePct, 0, 0);
   const years = Math.max(1, Math.round(sanitizeNumber(savingsPeriodYears, 1, 1)));
 
   let compoundTimesPerYear = 12;
@@ -183,6 +316,7 @@ export function calculateSavingsGrowth(
       principalInvested: initial,
       totalInterest: 0,
       totalBalance: initial,
+      realPurchasingPower: initial,
     },
   ];
 
@@ -190,11 +324,9 @@ export function calculateSavingsGrowth(
   let totalContributed = initial;
 
   for (let month = 1; month <= totalMonths; month++) {
-    // Add monthly deposit at the beginning/middle
     currentBalance += monthly;
     totalContributed += monthly;
 
-    // Monthly compounding interest applied
     if (rate > 0) {
       currentBalance += currentBalance * monthlyRate;
     }
@@ -207,6 +339,7 @@ export function calculateSavingsGrowth(
         principalInvested: Math.round(totalContributed * 100) / 100,
         totalInterest: Math.round(interestSoFar * 100) / 100,
         totalBalance: Math.round(currentBalance * 100) / 100,
+        realPurchasingPower: Math.round(calculateRealPurchasingPower(currentBalance, inflation, yearNumber) * 100) / 100,
       });
     }
   }
@@ -245,11 +378,13 @@ export function calculateCompoundInterest(
   additionalContribution: number,
   contributionFreq: 'monthly' | 'annually' = 'monthly',
   periodYears: number = 5,
-  compoundingFreq: CompoundingFrequency = 'monthly'
+  compoundingFreq: CompoundingFrequency = 'monthly',
+  annualInflationRatePct: number = 0
 ): CompoundInterestResults {
   const principal = sanitizeNumber(principalInput, 0, 0);
   const ratePct = sanitizeNumber(ratePctInput, 0, 0);
   const contribution = sanitizeNumber(additionalContribution, 0, 0);
+  const inflation = sanitizeNumber(annualInflationRatePct, 0, 0);
   const years = Math.max(1, Math.round(sanitizeNumber(periodYears, 1, 1)));
 
   const n = getCompoundingTimes(compoundingFreq);
@@ -265,6 +400,7 @@ export function calculateCompoundInterest(
       principalInvested: principal,
       totalInterest: 0,
       totalBalance: principal,
+      realPurchasingPower: principal,
     },
   ];
 
@@ -286,6 +422,7 @@ export function calculateCompoundInterest(
         principalInvested: Math.round(totalInvested * 100) / 100,
         totalInterest: Math.max(0, Math.round((currentBalance - totalInvested) * 100) / 100),
         totalBalance: Math.round(currentBalance * 100) / 100,
+        realPurchasingPower: Math.round(calculateRealPurchasingPower(currentBalance, inflation, year) * 100) / 100,
       });
     }
   }
@@ -308,11 +445,13 @@ export function calculateInvestment(
   initialInvestment: number,
   monthlyContribution: number,
   expectedAnnualReturnPct: number,
-  investmentDurationYears: number
+  investmentDurationYears: number,
+  annualInflationRatePct: number = 0
 ): InvestmentResults {
   const initial = sanitizeNumber(initialInvestment, 0, 0);
   const monthly = sanitizeNumber(monthlyContribution, 0, 0);
   const returnRate = sanitizeNumber(expectedAnnualReturnPct, 0, 0);
+  const inflation = sanitizeNumber(annualInflationRatePct, 0, 0);
   const years = Math.max(1, Math.round(sanitizeNumber(investmentDurationYears, 1, 1)));
 
   const totalMonths = years * 12;
@@ -324,6 +463,7 @@ export function calculateInvestment(
       principalInvested: initial,
       totalInterest: 0,
       totalBalance: initial,
+      realPurchasingPower: initial,
     },
   ];
 
@@ -345,6 +485,7 @@ export function calculateInvestment(
         principalInvested: Math.round(totalInvested * 100) / 100,
         totalInterest: Math.max(0, Math.round((currentBalance - totalInvested) * 100) / 100),
         totalBalance: Math.round(currentBalance * 100) / 100,
+        realPurchasingPower: Math.round(calculateRealPurchasingPower(currentBalance, inflation, year) * 100) / 100,
       });
     }
   }
