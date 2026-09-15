@@ -106,7 +106,7 @@ finance calculator/
 │   │   ├── financialMath.ts # Pure mathematical functions (separated from UI)
 │   │   ├── formatters.ts    # Currency, number, and duration formatting
 │   │   ├── exportUtils.ts   # CSV export utilities
-│   │   └── __tests__/       # Vitest unit tests (19 tests)
+│   │   └── __tests__/       # Vitest unit tests (24 tests)
 │   ├── App.tsx           # Main application shell & router
 │   ├── main.tsx          # Entry point
 │   └── index.css         # Tailwind & base styling
@@ -138,7 +138,7 @@ npm install
 ```bash
 npm run dev
 ```
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Open [http://localhost:4000](http://localhost:4000) in your browser (configured on dedicated port `4000` to prevent port collisions).
 
 ### Run Automated Tests
 ```bash
