@@ -13,6 +13,7 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
+  LayoutDashboard,
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -59,11 +60,15 @@ export const Navbar: React.FC<NavbarProps> = ({
       case 'about':
         return 'About FINCAL';
       case 'login':
-        return 'Authentication';
+        return 'User Sign In';
+      case 'admin-login':
+        return 'Admin Portal Sign In';
       case 'admin':
         return 'Administrative Portal';
       case 'saved':
         return 'My Calculations';
+      case 'user':
+        return 'User Dashboard';
       default:
         return 'Finance Calculator';
     }
@@ -246,7 +251,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
 
                       <div className="py-1">
-                        {user.role === 'admin' && (
+                        {user.role === 'admin' ? (
                           <button
                             onClick={() => {
                               onNavigate('admin');
@@ -255,6 +260,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                             className="w-full text-left px-4 py-2 text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 flex items-center gap-2 font-medium"
                           >
                             <ShieldCheck className="w-4 h-4" /> Admin Console
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              onNavigate('user');
+                              setUserDropdownOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center gap-2 font-medium"
+                          >
+                            <LayoutDashboard className="w-4 h-4" /> User Dashboard
                           </button>
                         )}
                         <button

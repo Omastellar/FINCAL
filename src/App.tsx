@@ -11,6 +11,7 @@ import { AboutPage } from './pages/AboutPage';
 import { LoginPage } from './pages/LoginPage';
 import { AdminPage } from './pages/AdminPage';
 import { SavedCalculationsPage } from './pages/SavedCalculationsPage';
+import { UserPage } from './pages/UserPage';
 import { PageView } from './types/navigation';
 import { CalculatorId } from './types/calculators';
 
@@ -20,7 +21,7 @@ export const AppContent: React.FC = () => {
       const search = new URLSearchParams(window.location.search);
       if (search.get('calc')) return 'calculators';
       const page = search.get('page') as PageView;
-      if (page && ['home', 'calculators', 'about', 'login', 'admin', 'saved'].includes(page)) {
+      if (page && ['home', 'calculators', 'about', 'login', 'admin', 'admin-login', 'saved', 'user'].includes(page)) {
         return page;
       }
     } catch {
@@ -111,11 +112,15 @@ export const AppContent: React.FC = () => {
       case 'about':
         return <AboutPage onNavigate={handleNavigate} />;
       case 'login':
-        return <LoginPage onNavigate={handleNavigate} />;
+        return <LoginPage onNavigate={handleNavigate} initialRole="user" />;
+      case 'admin-login':
+        return <LoginPage onNavigate={handleNavigate} initialRole="admin" />;
       case 'admin':
         return <AdminPage onNavigate={handleNavigate} />;
       case 'saved':
         return <SavedCalculationsPage onNavigate={handleNavigate} />;
+      case 'user':
+        return <UserPage onNavigate={handleNavigate} />;
       default:
         return <HomePage onNavigate={handleNavigate} />;
     }

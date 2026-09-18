@@ -1,9 +1,9 @@
 # FINCAL: Comprehensive Test Cases & Acceptance Criteria Specification
 
-**Document Version:** 2.1  
+**Document Version:** 2.2  
 **Application:** FINCAL (Financial Calculator Precision Suite)  
 **Repository:** `Omastellar/FINCAL`  
-**Test Suite Status:** 58 / 58 Automated Tests Passing (`npm test`)  
+**Test Suite Status:** 59 / 59 Automated Tests Passing (`npm test`)  
 **Production Build:** Clean (`npm run build`)  
 **Date:** September 2026  
 
@@ -133,6 +133,22 @@ Prior to this quality baseline, several components relied on static, hardcoded d
 - **And** a clear success alert banner shall be displayed confirming the update
 - **And** the interface shall automatically redirect back to Sign In after 1.8 seconds with the email and updated password populated for immediate access.
 
+### AC-16: Dedicated Users Interface & Isolated Admin Login
+- **Given** an unauthenticated visitor browsing the platform or clicking "Sign In"
+- **When** accessing the standard login page (`/` or `?page=login`)
+- **Then** the page shall display exclusively user-focused authentication (Sign In, Create Account, Forgot Password, and Standard User Demo)
+- **And** no Administrator role switcher tab, no Administrator demo buttons, and no administrator telemetry copy shall be visible to standard users
+- **When** an authorized administrator visits the Admin Portal or `?page=admin-login`
+- **Then** a dedicated Administrator Login Portal with security branding and administrative styling shall be presented
+- **When** a standard user logs into their account
+- **Then** they shall be routed directly to their dedicated **User Dashboard** (`?page=user`)
+- **And** the User Dashboard shall feature:
+  - User identity profile banner (Avatar, Name, Member Title, Email, Member Since date)
+  - Key financial status metrics (Saved Calculations count, Active Focus, Preferred Currency, Security Status)
+  - Interactive Launchpad for all 7 calculators with category filtering (`All`, `Borrowing`, `Growth`, `Planning`)
+  - Recent saved calculation models with 1-click calculator resumption and deletion
+  - Workspace preferences (Profile name/title editor, currency selector, and password change modal).
+
 ---
 
 ## 4. Comprehensive Test Cases Matrix
@@ -174,6 +190,7 @@ Prior to this quality baseline, several components relied on static, hardcoded d
 | **TC-AUTH-004** | Auth Engine | Saved calculation serialization | Saved calculation correctly serializes and parses | ✅ Pass (Vitest) |
 | **TC-AUTH-005** | Auth Engine | Platform settings constraint check | Default settings hold valid positive numbers | ✅ Pass (Vitest) |
 | **TC-AUTH-006** | Auth Engine | Password recovery, validation & storage update | Min length >= 6 enforced, email validated, password matching verified, user record updated in storage | ✅ Pass (Vitest) |
+| **TC-AUTH-007** | Auth Engine | User login isolation & User Dashboard state | Admin controls suppressed on user login, user dashboard metrics filter by user id | ✅ Pass (Vitest) |
 | **TC-CAT-001** | Categories | "All" category returns all 7 tools | Returns 7 calculators in metadata array | ✅ Pass (Vitest) |
 | **TC-CAT-002** | Categories | "Borrowing" category filter | Returns Loan and Debt Payoff tools | ✅ Pass (Vitest) |
 | **TC-CAT-003** | Categories | "Growth" category filter | Returns Savings, Compound Interest, Investment | ✅ Pass (Vitest) |
@@ -196,7 +213,7 @@ Prior to this quality baseline, several components relied on static, hardcoded d
 To re-run and verify the test cases and production build:
 
 ```bash
-# Execute automated test suite (58 tests)
+# Execute automated test suite (59 tests)
 npm test
 
 # Verify production build & TypeScript validation

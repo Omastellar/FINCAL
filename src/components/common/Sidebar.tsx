@@ -18,6 +18,7 @@ import {
   LogOut,
   ChevronDown,
   User as UserIcon,
+  LayoutDashboard,
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -263,6 +264,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
             Workspace & Tools
           </div>
 
+          {/* User Dashboard (for authenticated standard users) */}
+          {isAuthenticated && !isAdmin && (
+            <div className="relative group">
+              <button
+                onClick={() => handleNavClick('user')}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                  currentPage === 'user'
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-slate-100'
+                } ${isCollapsed ? 'md:justify-center' : ''}`}
+              >
+                <div className="flex items-center gap-3">
+                  <LayoutDashboard className={`w-5 h-5 shrink-0 ${currentPage === 'user' ? 'text-emerald-500' : ''}`} />
+                  <span className={`truncate ${isCollapsed ? 'md:hidden' : ''}`}>
+                    User Dashboard
+                  </span>
+                </div>
+              </button>
+
+              {/* Collapsed Tooltip */}
+              {isCollapsed && (
+                <div className="hidden md:block absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                  User Dashboard
+                </div>
+              )}
+            </div>
+          )}
+
           {/* My Saved Calculations (for logged in user) */}
           {isAuthenticated && (
             <div className="relative group">
@@ -375,8 +404,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
 
                 {/* Expanded Details */}
-                <div className={`flex-1 min-w-0 ${isCollapsed ? 'md:hidden' : ''}`}>
-                  <div className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                <div
+                  onClick={() => handleNavClick(user.role === 'admin' ? 'admin' : 'user')}
+                  className={`flex-1 min-w-0 cursor-pointer ${isCollapsed ? 'md:hidden' : ''}`}
+                >
+                  <div className="font-bold text-xs text-slate-900 dark:text-white truncate hover:text-emerald-500 transition-colors">
                     {user.name}
                   </div>
                   <div className="text-[10px] text-slate-400 uppercase font-semibold">

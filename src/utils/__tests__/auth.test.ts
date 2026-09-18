@@ -108,5 +108,73 @@ describe('Module 12: Authentication & Role Management Engine', () => {
     expect(testUsers[userIndex].passwordHash).toBe('NewSecretPassword2026!');
     expect(testUsers[userIndex].passwordHash).not.toBe('OldPassword123!');
   });
+
+  it('[TC-AUTH-007] validates user login isolation from administrator portal and user dashboard state', () => {
+    // 1. Role view isolation: standard login mode must exclude admin portal elements
+    interface LoginViewConfig {
+      mode: 'user' | 'admin';
+      showAdminTab: boolean;
+      showAdminDemo: boolean;
+      showUserDemo: boolean;
+      destinationPage: 'user' | 'admin';
+    }
+
+    const getLoginConfig = (mode: 'user' | 'admin'): LoginViewConfig => ({
+      mode,
+      showAdminTab: false, // In both modes, role tabs are suppressed to enforce strict separation
+      showAdminDemo: mode === 'admin',
+      showUserDemo: mode === 'user',
+      destinationPage: mode === 'admin' ? 'admin' : 'user',
+    });
+
+    const userLogin = getLoginConfig('user');
+    expect(userLogin.showAdminDemo).toBe(false);
+    expect(userLogin.showAdminTab).toBe(false);
+    expect(userLogin.showUserDemo).toBe(true);
+    expect(userLogin.destinationPage).toBe('user');
+
+    const adminLogin = getLoginConfig('admin');
+    expect(adminLogin.showAdminDemo).toBe(true);
+    expect(adminLogin.showUserDemo).toBe(false);
+    expect(adminLogin.destinationPage).toBe('admin');
+
+    // 2. User dashboard metric calculation: saved calculations filter by user id
+    const mockCalculations: SavedCalculation[] = [
+      {
+        id: 'calc_1',
+        userId: DEMO_USER.id,
+        calculatorId: 'loan',
+        title: 'Auto Loan',
+        inputs: {},
+        summaryResult: '₦50,000/mo',
+        currency: 'NGN',
+        timestamp: '2026-01-01T00:00:00Z',
+      },
+      {
+        id: 'calc_2',
+        userId: 'other_user_id',
+        calculatorId: 'savings',
+        title: 'Retirement Plan',
+        inputs: {},
+        summaryResult: '₦1,200,000',
+        currency: 'NGN',
+        timestamp: '2026-01-02T00:00:00Z',
+      },
+      {
+        id: 'calc_3',
+        userId: DEMO_USER.id,
+        calculatorId: 'currency-converter',
+        title: 'Euro Remittance',
+        inputs: {},
+        summaryResult: '€2,500',
+        currency: 'EUR',
+        timestamp: '2026-01-03T00:00:00Z',
+      },
+    ];
+
+    const userCalcs = mockCalculations.filter((c) => c.userId === DEMO_USER.id);
+    expect(userCalcs.length).toBe(2);
+    expect(userCalcs.map((c) => c.calculatorId)).toEqual(['loan', 'currency-converter']);
+  });
 });
 

@@ -57,7 +57,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         </div>
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
-            onClick={() => onNavigate('login')}
+            onClick={() => onNavigate('admin-login')}
             className="w-full sm:w-auto px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold shadow-md transition-colors"
           >
             Go to Admin Login
