@@ -12,6 +12,7 @@ import {
   Zap,
   Globe,
   Sparkles,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { CALCULATORS_LIST } from '../data/calculatorMetadata';
 import { CalculatorId } from '../types/calculators';
@@ -39,6 +40,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         return <Flame className="w-6 h-6 text-rose-500" />;
       case 'budget':
         return <Wallet className="w-6 h-6 text-amber-500" />;
+      case 'currency-converter':
+        return <ArrowRightLeft className="w-6 h-6 text-teal-500" />;
       default:
         return <TrendingUp className="w-6 h-6 text-emerald-500" />;
     }

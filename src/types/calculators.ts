@@ -177,13 +177,45 @@ export interface BudgetResults {
   };
 }
 
+// 7. Currency Conversion Calculator
+export interface CurrencyConversionInputs {
+  amount: number;
+  fromCurrency: import('./currency').CurrencyCode;
+  toCurrency: import('./currency').CurrencyCode;
+  transferFeePct: number;
+  customRate?: number;
+}
+
+export interface CurrencyMatrixItem {
+  code: import('./currency').CurrencyCode;
+  name: string;
+  symbol: string;
+  flag?: string;
+  rate: number;
+  amount: number;
+}
+
+export interface CurrencyConversionResults {
+  fromAmount: number;
+  fromCurrency: import('./currency').CurrencyCode;
+  toCurrency: import('./currency').CurrencyCode;
+  exchangeRate: number;
+  inverseRate: number;
+  grossConvertedAmount: number;
+  feeAmount: number;
+  netConvertedAmount: number;
+  feePct: number;
+  matrix: CurrencyMatrixItem[];
+}
+
 export type CalculatorId = 
   | 'loan'
   | 'savings'
   | 'compound-interest'
   | 'investment'
   | 'debt-payoff'
-  | 'budget';
+  | 'budget'
+  | 'currency-converter';
 
 export interface CalculatorMeta {
   id: CalculatorId;

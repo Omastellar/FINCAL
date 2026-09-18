@@ -7,6 +7,7 @@ import {
   Flame,
   Wallet,
   Zap,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { CALCULATORS_LIST } from '../data/calculatorMetadata';
 import { CalculatorId } from '../types/calculators';
@@ -16,6 +17,7 @@ import { CompoundInterestCalculator } from '../calculators/CompoundInterestCalcu
 import { InvestmentCalculator } from '../calculators/InvestmentCalculator';
 import { DebtPayoffCalculator } from '../calculators/DebtPayoffCalculator';
 import { BudgetCalculator } from '../calculators/BudgetCalculator';
+import { CurrencyConverterCalculator } from '../calculators/CurrencyConverterCalculator';
 
 interface CalculatorsPageProps {
   initialCalculatorId?: CalculatorId;
@@ -34,6 +36,7 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
       if (param === 'investment') return 'investment';
       if (param === 'debt' || param === 'debt-payoff') return 'debt-payoff';
       if (param === 'budget') return 'budget';
+      if (param === 'currency' || param === 'currency-converter') return 'currency-converter';
     } catch {
       // ignore
     }
@@ -72,6 +75,8 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
         return <Flame className="w-4 h-4" />;
       case 'budget':
         return <Wallet className="w-4 h-4" />;
+      case 'currency-converter':
+        return <ArrowRightLeft className="w-4 h-4" />;
       default:
         return <TrendingUp className="w-4 h-4" />;
     }
@@ -91,6 +96,8 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
         return <DebtPayoffCalculator />;
       case 'budget':
         return <BudgetCalculator />;
+      case 'currency-converter':
+        return <CurrencyConverterCalculator />;
       default:
         return <LoanCalculator />;
     }

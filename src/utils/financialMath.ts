@@ -18,7 +18,11 @@ import {
   ExpenseCategoryBreakdown,
   PaymentFrequency,
   CompoundingFrequency,
+  CurrencyConversionInputs,
+  CurrencyConversionResults,
+  CurrencyMatrixItem,
 } from '../types/calculators';
+import { CURRENCIES, CurrencyCode } from '../types/currency';
 
 // Helper to sanitize numeric inputs to avoid NaN, negative values when unexpected, or infinities
 export function sanitizeNumber(value: unknown, fallback: number = 0, min: number = 0): number {
@@ -687,5 +691,71 @@ export function calculateBudget(inputs: BudgetInputs): BudgetResults {
     savingsRate,
     expenseBreakdown,
     rule50_30_20,
+  };
+}
+
+// -------------------------------------------------------------
+// 7. CURRENCY CONVERSION ENGINE
+// -------------------------------------------------------------
+export function getCurrencyExchangeRate(
+  fromCurrency: CurrencyCode,
+  toCurrency: CurrencyCode,
+  customRate?: number
+): number {
+  if (customRate && customRate > 0) {
+    return customRate;
+  }
+  if (fromCurrency === toCurrency) {
+    return 1;
+  }
+  const fromConfig = CURRENCIES[fromCurrency];
+  const toConfig = CURRENCIES[toCurrency];
+  if (!fromConfig || !toConfig || fromConfig.rateToUSD <= 0) {
+    return 1;
+  }
+  return toConfig.rateToUSD / fromConfig.rateToUSD;
+}
+
+export function calculateCurrencyConversion(
+  inputs: CurrencyConversionInputs
+): CurrencyConversionResults {
+  const safeAmount = sanitizeNumber(inputs.amount, 0, 0);
+  const feePct = sanitizeNumber(inputs.transferFeePct, 0, 0);
+  const exchangeRate = getCurrencyExchangeRate(
+    inputs.fromCurrency,
+    inputs.toCurrency,
+    inputs.customRate
+  );
+  const inverseRate = exchangeRate > 0 ? 1 / exchangeRate : 0;
+
+  const grossConvertedAmount = safeAmount * exchangeRate;
+  const feeAmount = grossConvertedAmount * (feePct / 100);
+  const netConvertedAmount = Math.max(0, grossConvertedAmount - feeAmount);
+
+  // Cross currency comparison matrix
+  const matrix: CurrencyMatrixItem[] = (Object.keys(CURRENCIES) as CurrencyCode[]).map((code) => {
+    const cfg = CURRENCIES[code];
+    const rate = getCurrencyExchangeRate(inputs.fromCurrency, code);
+    return {
+      code,
+      name: cfg.name,
+      symbol: cfg.symbol,
+      flag: cfg.flag,
+      rate,
+      amount: safeAmount * rate,
+    };
+  });
+
+  return {
+    fromAmount: safeAmount,
+    fromCurrency: inputs.fromCurrency,
+    toCurrency: inputs.toCurrency,
+    exchangeRate,
+    inverseRate,
+    grossConvertedAmount,
+    feeAmount,
+    netConvertedAmount,
+    feePct,
+    matrix,
   };
 }

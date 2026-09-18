@@ -8,6 +8,8 @@ import {
   calculateInvestment,
   calculateDebtPayoff,
   calculateBudget,
+  calculateCurrencyConversion,
+  getCurrencyExchangeRate,
   sanitizeNumber,
 } from '../financialMath';
 import { formatCurrency, formatDurationMonths } from '../formatters';
@@ -298,3 +300,75 @@ describe('Module 9: Multi-Currency & Locale Engine', () => {
     expect(formatDurationMonths(5)).toBe('5 months');
   });
 });
+
+describe('Module 10: Currency Converter & FX Valuation Engine', () => {
+  it('[TC-FX-001] converts USD to NGN at baseline exchange rate', () => {
+    const result = calculateCurrencyConversion({
+      amount: 1000,
+      fromCurrency: 'USD',
+      toCurrency: 'NGN',
+      transferFeePct: 0,
+    });
+    expect(result.fromAmount).toBe(1000);
+    expect(result.exchangeRate).toBe(1540.0);
+    expect(result.grossConvertedAmount).toBe(1_540_000);
+    expect(result.netConvertedAmount).toBe(1_540_000);
+    expect(result.feeAmount).toBe(0);
+  });
+
+  it('[TC-FX-002] calculates cross rates between EUR and GBP accurately', () => {
+    const expectedRate = 0.79 / 0.92;
+    const result = calculateCurrencyConversion({
+      amount: 500,
+      fromCurrency: 'EUR',
+      toCurrency: 'GBP',
+      transferFeePct: 0,
+    });
+    expect(result.exchangeRate).toBeCloseTo(expectedRate, 4);
+    expect(result.grossConvertedAmount).toBeCloseTo(500 * expectedRate, 2);
+  });
+
+  it('[TC-FX-003] verifies inverse rate reciprocity holds', () => {
+    const directRate = getCurrencyExchangeRate('USD', 'CAD');
+    const inverseRate = getCurrencyExchangeRate('CAD', 'USD');
+    expect(directRate * inverseRate).toBeCloseTo(1, 5);
+  });
+
+  it('[TC-FX-004] deducts bank transfer spread fee correctly', () => {
+    const result = calculateCurrencyConversion({
+      amount: 1000,
+      fromCurrency: 'USD',
+      toCurrency: 'NGN',
+      transferFeePct: 2.0,
+    });
+    expect(result.grossConvertedAmount).toBe(1_540_000);
+    expect(result.feeAmount).toBe(30_800);
+    expect(result.netConvertedAmount).toBe(1_509_200);
+  });
+
+  it('[TC-FX-005] supports custom spot rate overrides', () => {
+    const result = calculateCurrencyConversion({
+      amount: 100,
+      fromCurrency: 'USD',
+      toCurrency: 'NGN',
+      transferFeePct: 0,
+      customRate: 1600.0,
+    });
+    expect(result.exchangeRate).toBe(1600.0);
+    expect(result.grossConvertedAmount).toBe(160_000);
+  });
+
+  it('[TC-FX-006] generates complete multi-currency valuation matrix', () => {
+    const result = calculateCurrencyConversion({
+      amount: 100,
+      fromCurrency: 'USD',
+      toCurrency: 'EUR',
+      transferFeePct: 0,
+    });
+    expect(result.matrix.length).toBeGreaterThanOrEqual(10);
+    const ngnRow = result.matrix.find((r) => r.code === 'NGN');
+    expect(ngnRow).toBeDefined();
+    expect(ngnRow?.amount).toBe(154_000);
+  });
+});
+

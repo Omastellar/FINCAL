@@ -43,4 +43,11 @@ export const CALCULATORS_LIST: CalculatorMeta[] = [
     category: 'Planning',
     badge: 'Daily Finance',
   },
+  {
+    id: 'currency-converter',
+    title: 'Currency Converter',
+    shortDescription: 'Convert between global and African currencies with spot cross-rates, transfer spread fees, and multi-currency comparison matrix.',
+    category: 'Planning',
+    badge: 'Real-Time FX',
+  },
 ];
