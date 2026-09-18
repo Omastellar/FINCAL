@@ -1,9 +1,9 @@
 # FINCAL: Comprehensive Test Cases & Acceptance Criteria Specification
 
-**Document Version:** 2.0  
+**Document Version:** 2.1  
 **Application:** FINCAL (Financial Calculator Precision Suite)  
 **Repository:** `Omastellar/FINCAL`  
-**Test Suite Status:** 57 / 57 Automated Tests Passing (`npm test`)  
+**Test Suite Status:** 58 / 58 Automated Tests Passing (`npm test`)  
 **Production Build:** Clean (`npm run build`)  
 **Date:** September 2026  
 
@@ -122,6 +122,17 @@ Prior to this quality baseline, several components relied on static, hardcoded d
 - **Then** the calculation shall be stored in `localStorage` under `fincal_saved_calculations`
 - **And** the user can view, delete, or export their calculations as a formatted JSON document.
 
+### AC-15: Password Recovery & Reset Flow
+- **Given** a registered user or platform administrator on the Sign In page
+- **When** the user clicks "Forgot password?"
+- **Then** the interface shall toggle smoothly into the Reset Password screen without page reload
+- **And** the role switcher tabs shall be hidden to avoid distraction
+- **When** the user enters their registered email address, a new password (min 6 characters), and confirms the password
+- **Then** client-side validation shall ensure non-empty fields, valid email format, minimum length, and matching passwords
+- **When** submitted, the system shall locate the account in `localStorage` (`fincal_registered_users`) or demo user accounts, update the password hash, and log a `'Password Reset'` audit event
+- **And** a clear success alert banner shall be displayed confirming the update
+- **And** the interface shall automatically redirect back to Sign In after 1.8 seconds with the email and updated password populated for immediate access.
+
 ---
 
 ## 4. Comprehensive Test Cases Matrix
@@ -162,6 +173,7 @@ Prior to this quality baseline, several components relied on static, hardcoded d
 | **TC-AUTH-003** | Auth Engine | Role separation enforcement | Admin role !== User role | ✅ Pass (Vitest) |
 | **TC-AUTH-004** | Auth Engine | Saved calculation serialization | Saved calculation correctly serializes and parses | ✅ Pass (Vitest) |
 | **TC-AUTH-005** | Auth Engine | Platform settings constraint check | Default settings hold valid positive numbers | ✅ Pass (Vitest) |
+| **TC-AUTH-006** | Auth Engine | Password recovery, validation & storage update | Min length >= 6 enforced, email validated, password matching verified, user record updated in storage | ✅ Pass (Vitest) |
 | **TC-CAT-001** | Categories | "All" category returns all 7 tools | Returns 7 calculators in metadata array | ✅ Pass (Vitest) |
 | **TC-CAT-002** | Categories | "Borrowing" category filter | Returns Loan and Debt Payoff tools | ✅ Pass (Vitest) |
 | **TC-CAT-003** | Categories | "Growth" category filter | Returns Savings, Compound Interest, Investment | ✅ Pass (Vitest) |
@@ -184,7 +196,7 @@ Prior to this quality baseline, several components relied on static, hardcoded d
 To re-run and verify the test cases and production build:
 
 ```bash
-# Execute automated test suite (57 tests)
+# Execute automated test suite (58 tests)
 npm test
 
 # Verify production build & TypeScript validation

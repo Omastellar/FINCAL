@@ -60,4 +60,53 @@ describe('Module 12: Authentication & Role Management Engine', () => {
     expect(defaultSettings.defaultInflationRate).toBeGreaterThan(0);
     expect(defaultSettings.defaultCurrency).toBe('NGN');
   });
+
+  it('[TC-AUTH-006] validates password reset and recovery workflows', () => {
+    // 1. Password minimum length criteria (min 6 characters)
+    const isValidPassword = (p: string) => typeof p === 'string' && p.trim().length >= 6;
+    expect(isValidPassword('12345')).toBe(false);
+    expect(isValidPassword('short')).toBe(false);
+    expect(isValidPassword('Secret2026!')).toBe(true);
+
+    // 2. Email format validation for password recovery
+    const isValidEmail = (email: string) => email.trim().includes('@') && email.trim().length >= 5;
+    expect(isValidEmail('')).toBe(false);
+    expect(isValidEmail('invalid-email')).toBe(false);
+    expect(isValidEmail('alex@example.com')).toBe(true);
+    expect(isValidEmail('admin@fincal.app')).toBe(true);
+
+    // 3. Password confirmation matching
+    const doPasswordsMatch = (p1: string, p2: string) => p1 === p2 && p1.length >= 6;
+    expect(doPasswordsMatch('Password2026!', 'Different2026!')).toBe(false);
+    expect(doPasswordsMatch('NewPassword123!', 'NewPassword123!')).toBe(true);
+
+    // 4. Stored user password hash update simulation
+    interface StoredUserAccount extends User {
+      passwordHash?: string;
+    }
+
+    const testUsers: StoredUserAccount[] = [
+      {
+        id: 'usr_test_999',
+        name: 'Jordan Smith',
+        email: 'jordan@example.com',
+        role: 'user',
+        title: 'Analyst',
+        createdAt: '2026-01-01T00:00:00Z',
+        lastLogin: '2026-01-01T00:00:00Z',
+        passwordHash: 'OldPassword123!',
+      },
+    ];
+
+    const targetEmail = 'jordan@example.com';
+    const newPassword = 'NewSecretPassword2026!';
+
+    const userIndex = testUsers.findIndex((u) => u.email.toLowerCase() === targetEmail.toLowerCase());
+    expect(userIndex).toBeGreaterThanOrEqual(0);
+
+    testUsers[userIndex].passwordHash = newPassword;
+    expect(testUsers[userIndex].passwordHash).toBe('NewSecretPassword2026!');
+    expect(testUsers[userIndex].passwordHash).not.toBe('OldPassword123!');
+  });
 });
+

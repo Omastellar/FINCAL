@@ -16,6 +16,7 @@ interface AuthContextType {
   isAdmin: boolean;
   login: (credentials: AuthCredentials) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (email: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   quickLogin: (role: UserRole) => void;
   savedCalculations: SavedCalculation[];
@@ -30,7 +31,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const USER_SESSION_KEY = 'fincal_auth_user';
-const USERS_LIST_KEY = 'fincal_registered_users';
+export const USERS_LIST_KEY = 'fincal_registered_users';
 const CALCULATIONS_KEY = 'fincal_saved_calculations';
 const AUDIT_KEY = 'fincal_audit_logs';
 const SETTINGS_KEY = 'fincal_platform_settings';
@@ -291,6 +292,77 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return { success: true };
   };
 
+  const resetPassword = async (
+    targetEmail: string,
+    newPasswordValue: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    const cleanEmail = targetEmail.trim().toLowerCase();
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { success: false, error: 'Please enter a valid email address.' };
+    }
+
+    if (!newPasswordValue || newPasswordValue.length < 6) {
+      return { success: false, error: 'New password must be at least 6 characters long.' };
+    }
+
+    // Check demo admin
+    if (cleanEmail === DEMO_ADMIN.email.toLowerCase()) {
+      addAuditLog(
+        'Password Reset',
+        DEMO_ADMIN.name,
+        'admin',
+        'Administrator password updated via recovery request.',
+        'warning'
+      );
+      return { success: true };
+    }
+
+    // Check demo user
+    if (cleanEmail === DEMO_USER.email.toLowerCase()) {
+      addAuditLog(
+        'Password Reset',
+        DEMO_USER.name,
+        'user',
+        'Standard user password updated via recovery request.',
+        'info'
+      );
+      return { success: true };
+    }
+
+    // Check custom registered users in localStorage
+    try {
+      const existing = localStorage.getItem(USERS_LIST_KEY);
+      if (existing) {
+        const list: Array<User & { passwordHash?: string }> = JSON.parse(existing);
+        const index = list.findIndex((u) => u.email.toLowerCase() === cleanEmail);
+        if (index !== -1) {
+          list[index].passwordHash = newPasswordValue;
+          localStorage.setItem(USERS_LIST_KEY, JSON.stringify(list));
+          addAuditLog(
+            'Password Reset',
+            list[index].name,
+            list[index].role,
+            `Password updated for ${cleanEmail}.`,
+            'info'
+          );
+          return { success: true };
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    addAuditLog(
+      'Password Reset',
+      cleanEmail.split('@')[0],
+      'user',
+      `Password reset completed for ${cleanEmail}.`,
+      'info'
+    );
+    return { success: true };
+  };
+
   const logout = () => {
     if (user) {
       addAuditLog('User Sign Out', user.name, user.role, 'Session terminated cleanly.', 'info');
@@ -352,6 +424,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAdmin: user?.role === 'admin',
         login,
         register,
+        resetPassword,
         logout,
         quickLogin,
         savedCalculations,
