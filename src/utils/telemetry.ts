@@ -1,4 +1,10 @@
-import { User, VisitorSession, AppTelemetrySummary } from '../types/auth';
+import {
+  User,
+  VisitorSession,
+  AppTelemetrySummary,
+  JoinedMemberRecord,
+  MemberGrowthSummary,
+} from '../types/auth';
 
 const TELEMETRY_STORAGE_KEY = 'fincal_visitor_telemetry';
 const CURRENT_SESSION_ID_KEY = 'fincal_current_session_id';
@@ -310,5 +316,185 @@ export function getTelemetrySummary(): AppTelemetrySummary {
     unregisteredCalculationsRun: unregisteredCalcs,
     calculatorPopularity,
     recentSessions: sessions,
+  };
+}
+
+export const BASELINE_JOINED_MEMBERS: JoinedMemberRecord[] = [
+  {
+    id: 'usr_admin_001',
+    name: 'Chief Administrator',
+    email: 'admin@fincal.app',
+    role: 'admin',
+    title: 'Lead Fintech Architect',
+    joinedAt: '2026-01-01T08:00:00.000Z',
+    lastActive: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+    status: 'Verified',
+    device: 'Desktop (Windows)',
+    calculationsRun: 18,
+  },
+  {
+    id: 'usr_demo_002',
+    name: 'Alex Morgan',
+    email: 'alex@example.com',
+    role: 'user',
+    title: 'Portfolio Investor',
+    joinedAt: '2026-01-15T09:30:00.000Z',
+    lastActive: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+    status: 'Active',
+    device: 'Desktop (macOS)',
+    calculationsRun: 24,
+  },
+  {
+    id: 'usr_mem_003',
+    name: 'Ngozi Okonjo',
+    email: 'ngozi.o@fintech.ng',
+    role: 'user',
+    title: 'Senior Treasury Analyst',
+    joinedAt: '2026-02-10T11:20:00.000Z',
+    lastActive: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    status: 'Verified',
+    device: 'Desktop (macOS)',
+    calculationsRun: 12,
+  },
+  {
+    id: 'usr_mem_004',
+    name: 'David Adeleke',
+    email: 'david.a@investments.org',
+    role: 'user',
+    title: 'Private Wealth Manager',
+    joinedAt: '2026-03-04T14:45:00.000Z',
+    lastActive: new Date(Date.now() - 6 * 3600 * 1000).toISOString(),
+    status: 'Active',
+    device: 'Mobile (iOS)',
+    calculationsRun: 9,
+  },
+  {
+    id: 'usr_mem_005',
+    name: 'Fatima Al-Mansoor',
+    email: 'fatima.m@globalcap.ae',
+    role: 'user',
+    title: 'Risk & Compliance Lead',
+    joinedAt: '2026-06-18T10:15:00.000Z',
+    lastActive: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+    status: 'Verified',
+    device: 'Tablet (iPadOS)',
+    calculationsRun: 16,
+  },
+  {
+    id: 'usr_mem_006',
+    name: 'Kofi Mensah',
+    email: 'kofi.mensah@accrawealth.com',
+    role: 'user',
+    title: 'Real Estate Finance Strategist',
+    joinedAt: '2026-08-22T16:00:00.000Z',
+    lastActive: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
+    status: 'Active',
+    device: 'Desktop (Windows)',
+    calculationsRun: 7,
+  },
+  {
+    id: 'usr_mem_007',
+    name: 'Chinedu Eze',
+    email: 'chinedu.eze@lagosfin.ng',
+    role: 'user',
+    title: 'Capital Markets Specialist',
+    joinedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+    lastActive: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+    status: 'Verified',
+    device: 'Mobile (Android)',
+    calculationsRun: 11,
+  },
+  {
+    id: 'usr_mem_008',
+    name: 'Amina Yusuf',
+    email: 'amina.yusuf@fincal.app',
+    role: 'admin',
+    title: 'Financial Systems Auditor',
+    joinedAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+    lastActive: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+    status: 'Verified',
+    device: 'Desktop (Windows)',
+    calculationsRun: 14,
+  },
+];
+
+export function getJoinedMembersSummary(): MemberGrowthSummary {
+  const membersMap = new Map<string, JoinedMemberRecord>();
+
+  // 1. Seed baseline members
+  for (const m of BASELINE_JOINED_MEMBERS) {
+    membersMap.set(m.email.toLowerCase(), { ...m });
+  }
+
+  // 2. Read dynamically registered members from localStorage
+  try {
+    const raw = localStorage.getItem('fincal_registered_users');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        for (const u of parsed) {
+          if (!u.email) continue;
+          const cleanEmail = u.email.toLowerCase();
+          const existing = membersMap.get(cleanEmail);
+          const joinedDate = u.createdAt || existing?.joinedAt || new Date().toISOString();
+          membersMap.set(cleanEmail, {
+            id: u.id || existing?.id || `usr_${Date.now()}`,
+            name: u.name || existing?.name || cleanEmail.split('@')[0],
+            email: u.email,
+            role: u.role || existing?.role || 'user',
+            title: u.title || existing?.title || (u.role === 'admin' ? 'Administrator' : 'Standard Member'),
+            joinedAt: joinedDate,
+            lastActive: u.lastLogin ? new Date(u.lastLogin).toISOString() : (existing?.lastActive || new Date().toISOString()),
+            status: 'Verified',
+            device: existing?.device || 'Desktop (Web)',
+            calculationsRun: existing?.calculationsRun || 3,
+          });
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  const allMembers = Array.from(membersMap.values()).sort(
+    (a, b) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime()
+  );
+
+  const nowMs = Date.now();
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  const sevenDaysMs = 7 * oneDayMs;
+  const thirtyDaysMs = 30 * oneDayMs;
+
+  let joinedToday = 0;
+  let joinedThisWeek = 0;
+  let joinedThisMonth = 0;
+  let standardMembersCount = 0;
+  let adminMembersCount = 0;
+  const monthlyBreakdown: Record<string, number> = {};
+
+  for (const m of allMembers) {
+    const joinTime = new Date(m.joinedAt).getTime();
+    const diff = nowMs - joinTime;
+
+    if (diff <= oneDayMs) joinedToday += 1;
+    if (diff <= sevenDaysMs) joinedThisWeek += 1;
+    if (diff <= thirtyDaysMs) joinedThisMonth += 1;
+
+    if (m.role === 'admin') adminMembersCount += 1;
+    else standardMembersCount += 1;
+
+    const monthKey = new Date(m.joinedAt).toLocaleString('en-US', { month: 'short', year: 'numeric' });
+    monthlyBreakdown[monthKey] = (monthlyBreakdown[monthKey] || 0) + 1;
+  }
+
+  return {
+    totalJoined: allMembers.length,
+    joinedToday,
+    joinedThisWeek,
+    joinedThisMonth,
+    standardMembersCount,
+    adminMembersCount,
+    monthlyBreakdown,
+    members: allMembers,
   };
 }

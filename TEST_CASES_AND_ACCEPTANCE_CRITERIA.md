@@ -166,6 +166,24 @@ Prior to this quality baseline, several components relied on static, hardcoded d
   - Detailed audit table capturing visitor identity, client device & browser icons, geographic location, last activity timestamp, calculation volume, and live online/active status
   - Persistent Registered User Accounts reference table showing registered database profiles.
 
+### AC-18: Joined Members Access, Growth Velocity & Registration Intelligence
+- **Given** an authenticated administrator viewing the Administrative Console (`?page=admin`)
+- **When** the page renders
+- **Then** the header banner and top KPI metrics strip shall prominently display:
+  - Total Members Joined All-Time (`joinedSummary.totalJoined`)
+  - Joined This Month count (`+{joinedSummary.joinedThisMonth}`)
+  - Joined This Week count (`+{joinedSummary.joinedThisWeek}`)
+  - Joined Today count (`+{joinedSummary.joinedToday}`)
+- **When** viewing the Admin navigation tabs
+- **Then** a dedicated **"Members Joined"** tab shall be present with a counter badge indicating total joined members
+- **When** the administrator selects the **Members Joined** tab (`activeTab === 'joined'`)
+- **Then** the Member Growth Intelligence dashboard shall render:
+  - 4 Key Metric Cards: Total Members Joined (with Standard vs Administrator mix), Joined This Month (30-day velocity), Joined This Week (7-day momentum), and Joined Today (24-hour acquisition)
+  - Monthly Registration Cohort Visualizer: breakdown of member registrations across historical calendar months with proportional distribution
+  - Membership Tier Distribution Bar: visual ratio comparing Standard Users vs Administrative Staff
+  - Joined Members Directory: filterable by `All Members`, `Standard Members`, `Administrators`, and `Recent (Last 30 Days)`, with a real-time search query box
+  - Roster Table: capturing Member Profile (avatar, full name, email), Account Role (Admin vs Standard badge), Professional Title / Specialization, Exact Date & Time Joined (with relative time pills), Calculations Run count, Verified Status, and Client Device.
+
 ---
 
 ## 4. Comprehensive Test Cases Matrix
@@ -209,6 +227,7 @@ Prior to this quality baseline, several components relied on static, hardcoded d
 | **TC-AUTH-006** | Auth Engine | Password recovery, validation & storage update | Min length >= 6 enforced, email validated, password matching verified, user record updated in storage | ✅ Pass (Vitest) |
 | **TC-AUTH-007** | Auth Engine | User login isolation & User Dashboard state | Admin controls suppressed on user login, user dashboard metrics filter by user id | ✅ Pass (Vitest) |
 | **TC-AUTH-008** | Auth & Telemetry | Registered vs unregistered telemetry aggregation | Aggregates visitors, sessions, calculations, and calculator popularity metrics | ✅ Pass (Vitest) |
+| **TC-AUTH-009** | Auth & Growth | Joined members growth summary & registration tracking | Validates total joined >= 8, standard vs admin mix, 30-day join velocity, chronological ordering, and record integrity | ✅ Pass (Vitest) |
 | **TC-CAT-001** | Categories | "All" category returns all 7 tools | Returns 7 calculators in metadata array | ✅ Pass (Vitest) |
 | **TC-CAT-002** | Categories | "Borrowing" category filter | Returns Loan and Debt Payoff tools | ✅ Pass (Vitest) |
 | **TC-CAT-003** | Categories | "Growth" category filter | Returns Savings, Compound Interest, Investment | ✅ Pass (Vitest) |
@@ -231,7 +250,7 @@ Prior to this quality baseline, several components relied on static, hardcoded d
 To re-run and verify the test cases and production build:
 
 ```bash
-# Execute automated test suite (60 tests)
+# Execute automated test suite (61 tests)
 npm test
 
 # Verify production build & TypeScript validation

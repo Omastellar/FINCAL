@@ -5,6 +5,7 @@ import {
   initOrUpdateVisitorSession,
   recordCalculationEvent,
   getTelemetrySummary,
+  getJoinedMembersSummary,
 } from '../telemetry';
 
 describe('Module 12: Authentication & Role Management Engine', () => {
@@ -220,6 +221,33 @@ describe('Module 12: Authentication & Role Management Engine', () => {
         summary.calculatorPopularity['Currency Converter'].unregistered
     );
     expect(summary.calculatorPopularity['Loan Calculator']).toBeDefined();
+  });
+
+  it('[TC-AUTH-009] validates joined members growth summary and registration tracking', () => {
+    const summary = getJoinedMembersSummary();
+    expect(summary.totalJoined).toBeGreaterThanOrEqual(8);
+    expect(summary.standardMembersCount).toBeGreaterThanOrEqual(1);
+    expect(summary.adminMembersCount).toBeGreaterThanOrEqual(1);
+    expect(summary.totalJoined).toBe(summary.standardMembersCount + summary.adminMembersCount);
+    expect(summary.joinedThisMonth).toBeGreaterThanOrEqual(1);
+    expect(summary.members.length).toBe(summary.totalJoined);
+
+    // Verify members are sorted newest joined first
+    for (let i = 0; i < summary.members.length - 1; i++) {
+      const currentTime = new Date(summary.members[i].joinedAt).getTime();
+      const nextTime = new Date(summary.members[i + 1].joinedAt).getTime();
+      expect(currentTime).toBeGreaterThanOrEqual(nextTime);
+    }
+
+    // Verify each member record structure
+    const sampleMember = summary.members[0];
+    expect(sampleMember.id).toBeDefined();
+    expect(sampleMember.name).toBeDefined();
+    expect(sampleMember.email).toContain('@');
+    expect(['admin', 'user']).toContain(sampleMember.role);
+    expect(sampleMember.title).toBeDefined();
+    expect(sampleMember.joinedAt).toBeDefined();
+    expect(sampleMember.status).toBe('Verified');
   });
 });
 

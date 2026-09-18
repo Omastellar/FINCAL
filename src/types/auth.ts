@@ -88,3 +88,28 @@ export interface AppTelemetrySummary {
   recentSessions: VisitorSession[];
 }
 
+export interface JoinedMemberRecord {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  title: string;
+  joinedAt: string;
+  lastActive: string;
+  status: 'Active' | 'Verified' | 'Pending';
+  device?: string;
+  calculationsRun?: number;
+}
+
+export interface MemberGrowthSummary {
+  totalJoined: number;
+  joinedToday: number;
+  joinedThisWeek: number;
+  joinedThisMonth: number;
+  standardMembersCount: number;
+  adminMembersCount: number;
+  monthlyBreakdown: Record<string, number>;
+  members: JoinedMemberRecord[];
+}
+
+
