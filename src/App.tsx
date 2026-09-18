@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CurrencyProvider } from './context/CurrencyContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { Sidebar } from './components/common/Sidebar';
 import { Navbar } from './components/common/Navbar';
 import { Footer } from './components/common/Footer';
 import { HomePage } from './pages/HomePage';
@@ -27,6 +28,7 @@ export const AppContent: React.FC = () => {
     }
     return 'home';
   });
+
   const [selectedCalcId, setSelectedCalcId] = useState<CalculatorId>(() => {
     try {
       const search = new URLSearchParams(window.location.search);
@@ -37,6 +39,31 @@ export const AppContent: React.FC = () => {
     }
     return 'loan';
   });
+
+  // Sidebar state
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('fincal_sidebar_collapsed');
+      if (saved !== null) return saved === 'true';
+    } catch {
+      // ignore
+    }
+    return false;
+  });
+
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('fincal_sidebar_collapsed', String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
 
   const handleNavigate = (page: PageView, calcId?: CalculatorId) => {
     setCurrentPage(page);
@@ -66,17 +93,42 @@ export const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200 selection:bg-emerald-500 selection:text-white">
-      {/* Header / Navbar */}
-      <Navbar currentPage={currentPage} onNavigate={handleNavigate} />
+    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200 selection:bg-emerald-500 selection:text-white">
+      {/* Collapsible Sidebar */}
+      <Sidebar
+        currentPage={currentPage}
+        activeCalcId={selectedCalcId}
+        onNavigate={handleNavigate}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={toggleSidebarCollapse}
+        mobileOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
+      />
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        {renderPage()}
-      </main>
+      {/* Main Column with Dynamic Left Margin Offset */}
+      <div
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out ${
+          isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
+        }`}
+      >
+        {/* Top Header Bar */}
+        <Navbar
+          currentPage={currentPage}
+          activeCalcId={selectedCalcId}
+          onNavigate={handleNavigate}
+          onToggleSidebarMobile={() => setMobileSidebarOpen((prev) => !prev)}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebarCollapse={toggleSidebarCollapse}
+        />
 
-      {/* Footer */}
-      <Footer onNavigate={handleNavigate} />
+        {/* Main Content Area */}
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+          {renderPage()}
+        </main>
+
+        {/* Footer */}
+        <Footer onNavigate={handleNavigate} />
+      </div>
     </div>
   );
 };
