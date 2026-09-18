@@ -1,9 +1,9 @@
 # FINCAL: Comprehensive Test Cases & Acceptance Criteria Specification
 
-**Document Version:** 2.2  
+**Document Version:** 2.3  
 **Application:** FINCAL (Financial Calculator Precision Suite)  
 **Repository:** `Omastellar/FINCAL`  
-**Test Suite Status:** 59 / 59 Automated Tests Passing (`npm test`)  
+**Test Suite Status:** 60 / 60 Automated Tests Passing (`npm test`)  
 **Production Build:** Clean (`npm run build`)  
 **Date:** September 2026  
 
@@ -149,6 +149,23 @@ Prior to this quality baseline, several components relied on static, hardcoded d
   - Recent saved calculation models with 1-click calculator resumption and deletion
   - Workspace preferences (Profile name/title editor, currency selector, and password change modal).
 
+### AC-17: Audience Intelligence & Real-Time Usage Telemetry (Registered vs Unregistered Users)
+- **Given** an authenticated administrator viewing the Administrative Console (`?page=admin`)
+- **When** the page renders
+- **Then** the primary KPI metrics strip shall display real-time platform audience counts:
+  - Total App Audience (`telemetry.totalVisitors`) breaking down Registered vs Unregistered Guests
+  - Registered Members count and total authenticated calculations computed
+  - Unregistered Guests count and anonymous calculations computed
+  - Live Active Now count displaying visitors active within the session window
+- **When** the administrator navigates to the **Audience & Users** tab (`activeTab === 'users'`)
+- **Then** an Audience Intelligence dashboard shall be presented, featuring:
+  - Proportional Ratio Visualizer: visual progress bar and percentage breakdown of Registered Members vs Unregistered Guests
+  - Comparative Performance Cards: comparing member privilege usage vs anonymous guest convenience with average calculations per visitor
+  - Calculator Module Popularity Matrix: breakdown of computations by financial tool (Loan Calculator, Currency Converter, Savings, Compound Interest, Investment Returns, Debt Payoff, Budget 50/30/20) cross-referenced by user classification (Registered vs Unregistered)
+  - Interactive Visitor Sessions Directory: filterable by `All Visitors`, `Registered Members`, and `Unregistered Guests`, with a real-time search query input
+  - Detailed audit table capturing visitor identity, client device & browser icons, geographic location, last activity timestamp, calculation volume, and live online/active status
+  - Persistent Registered User Accounts reference table showing registered database profiles.
+
 ---
 
 ## 4. Comprehensive Test Cases Matrix
@@ -191,6 +208,7 @@ Prior to this quality baseline, several components relied on static, hardcoded d
 | **TC-AUTH-005** | Auth Engine | Platform settings constraint check | Default settings hold valid positive numbers | ✅ Pass (Vitest) |
 | **TC-AUTH-006** | Auth Engine | Password recovery, validation & storage update | Min length >= 6 enforced, email validated, password matching verified, user record updated in storage | ✅ Pass (Vitest) |
 | **TC-AUTH-007** | Auth Engine | User login isolation & User Dashboard state | Admin controls suppressed on user login, user dashboard metrics filter by user id | ✅ Pass (Vitest) |
+| **TC-AUTH-008** | Auth & Telemetry | Registered vs unregistered telemetry aggregation | Aggregates visitors, sessions, calculations, and calculator popularity metrics | ✅ Pass (Vitest) |
 | **TC-CAT-001** | Categories | "All" category returns all 7 tools | Returns 7 calculators in metadata array | ✅ Pass (Vitest) |
 | **TC-CAT-002** | Categories | "Borrowing" category filter | Returns Loan and Debt Payoff tools | ✅ Pass (Vitest) |
 | **TC-CAT-003** | Categories | "Growth" category filter | Returns Savings, Compound Interest, Investment | ✅ Pass (Vitest) |
@@ -213,7 +231,7 @@ Prior to this quality baseline, several components relied on static, hardcoded d
 To re-run and verify the test cases and production build:
 
 ```bash
-# Execute automated test suite (59 tests)
+# Execute automated test suite (60 tests)
 npm test
 
 # Verify production build & TypeScript validation

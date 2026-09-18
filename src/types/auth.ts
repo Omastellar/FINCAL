@@ -56,3 +56,35 @@ export interface PlatformSettings {
   benchmarkInterestRate: number;
   defaultInflationRate: number;
 }
+
+export type VisitorType = 'registered' | 'unregistered';
+
+export interface VisitorSession {
+  id: string;
+  type: VisitorType;
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
+  device: string;
+  browser: string;
+  location: string;
+  startedAt: string;
+  lastActive: string;
+  pagesViewed: number;
+  calculationsRun: number;
+  lastToolUsed: string;
+  status: 'online' | 'active' | 'idle';
+}
+
+export interface AppTelemetrySummary {
+  totalVisitors: number;
+  registeredCount: number;
+  unregisteredCount: number;
+  activeNowCount: number;
+  totalCalculationsRun: number;
+  registeredCalculationsRun: number;
+  unregisteredCalculationsRun: number;
+  calculatorPopularity: Record<string, { registered: number; unregistered: number; total: number }>;
+  recentSessions: VisitorSession[];
+}
+

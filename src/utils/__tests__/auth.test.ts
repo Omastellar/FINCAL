@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { DEMO_ADMIN, DEMO_USER } from '../../context/AuthContext';
 import { User, SavedCalculation, PlatformSettings } from '../../types/auth';
+import {
+  initOrUpdateVisitorSession,
+  recordCalculationEvent,
+  getTelemetrySummary,
+} from '../telemetry';
 
 describe('Module 12: Authentication & Role Management Engine', () => {
   it('[TC-AUTH-001] validates default administrator configuration and roles', () => {
@@ -175,6 +180,46 @@ describe('Module 12: Authentication & Role Management Engine', () => {
     const userCalcs = mockCalculations.filter((c) => c.userId === DEMO_USER.id);
     expect(userCalcs.length).toBe(2);
     expect(userCalcs.map((c) => c.calculatorId)).toEqual(['loan', 'currency-converter']);
+  });
+
+  it('[TC-AUTH-008] validates telemetry tracking for registered vs unregistered guest users and calculator popularity', () => {
+    // 1. Initialize anonymous / unregistered guest session
+    const guestSession = initOrUpdateVisitorSession(null, 'Currency Converter');
+    expect(guestSession.type).toBe('unregistered');
+    expect(guestSession.lastToolUsed).toBe('Currency Converter');
+    expect(guestSession.status).toBe('online');
+    expect(guestSession.userName).toBeUndefined();
+
+    // 2. Record a calculation event for guest
+    recordCalculationEvent('Currency Converter', false);
+
+    // 3. Initialize registered session
+    const userSession = initOrUpdateVisitorSession(DEMO_USER, 'Loan Calculator');
+    expect(userSession.type).toBe('registered');
+    expect(userSession.userName).toBe(DEMO_USER.name);
+    expect(userSession.userEmail).toBe(DEMO_USER.email);
+    expect(userSession.lastToolUsed).toBe('Loan Calculator');
+
+    // 4. Record calculation event for registered user
+    recordCalculationEvent('Loan Calculator', true);
+
+    // 5. Query aggregated telemetry summary
+    const summary = getTelemetrySummary();
+    expect(summary.totalVisitors).toBeGreaterThanOrEqual(2);
+    expect(summary.registeredCount).toBeGreaterThanOrEqual(1);
+    expect(summary.unregisteredCount).toBeGreaterThanOrEqual(1);
+    expect(summary.totalVisitors).toBe(summary.registeredCount + summary.unregisteredCount);
+    expect(summary.totalCalculationsRun).toBe(
+      summary.registeredCalculationsRun + summary.unregisteredCalculationsRun
+    );
+
+    // 6. Verify calculator popularity metrics
+    expect(summary.calculatorPopularity['Currency Converter']).toBeDefined();
+    expect(summary.calculatorPopularity['Currency Converter'].total).toBe(
+      summary.calculatorPopularity['Currency Converter'].registered +
+        summary.calculatorPopularity['Currency Converter'].unregistered
+    );
+    expect(summary.calculatorPopularity['Loan Calculator']).toBeDefined();
   });
 });
 

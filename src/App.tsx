@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CurrencyProvider } from './context/CurrencyContext';
 import { ThemeProvider } from './context/ThemeContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar } from './components/common/Sidebar';
 import { Navbar } from './components/common/Navbar';
 import { Footer } from './components/common/Footer';
@@ -14,8 +14,10 @@ import { SavedCalculationsPage } from './pages/SavedCalculationsPage';
 import { UserPage } from './pages/UserPage';
 import { PageView } from './types/navigation';
 import { CalculatorId } from './types/calculators';
+import { initOrUpdateVisitorSession } from './utils/telemetry';
 
 export const AppContent: React.FC = () => {
+  const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState<PageView>(() => {
     try {
       const search = new URLSearchParams(window.location.search);
@@ -40,6 +42,29 @@ export const AppContent: React.FC = () => {
     }
     return null;
   });
+
+  // Track visitor telemetry for registered and unregistered guest users
+  useEffect(() => {
+    try {
+      const calcNameMap: Record<string, string> = {
+        loan: 'Loan Calculator',
+        savings: 'Savings Growth',
+        'compound-interest': 'Compound Interest',
+        investment: 'Investment Returns',
+        'debt-payoff': 'Debt Payoff',
+        budget: 'Budget 50/30/20',
+        'currency-converter': 'Currency Converter',
+      };
+      const activeName = selectedCalcId
+        ? calcNameMap[selectedCalcId] || selectedCalcId
+        : currentPage === 'calculators'
+        ? 'Calculators Hub'
+        : currentPage;
+      initOrUpdateVisitorSession(user, activeName);
+    } catch {
+      // ignore
+    }
+  }, [user, currentPage, selectedCalcId]);
 
   // Sidebar state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
