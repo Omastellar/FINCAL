@@ -845,7 +845,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <div>
                   <div className="font-semibold text-slate-900 dark:text-white">Allow Public Guest Calculations</div>
-                  <div className="text-slate-500">Allows non-authenticated users to compute numbers freely</div>
+                  <div className="text-slate-500">Enforce member registration to access calculators (Default: Members Only)</div>
                 </div>
                 <input
                   type="checkbox"

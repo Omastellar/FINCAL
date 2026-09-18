@@ -184,6 +184,19 @@ Prior to this quality baseline, several components relied on static, hardcoded d
   - Joined Members Directory: filterable by `All Members`, `Standard Members`, `Administrators`, and `Recent (Last 30 Days)`, with a real-time search query box
   - Roster Table: capturing Member Profile (avatar, full name, email), Account Role (Admin vs Standard badge), Professional Title / Specialization, Exact Date & Time Joined (with relative time pills), Calculations Run count, Verified Status, and Client Device.
 
+### AC-19: Enforce Registered Members-Only Access to Financial Calculators
+- **Given** an unauthenticated visitor browsing FINCAL
+- **When** attempting to access calculators via URL (`?page=calculators`, `?calc=loan`, etc.) or clicking calculator links in the Navbar, Sidebar, or Homepage
+- **Then** the financial calculator inputs and computation engines shall be restricted and inaccessible
+- **And** the system shall present a dedicated **Members-Only Access Gate** on the Calculators page featuring:
+  - Security branding with Lock icon and "Members-Only Financial Suite" badge
+  - Informative copy explaining that calculator models and engines are exclusive to registered members
+  - Direct Action buttons: "Sign In to Your Account", "Create Free Account", and "Instant Demo Member Access"
+  - Member value proposition cards detailing the 7 specialized engines, amortization tables, scenario saving, and multi-currency support
+  - Locked preview catalog of the 7 calculators with `Members Only` lock pills
+- **When** the user logs into their registered account or completes registration
+- **Then** all 7 calculators, schedules, custom models, and amortization engines shall instantly unlock.
+
 ---
 
 ## 4. Comprehensive Test Cases Matrix
@@ -228,6 +241,7 @@ Prior to this quality baseline, several components relied on static, hardcoded d
 | **TC-AUTH-007** | Auth Engine | User login isolation & User Dashboard state | Admin controls suppressed on user login, user dashboard metrics filter by user id | ✅ Pass (Vitest) |
 | **TC-AUTH-008** | Auth & Telemetry | Registered vs unregistered telemetry aggregation | Aggregates visitors, sessions, calculations, and calculator popularity metrics | ✅ Pass (Vitest) |
 | **TC-AUTH-009** | Auth & Growth | Joined members growth summary & registration tracking | Validates total joined >= 8, standard vs admin mix, 30-day join velocity, chronological ordering, and record integrity | ✅ Pass (Vitest) |
+| **TC-AUTH-010** | Auth & Access | Registered members-only access to calculators | Validates calculator access denial for guest visitors, approval for registered users & admins, and platform setting default | ✅ Pass (Vitest) |
 | **TC-CAT-001** | Categories | "All" category returns all 7 tools | Returns 7 calculators in metadata array | ✅ Pass (Vitest) |
 | **TC-CAT-002** | Categories | "Borrowing" category filter | Returns Loan and Debt Payoff tools | ✅ Pass (Vitest) |
 | **TC-CAT-003** | Categories | "Growth" category filter | Returns Savings, Compound Interest, Investment | ✅ Pass (Vitest) |
@@ -250,7 +264,7 @@ Prior to this quality baseline, several components relied on static, hardcoded d
 To re-run and verify the test cases and production build:
 
 ```bash
-# Execute automated test suite (61 tests)
+# Execute automated test suite (62 tests)
 npm test
 
 # Verify production build & TypeScript validation

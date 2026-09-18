@@ -59,7 +59,7 @@ export const DEMO_USER: User = {
 
 const DEFAULT_SETTINGS: PlatformSettings = {
   defaultCurrency: 'NGN',
-  allowGuestCalculations: true,
+  allowGuestCalculations: false,
   maintenanceMode: false,
   maxSavedCalculationsPerUser: 50,
   benchmarkInterestRate: 14.5,

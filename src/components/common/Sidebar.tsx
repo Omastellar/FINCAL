@@ -20,6 +20,7 @@ import {
   User as UserIcon,
   LayoutDashboard,
   X,
+  Lock,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { PageView } from '../../types/navigation';
@@ -167,11 +168,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Section Divider / Label */}
           <div
-            className={`pt-3 pb-1 px-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 ${
+            className={`pt-3 pb-1 px-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center justify-between ${
               isCollapsed ? 'md:hidden' : ''
             }`}
           >
-            Calculators
+            <span>Calculators</span>
+            {!isAuthenticated && (
+              <span className="flex items-center gap-1 text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 px-1.5 py-0.5 rounded-md">
+                <Lock className="w-2.5 h-2.5" /> Members Only
+              </span>
+            )}
           </div>
 
           {/* Calculators Hub */}
@@ -198,6 +204,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               {!isCollapsed && (
                 <div className="flex items-center gap-1.5">
+                  {!isAuthenticated && (
+                    <span title="Members Only">
+                      <Lock className="w-3 h-3 text-amber-500" />
+                    </span>
+                  )}
                   <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
                     7
                   </span>
@@ -223,7 +234,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Collapsed Tooltip */}
             {isCollapsed && (
               <div className="hidden md:block absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                Calculators (7)
+                Calculators (7) {!isAuthenticated ? '🔒' : ''}
               </div>
             )}
           </div>

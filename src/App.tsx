@@ -122,6 +122,7 @@ export const AppContent: React.FC = () => {
           <CalculatorsPage
             key={selectedCalcId || 'none'}
             initialCalculatorId={selectedCalcId}
+            onNavigate={handleNavigate}
             onSelectCalculator={(id) => {
               setSelectedCalcId(id);
               try {

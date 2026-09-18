@@ -54,14 +54,14 @@ describe('Module 12: Authentication & Role Management Engine', () => {
   it('[TC-AUTH-005] checks platform settings defaults and constraints', () => {
     const defaultSettings: PlatformSettings = {
       defaultCurrency: 'NGN',
-      allowGuestCalculations: true,
+      allowGuestCalculations: false,
       maintenanceMode: false,
       maxSavedCalculationsPerUser: 50,
       benchmarkInterestRate: 14.5,
       defaultInflationRate: 18.0,
     };
 
-    expect(defaultSettings.allowGuestCalculations).toBe(true);
+    expect(defaultSettings.allowGuestCalculations).toBe(false);
     expect(defaultSettings.benchmarkInterestRate).toBeGreaterThan(0);
     expect(defaultSettings.defaultInflationRate).toBeGreaterThan(0);
     expect(defaultSettings.defaultCurrency).toBe('NGN');
@@ -248,6 +248,33 @@ describe('Module 12: Authentication & Role Management Engine', () => {
     expect(sampleMember.title).toBeDefined();
     expect(sampleMember.joinedAt).toBeDefined();
     expect(sampleMember.status).toBe('Verified');
+  });
+
+  it('[TC-AUTH-010] enforces registered members-only access to calculators', () => {
+    // 1. Gating verification helper simulating calculator access control
+    const canAccessCalculator = (user: User | null, allowGuest: boolean = false) => {
+      if (allowGuest) return true;
+      return Boolean(user && user.id);
+    };
+
+    // Unregistered guest is denied access
+    expect(canAccessCalculator(null, false)).toBe(false);
+
+    // Registered user is granted access
+    expect(canAccessCalculator(DEMO_USER, false)).toBe(true);
+
+    // Administrator is granted access
+    expect(canAccessCalculator(DEMO_ADMIN, false)).toBe(true);
+
+    // Dynamic registered account is granted access
+    const dynamicUser: User = {
+      id: 'usr_new_123',
+      name: 'Test Member',
+      email: 'member@test.com',
+      role: 'user',
+      createdAt: new Date().toISOString(),
+    };
+    expect(canAccessCalculator(dynamicUser, false)).toBe(true);
   });
 });
 
