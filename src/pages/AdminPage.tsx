@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ShieldCheck,
   Users,
@@ -43,9 +43,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     updatePlatformSettings,
     savedCalculations,
     logout,
+    quickLogin,
   } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'benchmarks' | 'users' | 'logs'>('overview');
+  const [activeTab, setActiveTab] = useState<'users' | 'overview' | 'benchmarks' | 'logs'>('users');
   const [benchmarkRate, setBenchmarkRate] = useState<number>(platformSettings.benchmarkInterestRate);
   const [inflationRate, setInflationRate] = useState<number>(platformSettings.defaultInflationRate);
   const [saveSuccessNotice, setSaveSuccessNotice] = useState(false);
@@ -53,6 +54,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   const [audienceFilter, setAudienceFilter] = useState<'all' | 'registered' | 'unregistered'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Auto-refresh telemetry every 10 seconds while admin console is active
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTelemetry(getTelemetrySummary());
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleRefreshTelemetry = () => {
     setIsRefreshing(true);
@@ -90,14 +99,20 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         </div>
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
+            onClick={() => quickLogin('admin')}
+            className="w-full sm:w-auto px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold shadow-md transition-colors flex items-center justify-center gap-2"
+          >
+            <ShieldCheck className="w-4 h-4" /> Instant Admin Demo Access
+          </button>
+          <button
             onClick={() => onNavigate('admin-login')}
-            className="w-full sm:w-auto px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold shadow-md transition-colors"
+            className="w-full sm:w-auto px-6 py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-sm font-semibold transition-colors"
           >
             Go to Admin Login
           </button>
           <button
             onClick={() => onNavigate('calculators')}
-            className="w-full sm:w-auto px-6 py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-sm font-semibold transition-colors"
+            className="w-full sm:w-auto px-6 py-2.5 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl text-sm font-semibold transition-colors"
           >
             Back to Calculators
           </button>
@@ -190,7 +205,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Admin Header Banner */}
       <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 text-white border border-purple-800/40 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-semibold">
             <ShieldCheck className="w-3.5 h-3.5" /> FINCAL Administrative Console
           </div>
@@ -200,6 +215,22 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
           <p className="text-slate-300 text-xs sm:text-sm max-w-2xl">
             Logged in as <strong className="text-purple-300">{user?.name}</strong> ({user?.email}) • Lead Fintech Architect
           </p>
+          {/* Real-Time Audience Usage Badges */}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              Live Usage: {telemetry.totalVisitors} Total Users
+            </span>
+            <span className="px-2.5 py-1 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-semibold">
+              {telemetry.registeredCount} Registered Users
+            </span>
+            <span className="px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold">
+              {telemetry.unregisteredCount} Unregulated Users
+            </span>
+            <span className="px-2.5 py-1 rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300 text-xs font-semibold">
+              {telemetry.activeNowCount} Active Right Now
+            </span>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -223,60 +254,60 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
       {/* KPI Metrics Strip: Audience Intelligence & Platform Telemetry */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1: Total App Audience */}
+        {/* Metric 1: Total Users on App */}
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-bold uppercase tracking-wider">Total App Audience</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Total Users on App</span>
             <div className="p-1.5 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
-            {telemetry.totalVisitors} People
+            {telemetry.totalVisitors} Users
           </div>
           <div className="text-xs text-purple-600 dark:text-purple-400 font-semibold flex items-center gap-1.5">
             <span>{telemetry.registeredCount} Registered</span>
             <span>•</span>
-            <span>{telemetry.unregisteredCount} Guests</span>
+            <span>{telemetry.unregisteredCount} Unregulated</span>
           </div>
         </div>
 
-        {/* Metric 2: Registered Members */}
+        {/* Metric 2: Registered Users */}
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-bold uppercase tracking-wider">Registered Members</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Registered Users</span>
             <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
               <UserCheck className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
-            {telemetry.registeredCount} Accounts
+            {telemetry.registeredCount} Registered Users
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            {telemetry.registeredCalculationsRun} authenticated calculations
+            {telemetry.registeredCalculationsRun} authenticated calculations executed
           </div>
         </div>
 
-        {/* Metric 3: Unregistered Guests */}
+        {/* Metric 3: Unregulated Users */}
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-bold uppercase tracking-wider">Unregistered Guests</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Unregulated Users</span>
             <div className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
               <UserX className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
-            {telemetry.unregisteredCount} Guests
+            {telemetry.unregisteredCount} Unregulated Users
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            {telemetry.unregisteredCalculationsRun} anonymous calculations
+            {telemetry.unregisteredCalculationsRun} guest computations executed
           </div>
         </div>
 
         {/* Metric 4: Real-time Live Telemetry */}
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-bold uppercase tracking-wider">Active Telemetry</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Active Users Online</span>
             <span className="flex h-2.5 w-2.5 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
@@ -294,6 +325,20 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       {/* Admin Tab Navigation */}
       <div className="flex border-b border-slate-200 dark:border-slate-800 gap-2 sm:gap-6 overflow-x-auto">
         <button
+          onClick={() => setActiveTab('users')}
+          className={`py-3 px-1 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${
+            activeTab === 'users'
+              ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+              : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Audience & Users (Registered vs. Unregulated)</span>
+          <span className="px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 text-[10px] font-bold">
+            {telemetry.totalVisitors} Users
+          </span>
+        </button>
+        <button
           onClick={() => setActiveTab('overview')}
           className={`py-3 px-1 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${
             activeTab === 'overview'
@@ -301,7 +346,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
-          <Activity className="w-4 h-4" /> Platform Telemetry
+          <Activity className="w-4 h-4" /> Platform Health & Engines
         </button>
         <button
           onClick={() => setActiveTab('benchmarks')}
@@ -312,20 +357,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
           }`}
         >
           <Sliders className="w-4 h-4" /> Benchmark Parameters
-        </button>
-        <button
-          onClick={() => setActiveTab('users')}
-          className={`py-3 px-1 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${
-            activeTab === 'users'
-              ? 'border-purple-600 text-purple-600 dark:text-purple-400'
-              : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          <span>Audience & Users</span>
-          <span className="px-1.5 py-0.2 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 text-[10px] font-bold">
-            {telemetry.totalVisitors}
-          </span>
         </button>
         <button
           onClick={() => setActiveTab('logs')}
@@ -487,7 +518,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* Tab 3: Audience & User Intelligence */}
+      {/* Tab 1: Audience & User Intelligence */}
       {activeTab === 'users' && (
         <div className="space-y-6">
           {/* Top Visualizer Card: Audience Ratio & Comparison */}
@@ -496,10 +527,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               <div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <BarChart2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  Audience Intelligence & Proportions
+                  Audience Intelligence: Registered vs. Unregulated Users
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Real-time ratio comparing registered members with unregistered (guest) visitors across FINCAL.
+                  Real-time monitoring showing how many people are using FINCAL, categorized by authenticated registered users and unregulated guest users.
                 </p>
               </div>
               <button
@@ -509,7 +540,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span>Refresh Telemetry</span>
+                <span>Refresh Live Telemetry</span>
               </button>
             </div>
 
@@ -518,7 +549,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
               <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
                 <span className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400 font-bold">
                   <span className="w-2.5 h-2.5 rounded-full bg-purple-600 inline-block" />
-                  Registered Members: {telemetry.registeredCount} (
+                  Registered Users: {telemetry.registeredCount} (
                   {(
                     (telemetry.registeredCount / (telemetry.totalVisitors || 1)) *
                     100
@@ -527,7 +558,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 </span>
                 <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-bold">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
-                  Unregistered Guests: {telemetry.unregisteredCount} (
+                  Unregulated Users: {telemetry.unregisteredCount} (
                   {(
                     (telemetry.unregisteredCount / (telemetry.totalVisitors || 1)) *
                     100
@@ -535,7 +566,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                   %)
                 </span>
               </div>
-              <div className="w-full h-3 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex shadow-inner">
+              <div className="w-full h-3.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex shadow-inner">
                 <div
                   style={{
                     width: `${
@@ -544,7 +575,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                     }%`,
                   }}
                   className="bg-purple-600 h-full transition-all duration-500"
-                  title={`Registered: ${telemetry.registeredCount}`}
+                  title={`Registered Users: ${telemetry.registeredCount}`}
                 />
                 <div
                   style={{
@@ -554,12 +585,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                     }%`,
                   }}
                   className="bg-amber-500 h-full transition-all duration-500"
-                  title={`Unregistered: ${telemetry.unregisteredCount}`}
+                  title={`Unregulated Users: ${telemetry.unregisteredCount}`}
                 />
               </div>
             </div>
 
-            {/* Comparison Cards: Registered vs Unregistered */}
+            {/* Comparison Cards: Registered vs Unregulated */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
               <div className="p-4 rounded-2xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200/70 dark:border-purple-800/40 space-y-3">
                 <div className="flex items-center justify-between">
@@ -569,15 +600,15 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                     </div>
                     <div>
                       <div className="font-bold text-sm text-slate-900 dark:text-white">
-                        Registered User Accounts
+                        Registered Users (Authenticated)
                       </div>
                       <div className="text-[11px] text-purple-700 dark:text-purple-300">
-                        Authenticated Client Profiles
+                        Signed-in Account Holders
                       </div>
                     </div>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-[10px] font-bold uppercase">
-                    Member Base
+                  <span className="px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-[10px] font-bold uppercase">
+                    Registered
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center pt-1 border-t border-purple-200/50 dark:border-purple-800/30">
@@ -604,7 +635,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                   </div>
                 </div>
                 <div className="text-[11px] text-slate-600 dark:text-slate-400 bg-white/70 dark:bg-slate-900/60 p-2.5 rounded-xl">
-                  Enjoy authenticated profile preferences, saved calculation history, and persistent settings.
+                  Full profile preferences, cloud saved calculations, custom benchmarks, and persistent models.
                 </div>
               </div>
 
@@ -616,15 +647,15 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                     </div>
                     <div>
                       <div className="font-bold text-sm text-slate-900 dark:text-white">
-                        Unregistered Guest Visitors
+                        Unregulated Users (Guests)
                       </div>
                       <div className="text-[11px] text-amber-700 dark:text-amber-300">
-                        Anonymous Public Sessions
+                        Anonymous Public Visitors
                       </div>
                     </div>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 text-[10px] font-bold uppercase">
-                    Guest Base
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 text-[10px] font-bold uppercase">
+                    Unregulated
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center pt-1 border-t border-amber-200/50 dark:border-amber-800/30">
@@ -632,7 +663,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                     <div className="text-lg font-extrabold text-amber-700 dark:text-amber-300">
                       {telemetry.unregisteredCount}
                     </div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400">Total Guests</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">Total Users</div>
                   </div>
                   <div>
                     <div className="text-lg font-extrabold text-amber-700 dark:text-amber-300">
@@ -647,11 +678,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                         (telemetry.unregisteredCount || 1)
                       ).toFixed(1)}
                     </div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400">Avg Calcs/Guest</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">Avg Calcs/User</div>
                   </div>
                 </div>
                 <div className="text-[11px] text-slate-600 dark:text-slate-400 bg-white/70 dark:bg-slate-900/60 p-2.5 rounded-xl">
-                  Unrestricted access to all financial models without requiring account registration.
+                  Frictionless access to all financial calculators without registration or sign-in requirements.
                 </div>
               </div>
             </div>
@@ -760,7 +791,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  All ({telemetry.totalVisitors})
+                  All Users ({telemetry.totalVisitors})
                 </button>
                 <button
                   onClick={() => setAudienceFilter('registered')}
@@ -770,7 +801,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  Registered ({telemetry.registeredCount})
+                  Registered Users ({telemetry.registeredCount})
                 </button>
                 <button
                   onClick={() => setAudienceFilter('unregistered')}
@@ -780,7 +811,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  Guests ({telemetry.unregisteredCount})
+                  Unregulated Users ({telemetry.unregisteredCount})
                 </button>
               </div>
             </div>
@@ -803,7 +834,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 uppercase font-semibold text-[11px]">
                   <tr>
                     <th className="px-4 py-3 rounded-l-xl">User / Identity</th>
-                    <th className="px-4 py-3">Visitor Type</th>
+                    <th className="px-4 py-3">Classification</th>
                     <th className="px-4 py-3">Device & Client</th>
                     <th className="px-4 py-3">Location</th>
                     <th className="px-4 py-3">Last Activity</th>
@@ -836,8 +867,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                               <div className="font-mono font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
                                 {s.id}
                               </div>
-                              <div className="text-[11px] text-amber-600 dark:text-amber-400">
-                                Anonymous Guest Visitor
+                              <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                                Unregulated Public Visitor
                               </div>
                             </div>
                           )}
@@ -845,11 +876,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                         <td className="px-4 py-3.5">
                           {s.type === 'registered' ? (
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300">
-                              Registered
+                              Registered User
                             </span>
                           ) : (
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300">
-                              Unregistered
+                              Unregulated User
                             </span>
                           )}
                         </td>
