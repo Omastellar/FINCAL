@@ -41,11 +41,11 @@ export const SliderField: React.FC<SliderFieldProps> = ({
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      <div className="flex justify-between items-center text-sm font-medium text-slate-700 dark:text-slate-300">
-        <label>{label}</label>
-        <div className="relative flex items-center">
+      <div className="flex justify-between items-center text-sm font-medium text-slate-700 dark:text-slate-300 gap-2 min-w-0">
+        <label className="truncate min-w-0">{label}</label>
+        <div className="relative flex items-center shrink-0">
           {prefix && (
-            <span className="absolute left-2 text-xs text-slate-400 font-semibold pointer-events-none">
+            <span className="absolute left-2.5 text-xs text-slate-400 font-semibold pointer-events-none select-none">
               {prefix}
             </span>
           )}
@@ -56,12 +56,14 @@ export const SliderField: React.FC<SliderFieldProps> = ({
             max={max}
             step={step}
             onChange={handleInputChange}
-            className={`w-28 text-right text-sm font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none ${
-              prefix ? 'pl-5' : 'pl-2'
-            } ${suffix ? 'pr-6' : 'pr-2'}`}
+            className={`w-32 sm:w-36 text-right ${
+              String(value).length > 8 ? 'text-xs' : 'text-sm'
+            } font-semibold tabular-nums rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-1.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${
+              prefix ? 'pl-6 sm:pl-7' : 'pl-2.5'
+            } ${suffix ? 'pr-7 sm:pr-8' : 'pr-2.5'}`}
           />
           {suffix && (
-            <span className="absolute right-2 text-xs text-slate-400 font-semibold pointer-events-none">
+            <span className="absolute right-2.5 text-xs text-slate-400 font-semibold pointer-events-none select-none">
               {suffix}
             </span>
           )}

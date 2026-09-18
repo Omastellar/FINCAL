@@ -74,8 +74,8 @@ export const InputField: React.FC<InputFieldProps> = ({
           value={value === 0 && placeholder ? '' : value}
           onChange={handleChange}
           placeholder={placeholder}
-          className={`w-full rounded-xl border bg-white dark:bg-slate-900/90 text-slate-900 dark:text-slate-100 py-2.5 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent ${
-            prefix ? 'pl-9' : 'pl-3.5'
+          className={`w-full rounded-xl border bg-white dark:bg-slate-900/90 text-slate-900 dark:text-slate-100 py-2.5 text-base tabular-nums transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+            prefix ? (prefix.length > 2 ? 'pl-14' : 'pl-9') : 'pl-3.5'
           } ${suffix ? 'pr-12' : 'pr-3.5'} ${
             error
               ? 'border-rose-400 dark:border-rose-500 focus:ring-rose-500'

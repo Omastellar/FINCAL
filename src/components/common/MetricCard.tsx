@@ -50,36 +50,51 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     }
   };
 
+  const getValueFontSize = (val: string) => {
+    const len = val.length;
+    if (len > 22) return 'text-sm sm:text-base md:text-lg';
+    if (len > 16) return 'text-base sm:text-lg md:text-xl';
+    if (len > 12) return 'text-lg sm:text-xl md:text-2xl';
+    if (len > 9) return 'text-xl sm:text-2xl md:text-[1.65rem]';
+    return 'text-2xl sm:text-3xl';
+  };
+
   return (
     <div
-      className={`rounded-2xl border p-5 flex flex-col justify-between transition-all duration-200 ${getVariantStyles()}`}
+      className={`rounded-2xl border p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 min-w-0 overflow-hidden ${getVariantStyles()}`}
     >
-      <div className="flex justify-between items-start mb-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+      <div className="flex justify-between items-start mb-2 gap-2 min-w-0">
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate min-w-0">
           {label}
         </span>
         {icon && (
-          <div className="p-2 rounded-xl bg-white dark:bg-slate-800 shadow-xs text-slate-700 dark:text-slate-300">
+          <div className="p-1.5 sm:p-2 rounded-xl bg-white dark:bg-slate-800 shadow-xs text-slate-700 dark:text-slate-300 shrink-0">
             {icon}
           </div>
         )}
       </div>
 
-      <div>
-        <div className={`text-2xl md:text-3xl font-extrabold tracking-tight ${getValueColor()}`}>
+      <div className="min-w-0 overflow-hidden my-1">
+        <div
+          className={`${getValueFontSize(value)} font-extrabold tracking-tight tabular-nums leading-tight break-words max-w-full ${getValueColor()}`}
+          title={value}
+        >
           {value}
         </div>
         {subValue && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+          <p
+            className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium break-words leading-tight"
+            title={subValue}
+          >
             {subValue}
           </p>
         )}
       </div>
 
       {trend && (
-        <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-1.5 text-xs">
+        <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-1.5 text-xs min-w-0">
           <span
-            className={`font-semibold ${
+            className={`font-semibold truncate ${
               trend.direction === 'up'
                 ? 'text-emerald-600 dark:text-emerald-400'
                 : trend.direction === 'down'

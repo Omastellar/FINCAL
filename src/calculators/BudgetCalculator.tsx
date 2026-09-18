@@ -312,9 +312,9 @@ export const BudgetCalculator: React.FC = () => {
             <div className="space-y-3 text-xs">
               {/* Needs */}
               <div>
-                <div className="flex justify-between font-medium mb-1">
-                  <span>Needs (Target 50%)</span>
-                  <span>{results.rule50_30_20.needs.percentage.toFixed(1)}% ({format(results.rule50_30_20.needs.actual)})</span>
+                <div className="flex justify-between items-center font-medium mb-1 text-xs gap-2 min-w-0">
+                  <span className="truncate">Needs (Target 50%)</span>
+                  <span className="shrink-0 font-semibold tabular-nums">{results.rule50_30_20.needs.percentage.toFixed(1)}% ({format(results.rule50_30_20.needs.actual)})</span>
                 </div>
                 <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
@@ -328,9 +328,9 @@ export const BudgetCalculator: React.FC = () => {
 
               {/* Wants */}
               <div>
-                <div className="flex justify-between font-medium mb-1">
-                  <span>Wants (Target 30%)</span>
-                  <span>{results.rule50_30_20.wants.percentage.toFixed(1)}% ({format(results.rule50_30_20.wants.actual)})</span>
+                <div className="flex justify-between items-center font-medium mb-1 text-xs gap-2 min-w-0">
+                  <span className="truncate">Wants (Target 30%)</span>
+                  <span className="shrink-0 font-semibold tabular-nums">{results.rule50_30_20.wants.percentage.toFixed(1)}% ({format(results.rule50_30_20.wants.actual)})</span>
                 </div>
                 <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
@@ -344,9 +344,9 @@ export const BudgetCalculator: React.FC = () => {
 
               {/* Savings */}
               <div>
-                <div className="flex justify-between font-medium mb-1">
-                  <span>Savings / Investing (Target 20%)</span>
-                  <span>{results.rule50_30_20.savings.percentage.toFixed(1)}% ({format(results.rule50_30_20.savings.actual)})</span>
+                <div className="flex justify-between items-center font-medium mb-1 text-xs gap-2 min-w-0">
+                  <span className="truncate">Savings / Investing (Target 20%)</span>
+                  <span className="shrink-0 font-semibold tabular-nums">{results.rule50_30_20.savings.percentage.toFixed(1)}% ({format(results.rule50_30_20.savings.actual)})</span>
                 </div>
                 <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div

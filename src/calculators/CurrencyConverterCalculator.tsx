@@ -346,15 +346,26 @@ export const CurrencyConverterCalculator: React.FC = () => {
               </div>
 
               {/* Huge Converted Amount */}
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-slate-400">
+              <div className="space-y-1 min-w-0 overflow-hidden">
+                <div className="text-xs font-medium text-slate-400 truncate">
                   {formatCurrency(amount, fromCurrency)} equals:
                 </div>
-                <div className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-emerald-400 tracking-tight flex items-baseline gap-2">
-                  <span>{formatCurrency(results.netConvertedAmount, toCurrency)}</span>
+                <div
+                  className={`${
+                    formatCurrency(results.netConvertedAmount, toCurrency).length > 20
+                      ? 'text-xl sm:text-2xl lg:text-3xl'
+                      : formatCurrency(results.netConvertedAmount, toCurrency).length > 14
+                      ? 'text-2xl sm:text-3xl lg:text-4xl'
+                      : 'text-3xl sm:text-4xl lg:text-5xl'
+                  } font-extrabold text-emerald-400 tracking-tight flex items-baseline gap-2 tabular-nums break-words max-w-full leading-tight`}
+                  title={formatCurrency(results.netConvertedAmount, toCurrency)}
+                >
+                  <span className="break-words max-w-full">
+                    {formatCurrency(results.netConvertedAmount, toCurrency)}
+                  </span>
                 </div>
                 {transferFeePct > 0 && (
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-400 break-words leading-normal">
                     Gross: {formatCurrency(results.grossConvertedAmount, toCurrency)} • Fee ({transferFeePct}%): -{formatCurrency(results.feeAmount, toCurrency)}
                   </div>
                 )}
