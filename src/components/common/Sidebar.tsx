@@ -175,16 +175,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Calculators Hub */}
           <div className="relative group">
-            <button
+            <div
               onClick={() => {
-                if (isCollapsed) {
-                  handleNavClick('calculators');
-                } else {
-                  setCalculatorsSubmenuOpen(!calculatorsSubmenuOpen);
+                handleNavClick('calculators');
+                if (!isCollapsed) {
+                  setCalculatorsSubmenuOpen(true);
                 }
               }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                currentPage === 'calculators'
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
+                currentPage === 'calculators' && !activeCalcId
                   ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-slate-100'
               } ${isCollapsed ? 'md:justify-center' : ''}`}
@@ -201,14 +200,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
                     7
                   </span>
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
-                      calculatorsSubmenuOpen ? 'rotate-180' : ''
-                    }`}
-                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCalculatorsSubmenuOpen(!calculatorsSubmenuOpen);
+                    }}
+                    className="p-1 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-md transition-colors"
+                    title="Toggle submenu"
+                  >
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
+                        calculatorsSubmenuOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
                 </div>
               )}
-            </button>
+            </div>
 
             {/* Collapsed Tooltip */}
             {isCollapsed && (
@@ -226,8 +235,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 return (
                   <button
                     key={sub.id}
-                    onClick={() => handleNavClick('calculators', sub.id)}
-                    className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors text-left ${
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleNavClick('calculators', sub.id);
+                    }}
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors text-left cursor-pointer ${
                       isActive
                         ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-950/40 font-semibold'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900'

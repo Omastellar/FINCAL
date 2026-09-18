@@ -21,10 +21,12 @@ import { CurrencyConverterCalculator } from '../calculators/CurrencyConverterCal
 
 interface CalculatorsPageProps {
   initialCalculatorId?: CalculatorId;
+  onSelectCalculator?: (id: CalculatorId) => void;
 }
 
 export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
   initialCalculatorId = 'loan',
+  onSelectCalculator,
 }) => {
   const getCalcFromUrl = (): CalculatorId => {
     try {
@@ -43,14 +45,13 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
     return initialCalculatorId;
   };
 
-  const [activeCalcId, setActiveCalcId] = useState<CalculatorId>(getCalcFromUrl);
+  const [activeCalcId, setActiveCalcId] = useState<CalculatorId>(() => {
+    return initialCalculatorId || getCalcFromUrl();
+  });
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   useEffect(() => {
-    const fromUrl = getCalcFromUrl();
-    if (fromUrl) {
-      setActiveCalcId(fromUrl);
-    } else if (initialCalculatorId) {
+    if (initialCalculatorId) {
       setActiveCalcId(initialCalculatorId);
     }
   }, [initialCalculatorId]);
@@ -138,6 +139,7 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
                 key={calc.id}
                 onClick={() => {
                   setActiveCalcId(calc.id);
+                  onSelectCalculator?.(calc.id);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2 ${

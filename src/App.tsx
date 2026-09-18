@@ -70,6 +70,18 @@ export const AppContent: React.FC = () => {
     if (calcId) {
       setSelectedCalcId(calcId);
     }
+    try {
+      const url = new URL(window.location.href);
+      if (calcId) {
+        url.searchParams.set('calc', calcId);
+      } else if (page !== 'calculators') {
+        url.searchParams.delete('calc');
+      }
+      url.searchParams.set('page', page);
+      window.history.pushState({}, '', url.toString());
+    } catch {
+      // ignore
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -78,7 +90,22 @@ export const AppContent: React.FC = () => {
       case 'home':
         return <HomePage onNavigate={handleNavigate} />;
       case 'calculators':
-        return <CalculatorsPage initialCalculatorId={selectedCalcId} />;
+        return (
+          <CalculatorsPage
+            key={selectedCalcId}
+            initialCalculatorId={selectedCalcId}
+            onSelectCalculator={(id) => {
+              setSelectedCalcId(id);
+              try {
+                const url = new URL(window.location.href);
+                url.searchParams.set('calc', id);
+                window.history.pushState({}, '', url.toString());
+              } catch {
+                // ignore
+              }
+            }}
+          />
+        );
       case 'about':
         return <AboutPage onNavigate={handleNavigate} />;
       case 'login':
