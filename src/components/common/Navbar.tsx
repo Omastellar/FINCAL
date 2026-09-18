@@ -44,6 +44,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { theme, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
 
+  const isAuthPage = currentPage === 'login' || currentPage === 'admin-login';
+
   const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
@@ -80,29 +82,33 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center justify-between h-16">
           {/* Left: Sidebar Toggles & Breadcrumbs */}
           <div className="flex items-center gap-3">
-            {/* Mobile Drawer Trigger */}
-            <button
-              type="button"
-              onClick={onToggleSidebarMobile}
-              className="md:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 transition-colors"
-              aria-label="Open navigation menu"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
+            {/* Mobile Drawer Trigger - hidden on auth pages */}
+            {!isAuthPage && (
+              <button
+                type="button"
+                onClick={onToggleSidebarMobile}
+                className="md:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 transition-colors"
+                aria-label="Open navigation menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            )}
 
-            {/* Desktop Collapse Toggle Shortcut */}
-            <button
-              type="button"
-              onClick={onToggleSidebarCollapse}
-              className="hidden md:flex p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-800 transition-colors"
-              title={isSidebarCollapsed ? 'Expand sidebar (Ctrl+B)' : 'Collapse sidebar (Ctrl+B)'}
-            >
-              {isSidebarCollapsed ? (
-                <PanelLeftOpen className="w-4 h-4 text-emerald-500" />
-              ) : (
-                <PanelLeftClose className="w-4 h-4" />
-              )}
-            </button>
+            {/* Desktop Collapse Toggle Shortcut - hidden on auth pages */}
+            {!isAuthPage && (
+              <button
+                type="button"
+                onClick={onToggleSidebarCollapse}
+                className="hidden md:flex p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-800 transition-colors"
+                title={isSidebarCollapsed ? 'Expand sidebar (Ctrl+B)' : 'Collapse sidebar (Ctrl+B)'}
+              >
+                {isSidebarCollapsed ? (
+                  <PanelLeftOpen className="w-4 h-4 text-emerald-500" />
+                ) : (
+                  <PanelLeftClose className="w-4 h-4" />
+                )}
+              </button>
+            )}
 
             {/* Breadcrumbs / Page Context */}
             <div className="flex items-center gap-1.5 text-xs sm:text-sm">

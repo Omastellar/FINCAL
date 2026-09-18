@@ -152,23 +152,27 @@ export const AppContent: React.FC = () => {
     }
   };
 
+  const isAuthPage = currentPage === 'login' || currentPage === 'admin-login';
+
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200 selection:bg-emerald-500 selection:text-white">
-      {/* Collapsible Sidebar */}
-      <Sidebar
-        currentPage={currentPage}
-        activeCalcId={selectedCalcId}
-        onNavigate={handleNavigate}
-        isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={toggleSidebarCollapse}
-        mobileOpen={mobileSidebarOpen}
-        onCloseMobile={() => setMobileSidebarOpen(false)}
-      />
+      {/* Collapsible Sidebar - only rendered outside of auth/login pages */}
+      {!isAuthPage && (
+        <Sidebar
+          currentPage={currentPage}
+          activeCalcId={selectedCalcId}
+          onNavigate={handleNavigate}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={toggleSidebarCollapse}
+          mobileOpen={mobileSidebarOpen}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
+        />
+      )}
 
       {/* Main Column with Dynamic Left Margin Offset */}
       <div
         className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out ${
-          isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
+          isAuthPage ? 'ml-0' : isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
         }`}
       >
         {/* Top Header Bar */}

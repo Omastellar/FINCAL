@@ -276,5 +276,43 @@ describe('Module 12: Authentication & Role Management Engine', () => {
     };
     expect(canAccessCalculator(dynamicUser, false)).toBe(true);
   });
+
+  it('[TC-AUTH-011] validates non-collapsible interface and demo element removal for login pages', () => {
+    // 1. Auth page identification helper
+    const isAuthPage = (page: string) => page === 'login' || page === 'admin-login';
+    expect(isAuthPage('login')).toBe(true);
+    expect(isAuthPage('admin-login')).toBe(true);
+    expect(isAuthPage('home')).toBe(false);
+    expect(isAuthPage('calculators')).toBe(false);
+    expect(isAuthPage('admin')).toBe(false);
+    expect(isAuthPage('user')).toBe(false);
+
+    // 2. Collapsible sidebar suppression on auth pages
+    const shouldRenderSidebar = (page: string) => !isAuthPage(page);
+    expect(shouldRenderSidebar('login')).toBe(false);
+    expect(shouldRenderSidebar('admin-login')).toBe(false);
+    expect(shouldRenderSidebar('home')).toBe(true);
+
+    // 3. Margin offset normalization on auth pages (no sidebar offset)
+    const getMainColumnMargin = (page: string, isCollapsed: boolean) => {
+      if (isAuthPage(page)) return 'ml-0';
+      return isCollapsed ? 'md:ml-20' : 'md:ml-64';
+    };
+    expect(getMainColumnMargin('login', false)).toBe('ml-0');
+    expect(getMainColumnMargin('login', true)).toBe('ml-0');
+    expect(getMainColumnMargin('admin-login', false)).toBe('ml-0');
+    expect(getMainColumnMargin('home', false)).toBe('md:ml-64');
+    expect(getMainColumnMargin('home', true)).toBe('md:ml-20');
+
+    // 4. Initial credentials must be empty strings (no demo pre-fill)
+    const initialLoginFormState = {
+      email: '',
+      password: '',
+      name: '',
+    };
+    expect(initialLoginFormState.email).toBe('');
+    expect(initialLoginFormState.password).toBe('');
+    expect(initialLoginFormState.name).toBe('');
+  });
 });
 

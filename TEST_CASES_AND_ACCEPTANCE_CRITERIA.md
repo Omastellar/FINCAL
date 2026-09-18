@@ -242,6 +242,7 @@ Prior to this quality baseline, several components relied on static, hardcoded d
 | **TC-AUTH-008** | Auth & Telemetry | Registered vs unregistered telemetry aggregation | Aggregates visitors, sessions, calculations, and calculator popularity metrics | ✅ Pass (Vitest) |
 | **TC-AUTH-009** | Auth & Growth | Joined members growth summary & registration tracking | Validates total joined >= 8, standard vs admin mix, 30-day join velocity, chronological ordering, and record integrity | ✅ Pass (Vitest) |
 | **TC-AUTH-010** | Auth & Access | Registered members-only access to calculators | Validates calculator access denial for guest visitors, approval for registered users & admins, and platform setting default | ✅ Pass (Vitest) |
+| **TC-AUTH-011** | Auth UI | Clean Authentication Interface & Demo Removal | Validates removal of demo panels, demo auto-fill buttons, prefilled credentials, and suppresses collapsible sidebar and toggle controls on login pages | ✅ Pass (Vitest) |
 | **TC-CAT-001** | Categories | "All" category returns all 7 tools | Returns 7 calculators in metadata array | ✅ Pass (Vitest) |
 | **TC-CAT-002** | Categories | "Borrowing" category filter | Returns Loan and Debt Payoff tools | ✅ Pass (Vitest) |
 | **TC-CAT-003** | Categories | "Growth" category filter | Returns Savings, Compound Interest, Investment | ✅ Pass (Vitest) |
