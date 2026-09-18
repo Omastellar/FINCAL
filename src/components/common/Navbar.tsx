@@ -7,9 +7,16 @@ import {
   X,
   ChevronDown,
   Sparkles,
+  User as UserIcon,
+  ShieldCheck,
+  LogIn,
+  LogOut,
+  Bookmark,
+  Sliders,
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { CURRENCIES, CurrencyCode } from '../../types/currency';
 import { PageView } from '../../types/navigation';
 import { CalculatorId } from '../../types/calculators';
@@ -22,14 +29,18 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
   const { currency, setCurrency } = useCurrency();
   const { theme, toggleTheme } = useTheme();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const currencyOptions: CurrencyCode[] = ['NGN', 'USD', 'GBP', 'EUR'];
 
   const handleNavClick = (page: PageView) => {
     onNavigate(page);
     setMobileMenuOpen(false);
+    setUserDropdownOpen(false);
   };
 
   return (
@@ -86,9 +97,36 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
             >
               About
             </button>
+
+            {/* Role-specific Nav items */}
+            {isAdmin && (
+              <button
+                onClick={() => handleNavClick('admin')}
+                className={`px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5 ${
+                  currentPage === 'admin'
+                    ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40'
+                    : 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/30'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4" /> Admin Portal
+              </button>
+            )}
+
+            {isAuthenticated && !isAdmin && (
+              <button
+                onClick={() => handleNavClick('saved')}
+                className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                  currentPage === 'saved'
+                    ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900'
+                }`}
+              >
+                <Bookmark className="w-4 h-4" /> My Calculations
+              </button>
+            )}
           </nav>
 
-          {/* Actions: Currency Switcher & Dark Mode Toggle */}
+          {/* Actions: Currency Switcher & Dark Mode & Auth */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Currency Selector */}
             <div className="relative">
@@ -159,6 +197,101 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
               )}
             </button>
 
+            {/* User Profile / Sign In */}
+            {isAuthenticated && user ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border text-xs sm:text-sm font-semibold transition-all ${
+                    user.role === 'admin'
+                      ? 'border-purple-300 dark:border-purple-800 bg-purple-50/80 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:border-purple-500'
+                      : 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:border-emerald-500'
+                  }`}
+                >
+                  <div
+                    className={`w-6 h-6 rounded-lg flex items-center justify-center text-white font-bold text-xs ${
+                      user.role === 'admin' ? 'bg-purple-600' : 'bg-emerald-600'
+                    }`}
+                  >
+                    {user.role === 'admin' ? <ShieldCheck className="w-3.5 h-3.5" /> : <UserIcon className="w-3.5 h-3.5" />}
+                  </div>
+                  <span className="hidden sm:inline font-bold max-w-[100px] truncate">{user.name}</span>
+                  <span
+                    className={`text-[10px] uppercase font-extrabold px-1.5 py-0.2 rounded ${
+                      user.role === 'admin'
+                        ? 'bg-purple-200 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
+                        : 'bg-emerald-200 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200'
+                    }`}
+                  >
+                    {user.role}
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                </button>
+
+                {userDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-30"
+                      onClick={() => setUserDropdownOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl py-2 z-40">
+                      <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
+                        <div className="font-bold text-slate-900 dark:text-white text-xs truncate">
+                          {user.name}
+                        </div>
+                        <div className="text-[11px] text-slate-400 truncate">{user.email}</div>
+                      </div>
+
+                      <div className="py-1">
+                        {user.role === 'admin' && (
+                          <button
+                            onClick={() => handleNavClick('admin')}
+                            className="w-full text-left px-4 py-2 text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 flex items-center gap-2 font-medium"
+                          >
+                            <ShieldCheck className="w-4 h-4" /> Admin Console
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleNavClick('saved')}
+                          className="w-full text-left px-4 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
+                        >
+                          <Bookmark className="w-4 h-4 text-emerald-500" /> My Saved Calculations
+                        </button>
+                        <button
+                          onClick={() => handleNavClick('calculators')}
+                          className="w-full text-left px-4 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
+                        >
+                          <Calculator className="w-4 h-4 text-slate-400" /> Open Calculators
+                        </button>
+                      </div>
+
+                      <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
+                        <button
+                          onClick={() => {
+                            logout();
+                            setUserDropdownOpen(false);
+                            onNavigate('login');
+                          }}
+                          className="w-full text-left px-4 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-2 font-medium"
+                        >
+                          <LogOut className="w-4 h-4" /> Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => handleNavClick('login')}
+                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </button>
+            )}
+
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -202,6 +335,51 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
             >
               About
             </button>
+
+            {isAdmin && (
+              <button
+                onClick={() => handleNavClick('admin')}
+                className={`text-left px-4 py-2.5 rounded-xl text-sm font-semibold ${
+                  currentPage === 'admin'
+                    ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40'
+                    : 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/30'
+                }`}
+              >
+                Admin Portal
+              </button>
+            )}
+
+            {isAuthenticated ? (
+              <>
+                <button
+                  onClick={() => handleNavClick('saved')}
+                  className={`text-left px-4 py-2.5 rounded-xl text-sm font-medium ${
+                    currentPage === 'saved'
+                      ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900'
+                  }`}
+                >
+                  My Saved Calculations
+                </button>
+                <button
+                  onClick={() => {
+                    logout();
+                    setMobileMenuOpen(false);
+                    onNavigate('login');
+                  }}
+                  className="text-left px-4 py-2.5 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
+                >
+                  Sign Out ({user?.name})
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => handleNavClick('login')}
+                className="text-left px-4 py-2.5 rounded-xl text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+              >
+                Sign In / Register
+              </button>
+            )}
           </div>
         )}
       </div>

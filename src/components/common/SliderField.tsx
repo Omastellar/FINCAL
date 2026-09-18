@@ -24,9 +24,14 @@ export const SliderField: React.FC<SliderFieldProps> = ({
   helperText,
 }) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const parsed = parseFloat(e.target.value);
+    const raw = e.target.value;
+    if (raw === '') {
+      onChange(0);
+      return;
+    }
+    const parsed = parseFloat(raw);
     if (!isNaN(parsed)) {
-      onChange(Math.max(min, Math.min(max, parsed)));
+      onChange(Math.max(0, Math.min(max, parsed)));
     }
   };
 

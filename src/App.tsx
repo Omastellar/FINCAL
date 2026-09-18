@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { CurrencyProvider } from './context/CurrencyContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/common/Navbar';
 import { Footer } from './components/common/Footer';
 import { HomePage } from './pages/HomePage';
 import { CalculatorsPage } from './pages/CalculatorsPage';
 import { AboutPage } from './pages/AboutPage';
+import { LoginPage } from './pages/LoginPage';
+import { AdminPage } from './pages/AdminPage';
+import { SavedCalculationsPage } from './pages/SavedCalculationsPage';
 import { PageView } from './types/navigation';
 import { CalculatorId } from './types/calculators';
 
@@ -14,6 +18,10 @@ export const AppContent: React.FC = () => {
     try {
       const search = new URLSearchParams(window.location.search);
       if (search.get('calc')) return 'calculators';
+      const page = search.get('page') as PageView;
+      if (page && ['home', 'calculators', 'about', 'login', 'admin', 'saved'].includes(page)) {
+        return page;
+      }
     } catch {
       // ignore
     }
@@ -46,6 +54,12 @@ export const AppContent: React.FC = () => {
         return <CalculatorsPage initialCalculatorId={selectedCalcId} />;
       case 'about':
         return <AboutPage onNavigate={handleNavigate} />;
+      case 'login':
+        return <LoginPage onNavigate={handleNavigate} />;
+      case 'admin':
+        return <AdminPage onNavigate={handleNavigate} />;
+      case 'saved':
+        return <SavedCalculationsPage onNavigate={handleNavigate} />;
       default:
         return <HomePage onNavigate={handleNavigate} />;
     }
@@ -71,7 +85,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <CurrencyProvider>
-        <AppContent />
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
       </CurrencyProvider>
     </ThemeProvider>
   );

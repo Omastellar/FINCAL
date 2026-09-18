@@ -392,7 +392,8 @@ export function calculateCompoundInterest(
   const periodicContrib = contributionFreq === 'monthly' ? contribution : contribution / 12;
 
   const totalMonths = years * 12;
-  const monthlyRate = ratePct > 0 ? (ratePct / 100) / 12 : 0;
+  const nominalRate = ratePct > 0 ? (ratePct / 100) : 0;
+  const monthlyRate = nominalRate > 0 ? Math.pow(1 + nominalRate / n, n / 12) - 1 : 0;
 
   const growthTimeline: GrowthPoint[] = [
     {
