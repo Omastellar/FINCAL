@@ -83,26 +83,50 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     setTimeout(() => setSaveSuccessNotice(false), 3000);
   };
 
-  const registeredUsersList = [
-    {
-      id: DEMO_ADMIN.id,
-      name: DEMO_ADMIN.name,
-      email: DEMO_ADMIN.email,
-      role: 'admin' as UserRole,
-      title: DEMO_ADMIN.title || 'Lead Fintech Architect',
-      status: 'Active',
-      lastActive: 'Just now',
-    },
-    {
-      id: DEMO_USER.id,
-      name: DEMO_USER.name,
-      email: DEMO_USER.email,
-      role: 'user' as UserRole,
-      title: DEMO_USER.title || 'Portfolio Investor',
-      status: 'Active',
-      lastActive: '5 mins ago',
-    },
-  ];
+  const registeredUsersList = React.useMemo(() => {
+    const baseList = [
+      {
+        id: DEMO_ADMIN.id,
+        name: DEMO_ADMIN.name,
+        email: DEMO_ADMIN.email,
+        role: 'admin' as UserRole,
+        title: DEMO_ADMIN.title || 'Lead Fintech Architect',
+        status: 'Active',
+        lastActive: 'Online',
+      },
+      {
+        id: DEMO_USER.id,
+        name: DEMO_USER.name,
+        email: DEMO_USER.email,
+        role: 'user' as UserRole,
+        title: DEMO_USER.title || 'Portfolio Investor',
+        status: 'Active',
+        lastActive: 'Recently',
+      },
+    ];
+
+    try {
+      const stored = localStorage.getItem('fincal_registered_users');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          const registered = parsed.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            role: u.role as UserRole,
+            title: u.title || (u.role === 'admin' ? 'Administrator' : 'Standard User'),
+            status: 'Active',
+            lastActive: new Date(u.lastLogin || u.createdAt || Date.now()).toLocaleDateString(),
+          }));
+          return [...baseList, ...registered];
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return baseList;
+  }, []);
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -400,7 +424,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
             <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Users className="w-5 h-5 text-purple-500" /> Platform User Directory
             </h3>
-            <span className="text-xs text-slate-500">2 Active Profiles</span>
+            <span className="text-xs text-slate-500">{registeredUsersList.length} Active Profiles</span>
           </div>
 
           <div className="overflow-x-auto">

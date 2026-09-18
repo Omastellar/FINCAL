@@ -67,22 +67,13 @@ const DEFAULT_SETTINGS: PlatformSettings = {
 
 const INITIAL_AUDIT_LOGS: SystemAuditLog[] = [
   {
-    id: 'log_001',
-    action: 'System Initialized',
+    id: 'log_init_001',
+    action: 'System Engine Initialized',
     performedBy: 'System Core',
     role: 'admin',
-    timestamp: '2026-09-18T08:00:00.000Z',
-    details: '11 Financial engines loaded with 100% precision calibration.',
+    timestamp: new Date().toISOString(),
+    details: 'Precision financial computation suite initialized successfully.',
     status: 'success',
-  },
-  {
-    id: 'log_002',
-    action: 'Benchmark Rate Synchronized',
-    performedBy: 'Chief Administrator',
-    role: 'admin',
-    timestamp: '2026-09-18T10:15:00.000Z',
-    details: 'Central Bank benchmark rate verified at 14.50%.',
-    status: 'info',
   },
 ];
 
