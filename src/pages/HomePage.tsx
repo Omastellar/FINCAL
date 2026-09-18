@@ -69,7 +69,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
           <button
-            onClick={() => onNavigate('calculators', 'loan')}
+            onClick={() => onNavigate('calculators')}
             className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base shadow-lg shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 group cursor-pointer"
           >
             <span>Explore Calculators</span>

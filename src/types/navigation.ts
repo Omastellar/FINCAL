@@ -4,5 +4,5 @@ export type PageView = 'home' | 'calculators' | 'about' | 'login' | 'admin' | 's
 
 export interface NavigationState {
   currentPage: PageView;
-  activeCalculatorId?: CalculatorId;
+  activeCalculatorId?: CalculatorId | null;
 }

@@ -26,7 +26,7 @@ import { CalculatorId } from '../../types/calculators';
 
 interface SidebarProps {
   currentPage: PageView;
-  activeCalcId?: CalculatorId;
+  activeCalcId?: CalculatorId | null;
   onNavigate: (page: PageView, calcId?: CalculatorId) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
@@ -46,7 +46,7 @@ interface NavItem {
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentPage,
-  activeCalcId = 'loan',
+  activeCalcId = null,
   onNavigate,
   isCollapsed,
   onToggleCollapse,

@@ -20,15 +20,15 @@ import { BudgetCalculator } from '../calculators/BudgetCalculator';
 import { CurrencyConverterCalculator } from '../calculators/CurrencyConverterCalculator';
 
 interface CalculatorsPageProps {
-  initialCalculatorId?: CalculatorId;
+  initialCalculatorId?: CalculatorId | null;
   onSelectCalculator?: (id: CalculatorId) => void;
 }
 
 export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
-  initialCalculatorId = 'loan',
+  initialCalculatorId = null,
   onSelectCalculator,
 }) => {
-  const getCalcFromUrl = (): CalculatorId => {
+  const getCalcFromUrl = (): CalculatorId | null => {
     try {
       const search = new URLSearchParams(window.location.search);
       const param = search.get('calc');
@@ -42,16 +42,16 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
     } catch {
       // ignore
     }
-    return initialCalculatorId;
+    return null;
   };
 
-  const [activeCalcId, setActiveCalcId] = useState<CalculatorId>(() => {
-    return initialCalculatorId || getCalcFromUrl();
+  const [activeCalcId, setActiveCalcId] = useState<CalculatorId | null>(() => {
+    return initialCalculatorId !== undefined ? initialCalculatorId : getCalcFromUrl();
   });
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   useEffect(() => {
-    if (initialCalculatorId) {
+    if (initialCalculatorId !== undefined) {
       setActiveCalcId(initialCalculatorId);
     }
   }, [initialCalculatorId]);
@@ -84,6 +84,7 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
   };
 
   const renderActiveCalculator = () => {
+    if (!activeCalcId) return null;
     switch (activeCalcId) {
       case 'loan':
         return <LoanCalculator />;
@@ -100,7 +101,7 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
       case 'currency-converter':
         return <CurrencyConverterCalculator />;
       default:
-        return <LoanCalculator />;
+        return null;
     }
   };
 
@@ -172,9 +173,23 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
       </div>
 
       {/* Active Calculator Component View */}
-      <div className="pt-2">
-        {renderActiveCalculator()}
-      </div>
+      {activeCalcId ? (
+        <div className="pt-2">
+          {renderActiveCalculator()}
+        </div>
+      ) : (
+        <div className="text-center py-16 px-4 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/30">
+          <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
+            <TrendingUp className="w-6 h-6" />
+          </div>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">
+            Choose a Calculator to Get Started
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+            Select any financial tool from the options above or the sidebar to view calculations, schedules, and charts.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

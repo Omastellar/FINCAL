@@ -24,7 +24,7 @@ import { CALCULATORS_LIST } from '../../data/calculatorMetadata';
 
 interface NavbarProps {
   currentPage: PageView;
-  activeCalcId?: CalculatorId;
+  activeCalcId?: CalculatorId | null;
   onNavigate: (page: PageView, calcId?: CalculatorId) => void;
   onToggleSidebarMobile: () => void;
   isSidebarCollapsed: boolean;
@@ -33,7 +33,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentPage,
-  activeCalcId = 'loan',
+  activeCalcId = null,
   onNavigate,
   onToggleSidebarMobile,
   isSidebarCollapsed,
@@ -53,7 +53,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       case 'home':
         return 'Home';
       case 'calculators': {
-        const match = CALCULATORS_LIST.find((c) => c.id === activeCalcId);
+        const match = activeCalcId ? CALCULATORS_LIST.find((c) => c.id === activeCalcId) : null;
         return match ? match.title : 'Calculators';
       }
       case 'about':
@@ -110,7 +110,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
 
-              {currentPage === 'calculators' && (
+              {currentPage === 'calculators' && activeCalcId && (
                 <>
                   <span
                     onClick={() => onNavigate('calculators')}

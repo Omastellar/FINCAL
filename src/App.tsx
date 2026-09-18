@@ -29,7 +29,7 @@ export const AppContent: React.FC = () => {
     return 'home';
   });
 
-  const [selectedCalcId, setSelectedCalcId] = useState<CalculatorId>(() => {
+  const [selectedCalcId, setSelectedCalcId] = useState<CalculatorId | null>(() => {
     try {
       const search = new URLSearchParams(window.location.search);
       const calc = search.get('calc') as CalculatorId;
@@ -37,7 +37,7 @@ export const AppContent: React.FC = () => {
     } catch {
       // ignore
     }
-    return 'loan';
+    return null;
   });
 
   // Sidebar state
@@ -69,12 +69,14 @@ export const AppContent: React.FC = () => {
     setCurrentPage(page);
     if (calcId) {
       setSelectedCalcId(calcId);
+    } else if (page === 'calculators') {
+      setSelectedCalcId(null);
     }
     try {
       const url = new URL(window.location.href);
       if (calcId) {
         url.searchParams.set('calc', calcId);
-      } else if (page !== 'calculators') {
+      } else {
         url.searchParams.delete('calc');
       }
       url.searchParams.set('page', page);
@@ -92,7 +94,7 @@ export const AppContent: React.FC = () => {
       case 'calculators':
         return (
           <CalculatorsPage
-            key={selectedCalcId}
+            key={selectedCalcId || 'none'}
             initialCalculatorId={selectedCalcId}
             onSelectCalculator={(id) => {
               setSelectedCalcId(id);
