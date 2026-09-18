@@ -136,10 +136,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <ShieldCheck className="w-5 h-5" />
           </div>
           <h3 className="font-bold text-slate-900 dark:text-white text-base">
-            Protected Member Suite
+            Open Access, Saved Portfolios
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Registered member access with zero tracking, custom model preservation, and bank-grade client security.
+            Free interactive calculator access for all visitors. Register to save custom models and track scenarios across devices.
           </p>
         </div>
       </section>

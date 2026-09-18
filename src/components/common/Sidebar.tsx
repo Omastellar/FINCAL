@@ -204,11 +204,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               {!isCollapsed && (
                 <div className="flex items-center gap-1.5">
-                  {!isAuthenticated && (
-                    <span title="Members Only">
-                      <Lock className="w-3 h-3 text-amber-500" />
-                    </span>
-                  )}
                   <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
                     7
                   </span>
@@ -234,7 +229,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Collapsed Tooltip */}
             {isCollapsed && (
               <div className="hidden md:block absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                Calculators (7) {!isAuthenticated ? '🔒' : ''}
+                Calculators (7)
               </div>
             )}
           </div>

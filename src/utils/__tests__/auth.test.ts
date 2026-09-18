@@ -54,14 +54,14 @@ describe('Module 12: Authentication & Role Management Engine', () => {
   it('[TC-AUTH-005] checks platform settings defaults and constraints', () => {
     const defaultSettings: PlatformSettings = {
       defaultCurrency: 'NGN',
-      allowGuestCalculations: false,
+      allowGuestCalculations: true,
       maintenanceMode: false,
       maxSavedCalculationsPerUser: 50,
       benchmarkInterestRate: 14.5,
       defaultInflationRate: 18.0,
     };
 
-    expect(defaultSettings.allowGuestCalculations).toBe(false);
+    expect(defaultSettings.allowGuestCalculations).toBe(true);
     expect(defaultSettings.benchmarkInterestRate).toBeGreaterThan(0);
     expect(defaultSettings.defaultInflationRate).toBeGreaterThan(0);
     expect(defaultSettings.defaultCurrency).toBe('NGN');
@@ -250,21 +250,21 @@ describe('Module 12: Authentication & Role Management Engine', () => {
     expect(sampleMember.status).toBe('Verified');
   });
 
-  it('[TC-AUTH-010] enforces registered members-only access to calculators', () => {
-    // 1. Gating verification helper simulating calculator access control
-    const canAccessCalculator = (user: User | null, allowGuest: boolean = false) => {
+  it('[TC-AUTH-010] grants non-registered users access to calculators but restricts data saving until registration', () => {
+    // 1. Gating verification helper: calculators are accessible to guests and registered users
+    const canAccessCalculator = (user: User | null, allowGuest: boolean = true) => {
       if (allowGuest) return true;
       return Boolean(user && user.id);
     };
 
-    // Unregistered guest is denied access
-    expect(canAccessCalculator(null, false)).toBe(false);
+    // Unregistered guest is granted access to interactive calculators
+    expect(canAccessCalculator(null, true)).toBe(true);
 
     // Registered user is granted access
-    expect(canAccessCalculator(DEMO_USER, false)).toBe(true);
+    expect(canAccessCalculator(DEMO_USER, true)).toBe(true);
 
     // Administrator is granted access
-    expect(canAccessCalculator(DEMO_ADMIN, false)).toBe(true);
+    expect(canAccessCalculator(DEMO_ADMIN, true)).toBe(true);
 
     // Dynamic registered account is granted access
     const dynamicUser: User = {
@@ -274,7 +274,20 @@ describe('Module 12: Authentication & Role Management Engine', () => {
       role: 'user',
       createdAt: new Date().toISOString(),
     };
-    expect(canAccessCalculator(dynamicUser, false)).toBe(true);
+    expect(canAccessCalculator(dynamicUser, true)).toBe(true);
+
+    // 2. Data persistence verification helper: data won't be saved until registered
+    const canSaveCalculationData = (user: User | null): boolean => {
+      return Boolean(user && user.id && user.role);
+    };
+
+    // Non-registered users' data cannot be saved
+    expect(canSaveCalculationData(null)).toBe(false);
+
+    // Registered members' data can be saved
+    expect(canSaveCalculationData(DEMO_USER)).toBe(true);
+    expect(canSaveCalculationData(DEMO_ADMIN)).toBe(true);
+    expect(canSaveCalculationData(dynamicUser)).toBe(true);
   });
 
   it('[TC-AUTH-011] validates non-collapsible interface and demo element removal for login pages', () => {

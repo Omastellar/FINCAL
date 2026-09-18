@@ -20,7 +20,7 @@ interface AuthContextType {
   logout: () => void;
   quickLogin: (role: UserRole) => void;
   savedCalculations: SavedCalculation[];
-  saveCalculation: (calc: Omit<SavedCalculation, 'id' | 'userId' | 'timestamp'>) => void;
+  saveCalculation: (calc: Omit<SavedCalculation, 'id' | 'userId' | 'timestamp'>) => boolean;
   deleteCalculation: (id: string) => void;
   clearSavedCalculations: () => void;
   auditLogs: SystemAuditLog[];
@@ -59,7 +59,7 @@ export const DEMO_USER: User = {
 
 const DEFAULT_SETTINGS: PlatformSettings = {
   defaultCurrency: 'NGN',
-  allowGuestCalculations: false,
+  allowGuestCalculations: true,
   maintenanceMode: false,
   maxSavedCalculationsPerUser: 50,
   benchmarkInterestRate: 14.5,
@@ -382,21 +382,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const saveCalculation = (calc: Omit<SavedCalculation, 'id' | 'userId' | 'timestamp'>) => {
+  const saveCalculation = (calc: Omit<SavedCalculation, 'id' | 'userId' | 'timestamp'>): boolean => {
+    // Non-registered users can calculate freely, but data won't be saved until they register
+    if (!user) {
+      return false;
+    }
+
     const newCalculation: SavedCalculation = {
       ...calc,
       id: `calc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      userId: user?.id || 'guest_user',
+      userId: user.id,
       timestamp: new Date().toISOString(),
     };
     setSavedCalculations((prev) => [newCalculation, ...prev]);
     addAuditLog(
       'Calculation Saved',
-      user?.name || 'Guest',
-      user?.role || 'user',
+      user.name,
+      user.role,
       `Saved ${calc.title} result: ${calc.summaryResult}`,
       'info'
     );
+    return true;
   };
 
   const deleteCalculation = (id: string) => {

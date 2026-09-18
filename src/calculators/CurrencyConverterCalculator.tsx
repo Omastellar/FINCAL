@@ -13,6 +13,7 @@ import {
   Sliders,
   DollarSign,
   AlertCircle,
+  Lock,
 } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
 import { useAuth } from '../context/AuthContext';
@@ -66,6 +67,7 @@ export const CurrencyConverterCalculator: React.FC = () => {
   });
 
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [guestSavePrompt, setGuestSavePrompt] = useState(false);
 
   // Sync with URL params
   useEffect(() => {
@@ -100,28 +102,37 @@ export const CurrencyConverterCalculator: React.FC = () => {
     }
   };
 
-  // Reset defaults
   const handleReset = () => {
-    setAmount(1000);
-    setFromCurrency('USD');
-    setToCurrency('NGN');
-    setTransferFeePct(0);
+    setAmount(100_000);
+    setFromCurrency('NGN');
+    setToCurrency('USD');
+    setTransferFeePct(1.5);
     setUseCustomRate(false);
     setCustomRate(0);
+    setGuestSavePrompt(false);
   };
 
-  // Save calculation
+  // Save calculation (requires registered user session)
   const handleSave = () => {
+    if (!isAuthenticated || !user) {
+      setGuestSavePrompt(true);
+      setTimeout(() => setGuestSavePrompt(false), 5000);
+      return;
+    }
+
     const summary = `${formatCurrency(amount, fromCurrency)} = ${formatCurrency(results.netConvertedAmount, toCurrency)}`;
-    saveCalculation({
+    const saved = saveCalculation({
       calculatorId: 'currency-converter',
       title: `${fromCurrency} to ${toCurrency} Exchange`,
       inputs: { amount, fromCurrency, toCurrency, transferFeePct, customRate },
       summaryResult: summary,
       currency: toCurrency,
     });
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 2500);
+
+    if (saved) {
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 2500);
+    }
   };
 
   // Preset quick buttons
@@ -177,6 +188,24 @@ export const CurrencyConverterCalculator: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Guest Save Alert Notice */}
+      {guestSavePrompt && (
+        <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span>
+              <strong>Registration Required:</strong> Calculation data cannot be saved for guest users. Create a free account or sign in to store and manage calculations in your portfolio.
+            </span>
+          </div>
+          <a
+            href="?page=login"
+            className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shrink-0 transition-colors cursor-pointer"
+          >
+            Sign In / Register
+          </a>
+        </div>
+      )}
 
       {/* Main Grid: Inputs + Output */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
