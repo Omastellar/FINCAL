@@ -49,7 +49,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     quickLogin,
   } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'joined' | 'users' | 'overview' | 'benchmarks' | 'logs'>('joined');
+  const [activeTab, setActiveTab] = useState<'users' | 'joined' | 'overview' | 'benchmarks' | 'logs'>('users');
   const [benchmarkRate, setBenchmarkRate] = useState<number>(platformSettings.benchmarkInterestRate);
   const [inflationRate, setInflationRate] = useState<number>(platformSettings.defaultInflationRate);
   const [saveSuccessNotice, setSaveSuccessNotice] = useState(false);
@@ -397,6 +397,20 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
       {/* Admin Tab Navigation */}
       <div className="flex border-b border-slate-200 dark:border-slate-800 gap-2 sm:gap-6 overflow-x-auto">
         <button
+          onClick={() => setActiveTab('users')}
+          className={`py-3 px-1 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${
+            activeTab === 'users'
+              ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+              : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Numbers of Users</span>
+          <span className="px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 text-[10px] font-bold">
+            {telemetry.totalVisitors} Users
+          </span>
+        </button>
+        <button
           onClick={() => setActiveTab('joined')}
           className={`py-3 px-1 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${
             activeTab === 'joined'
@@ -406,22 +420,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         >
           <UserPlus className="w-4 h-4" />
           <span>Members Joined</span>
-          <span className="px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 text-[10px] font-bold">
-            {joinedSummary.totalJoined}
-          </span>
-        </button>
-        <button
-          onClick={() => setActiveTab('users')}
-          className={`py-3 px-1 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${
-            activeTab === 'users'
-              ? 'border-purple-600 text-purple-600 dark:text-purple-400'
-              : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          <span>Audience & Users (Registered vs. Unregulated)</span>
           <span className="px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold">
-            {telemetry.totalVisitors} Users
+            {joinedSummary.totalJoined}
           </span>
         </button>
         <button
@@ -948,19 +948,19 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* Tab 1: Audience & User Intelligence */}
+      {/* Tab 1: Numbers of Users & Audience Intelligence */}
       {activeTab === 'users' && (
         <div className="space-y-6">
-          {/* Top Visualizer Card: Audience Ratio & Comparison */}
+          {/* Top Visualizer Card: Numbers of Users Summary & Comparison */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <BarChart2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  Audience Intelligence: Registered vs. Unregulated Users
+                  Numbers of Users & Audience Intelligence
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Real-time monitoring showing how many people are using FINCAL, categorized by authenticated registered users and unregulated guest users.
+                  Complete real-time monitoring showing how many people are using FINCAL, categorized by authenticated registered users and unregulated guest users.
                 </p>
               </div>
               <button
@@ -972,6 +972,33 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
                 <span>Refresh Live Telemetry</span>
               </button>
+            </div>
+
+            {/* Quick Metrics Strip for Numbers of Users */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Users on App</div>
+                <div className="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">{telemetry.totalVisitors} Users</div>
+                <div className="text-[10px] text-slate-400 mt-0.5">All tracked sessions</div>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/60 dark:border-purple-800/40">
+                <div className="text-[11px] font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider">Registered Users</div>
+                <div className="text-2xl font-extrabold text-purple-700 dark:text-purple-300 mt-1">{telemetry.registeredCount} Users</div>
+                <div className="text-[10px] text-purple-600/80 dark:text-purple-400/80 mt-0.5">Authenticated members</div>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/40">
+                <div className="text-[11px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">Unregulated Users</div>
+                <div className="text-2xl font-extrabold text-amber-700 dark:text-amber-300 mt-1">{telemetry.unregisteredCount} Users</div>
+                <div className="text-[10px] text-amber-600/80 dark:text-amber-400/80 mt-0.5">Anonymous public guests</div>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40">
+                <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Active Right Now</div>
+                <div className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-300 mt-1 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  {telemetry.activeNowCount} Online
+                </div>
+                <div className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">Active in last 20 mins</div>
+              </div>
             </div>
 
             {/* Proportional Ratio Bar */}

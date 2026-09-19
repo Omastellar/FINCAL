@@ -103,6 +103,15 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 </button>
               </li>
               <li>
+                <button
+                  onClick={() => onNavigate('admin')}
+                  className="hover:text-purple-500 transition-colors flex items-center gap-1.5"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-purple-500" />
+                  <span>Admin Console</span>
+                </button>
+              </li>
+              <li>
                 <span className="text-slate-400 dark:text-slate-500 cursor-not-allowed">
                   API & Integrations (Coming soon)
                 </span>

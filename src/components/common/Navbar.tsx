@@ -14,6 +14,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LayoutDashboard,
+  Users,
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -22,6 +23,7 @@ import { CURRENCIES, CurrencyCode } from '../../types/currency';
 import { PageView } from '../../types/navigation';
 import { CalculatorId } from '../../types/calculators';
 import { CALCULATORS_LIST } from '../../data/calculatorMetadata';
+import { getTelemetrySummary } from '../../utils/telemetry';
 
 interface NavbarProps {
   currentPage: PageView;
@@ -43,6 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { currency, setCurrency } = useCurrency();
   const { theme, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
+  const telemetry = getTelemetrySummary();
 
   const isAuthPage = currentPage === 'login' || currentPage === 'admin-login';
 
@@ -210,6 +213,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
+            {/* Live Numbers of Users Badge for Admin */}
+            {isAuthenticated && user?.role === 'admin' && (
+              <button
+                type="button"
+                onClick={() => onNavigate('admin')}
+                className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-700 dark:text-purple-300 text-xs font-semibold transition-colors cursor-pointer"
+                title="View Numbers of Users in Admin Portal"
+              >
+                <Users className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                <span>{telemetry.totalVisitors} Users</span>
+                <span className="text-[10px] text-purple-600/80 dark:text-purple-400/80 font-normal">
+                  ({telemetry.registeredCount} Reg • {telemetry.unregisteredCount} Guest)
+                </span>
+              </button>
+            )}
+
             {/* User Profile Dropdown or Sign In */}
             {isAuthenticated && user ? (
               <div className="relative">
@@ -248,7 +267,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       className="fixed inset-0 z-30"
                       onClick={() => setUserDropdownOpen(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl py-2 z-40">
+                    <div className="absolute right-0 mt-2 w-60 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl py-2 z-40">
                       <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
                         <div className="font-bold text-slate-900 dark:text-white text-xs truncate">
                           {user.name}
@@ -258,15 +277,29 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                       <div className="py-1">
                         {user.role === 'admin' ? (
-                          <button
-                            onClick={() => {
-                              onNavigate('admin');
-                              setUserDropdownOpen(false);
-                            }}
-                            className="w-full text-left px-4 py-2 text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 flex items-center gap-2 font-medium"
-                          >
-                            <ShieldCheck className="w-4 h-4" /> Admin Console
-                          </button>
+                          <>
+                            <button
+                              onClick={() => {
+                                onNavigate('admin');
+                                setUserDropdownOpen(false);
+                              }}
+                              className="w-full text-left px-4 py-2 text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 flex items-center justify-between font-medium"
+                            >
+                              <div className="flex items-center gap-2">
+                                <ShieldCheck className="w-4 h-4" />
+                                <span>Admin Console</span>
+                              </div>
+                              <span className="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-[10px] font-bold rounded">
+                                {telemetry.totalVisitors} Users
+                              </span>
+                            </button>
+                            <div className="px-4 py-1.5 text-[10px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 mx-2 my-1 rounded-lg flex items-center justify-between">
+                              <span>Users:</span>
+                              <span className="font-semibold text-purple-600 dark:text-purple-400">
+                                {telemetry.registeredCount} Reg • {telemetry.unregisteredCount} Guest
+                              </span>
+                            </div>
+                          </>
                         ) : (
                           <button
                             onClick={() => {

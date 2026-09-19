@@ -36,6 +36,7 @@ import { PageView } from '../types/navigation';
 import { CalculatorId } from '../types/calculators';
 import { CURRENCIES, CurrencyConfig } from '../types/currency';
 import { CALCULATORS_LIST } from '../data/calculatorMetadata';
+import { getTelemetrySummary } from '../utils/telemetry';
 
 interface UserPageProps {
   onNavigate: (page: PageView, calcId?: CalculatorId) => void;
@@ -220,9 +221,39 @@ export const UserPage: React.FC<UserPageProps> = ({ onNavigate }) => {
 
   // User's saved calculations
   const userSavedCalculations = savedCalculations.filter((c) => c.userId === user.id || !c.userId);
+  const telemetry = getTelemetrySummary();
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 py-2 sm:py-6">
+      {/* Admin Executive Mode Banner */}
+      {user.role === 'admin' && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 border border-purple-800/40 text-white shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold shrink-0">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-sm font-bold flex items-center gap-2">
+                <span>Administrator Session Active</span>
+                <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded bg-purple-500/30 text-purple-300 border border-purple-500/40">
+                  {telemetry.totalVisitors} Users Tracked
+                </span>
+              </div>
+              <div className="text-xs text-slate-300 mt-0.5">
+                Current platform headcount: <strong>{telemetry.registeredCount}</strong> registered users & <strong>{telemetry.unregisteredCount}</strong> unregulated guest visitors.
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigate('admin')}
+            className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-md transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <span>Open Admin Console & Numbers of Users</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* 1. Header & User Identity Card */}
       <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 text-white shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />

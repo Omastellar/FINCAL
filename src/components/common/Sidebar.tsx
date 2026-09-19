@@ -21,10 +21,12 @@ import {
   LayoutDashboard,
   X,
   Lock,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { PageView } from '../../types/navigation';
 import { CalculatorId } from '../../types/calculators';
+import { getTelemetrySummary } from '../../utils/telemetry';
 
 interface SidebarProps {
   currentPage: PageView;
@@ -57,6 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { user, isAuthenticated, isAdmin, logout, savedCalculations } = useAuth();
   const [calculatorsSubmenuOpen, setCalculatorsSubmenuOpen] = useState(true);
+  const telemetry = getTelemetrySummary();
 
   const handleNavClick = (page: PageView, calcId?: CalculatorId) => {
     onNavigate(page, calcId);
@@ -173,11 +176,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }`}
           >
             <span>Calculators</span>
-            {!isAuthenticated && (
-              <span className="flex items-center gap-1 text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 px-1.5 py-0.5 rounded-md">
-                <Lock className="w-2.5 h-2.5" /> Members Only
-              </span>
-            )}
           </div>
 
           {/* Calculators Hub */}
@@ -349,16 +347,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </span>
                 </div>
                 {!isCollapsed && (
-                  <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-purple-200 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
-                    Admin
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
+                      {telemetry.totalVisitors} Users
+                    </span>
+                    <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-purple-200 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                      Admin
+                    </span>
+                  </div>
                 )}
               </button>
 
               {/* Collapsed Tooltip */}
               {isCollapsed && (
                 <div className="hidden md:block absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                  Admin Portal
+                  Admin Portal ({telemetry.totalVisitors} Users)
                 </div>
               )}
             </div>

@@ -92,6 +92,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialRole = 
     setIsLoading(true);
 
     try {
+      let destinationRole: UserRole = activeRoleTab;
       if (isRegisterMode) {
         const res = await register({
           name,
@@ -104,6 +105,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialRole = 
           setIsLoading(false);
           return;
         }
+        if (res.user?.role) destinationRole = res.user.role;
       } else {
         const res = await login({
           email,
@@ -115,10 +117,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialRole = 
           setIsLoading(false);
           return;
         }
+        if (res.user?.role) destinationRole = res.user.role;
       }
 
       // Navigate to destination: Admins -> Admin Portal, Users -> Users Interface
-      if (activeRoleTab === 'admin') {
+      if (destinationRole === 'admin') {
         onNavigate('admin');
       } else {
         onNavigate('user');

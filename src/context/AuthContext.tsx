@@ -14,8 +14,8 @@ interface AuthContextType {
   role: UserRole | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  login: (credentials: AuthCredentials) => Promise<{ success: boolean; error?: string }>;
-  register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
+  login: (credentials: AuthCredentials) => Promise<{ success: boolean; user?: User; error?: string }>;
+  register: (data: RegisterData) => Promise<{ success: boolean; user?: User; error?: string }>;
   resetPassword: (email: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   quickLogin: (role: UserRole) => void;
@@ -182,7 +182,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAuditLogs((prev) => [newLog, ...prev.slice(0, 99)]);
   };
 
-  const login = async (credentials: AuthCredentials): Promise<{ success: boolean; error?: string }> => {
+  const login = async (credentials: AuthCredentials): Promise<{ success: boolean; user?: User; error?: string }> => {
     const { email, password, role } = credentials;
     const cleanEmail = email.trim().toLowerCase();
 
@@ -198,7 +198,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const adminUser: User = { ...DEMO_ADMIN, lastLogin: new Date().toISOString() };
       setUser(adminUser);
       addAuditLog('Admin Authentication', adminUser.name, 'admin', 'Administrator signed into session.', 'success');
-      return { success: true };
+      return { success: true, user: adminUser };
     }
 
     // Check Demo User
@@ -209,7 +209,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const regularUser: User = { ...DEMO_USER, lastLogin: new Date().toISOString() };
       setUser(regularUser);
       addAuditLog('User Authentication', regularUser.name, 'user', 'Standard user signed into session.', 'success');
-      return { success: true };
+      return { success: true, user: regularUser };
     }
 
     // Check custom registered users
@@ -233,7 +233,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           };
           setUser(loggedInUser);
           addAuditLog('User Authentication', loggedInUser.name, loggedInUser.role, `${loggedInUser.role} logged in successfully.`, 'success');
-          return { success: true };
+          return { success: true, user: loggedInUser };
         }
       }
     } catch {
@@ -254,13 +254,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
       setUser(newUser);
       addAuditLog('New Session Created', newUser.name, newUser.role, `Authenticated as ${newUser.role}.`, 'info');
-      return { success: true };
+      return { success: true, user: newUser };
     }
 
     return { success: false, error: 'Invalid credentials. Password must be at least 6 characters.' };
   };
 
-  const register = async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
+  const register = async (data: RegisterData): Promise<{ success: boolean; user?: User; error?: string }> => {
     const { name, email, password, role = 'user' } = data;
     const cleanEmail = email.trim().toLowerCase();
 
@@ -289,7 +289,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     setUser(newUser);
     addAuditLog('User Registered', newUser.name, newUser.role, `New ${newUser.role} account created successfully.`, 'success');
-    return { success: true };
+    return { success: true, user: newUser };
   };
 
   const resetPassword = async (

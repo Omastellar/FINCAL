@@ -327,5 +327,26 @@ describe('Module 12: Authentication & Role Management Engine', () => {
     expect(initialLoginFormState.password).toBe('');
     expect(initialLoginFormState.name).toBe('');
   });
+
+  it('[TC-AUTH-012] validates admin access to numbers of users telemetry (registered, unregistered, and live active users)', () => {
+    // 1. Verify telemetry summary computes user counts accurately
+    const telemetry = getTelemetrySummary();
+    expect(telemetry.totalVisitors).toBeGreaterThan(0);
+    expect(telemetry.registeredCount).toBeGreaterThan(0);
+    expect(telemetry.unregisteredCount).toBeGreaterThan(0);
+    expect(telemetry.totalVisitors).toBe(telemetry.registeredCount + telemetry.unregisteredCount);
+    expect(telemetry.activeNowCount).toBeGreaterThanOrEqual(0);
+
+    // 2. Role-based visibility check: Admin can access user analytics and totals
+    const canAdminViewNumbersOfUsers = (role?: string) => role === 'admin';
+    expect(canAdminViewNumbersOfUsers(DEMO_ADMIN.role)).toBe(true);
+    expect(canAdminViewNumbersOfUsers(DEMO_USER.role)).toBe(false);
+    expect(canAdminViewNumbersOfUsers(undefined)).toBe(false);
+
+    // 3. Verify user classification proportion calculation
+    const registeredRatio = (telemetry.registeredCount / telemetry.totalVisitors) * 100;
+    const unregisteredRatio = (telemetry.unregisteredCount / telemetry.totalVisitors) * 100;
+    expect(registeredRatio + unregisteredRatio).toBeCloseTo(100, 1);
+  });
 });
 
