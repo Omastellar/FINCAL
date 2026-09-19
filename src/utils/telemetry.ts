@@ -322,10 +322,10 @@ export function getTelemetrySummary(): AppTelemetrySummary {
 export const BASELINE_JOINED_MEMBERS: JoinedMemberRecord[] = [
   {
     id: 'usr_admin_001',
-    name: 'Chief Administrator',
+    name: 'Chief Super Administrator',
     email: 'admin@fincal.app',
-    role: 'admin',
-    title: 'Lead Fintech Architect',
+    role: 'superadmin',
+    title: 'Lead Fintech Architect & Super Admin',
     joinedAt: '2026-01-01T08:00:00.000Z',
     lastActive: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
     status: 'Verified',
@@ -470,6 +470,7 @@ export function getJoinedMembersSummary(): MemberGrowthSummary {
   let joinedThisMonth = 0;
   let standardMembersCount = 0;
   let adminMembersCount = 0;
+  let superAdminMembersCount = 0;
   const monthlyBreakdown: Record<string, number> = {};
 
   for (const m of allMembers) {
@@ -480,7 +481,8 @@ export function getJoinedMembersSummary(): MemberGrowthSummary {
     if (diff <= sevenDaysMs) joinedThisWeek += 1;
     if (diff <= thirtyDaysMs) joinedThisMonth += 1;
 
-    if (m.role === 'admin') adminMembersCount += 1;
+    if (m.role === 'superadmin') superAdminMembersCount += 1;
+    else if (m.role === 'admin') adminMembersCount += 1;
     else standardMembersCount += 1;
 
     const monthKey = new Date(m.joinedAt).toLocaleString('en-US', { month: 'short', year: 'numeric' });
@@ -494,6 +496,7 @@ export function getJoinedMembersSummary(): MemberGrowthSummary {
     joinedThisMonth,
     standardMembersCount,
     adminMembersCount,
+    superAdminMembersCount,
     monthlyBreakdown,
     members: allMembers,
   };

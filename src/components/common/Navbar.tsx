@@ -15,6 +15,7 @@ import {
   PanelLeftOpen,
   LayoutDashboard,
   Users,
+  Crown,
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -213,17 +214,25 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
-            {/* Live Numbers of Users Badge for Admin */}
-            {isAuthenticated && user?.role === 'admin' && (
+            {/* Live Numbers of Users Badge for Admin / Super Admin */}
+            {isAuthenticated && (user?.role === 'admin' || user?.role === 'superadmin') && (
               <button
                 type="button"
                 onClick={() => onNavigate('admin')}
-                className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-700 dark:text-purple-300 text-xs font-semibold transition-colors cursor-pointer"
+                className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl ${
+                  user?.role === 'superadmin'
+                    ? 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/30 text-amber-700 dark:text-amber-300'
+                    : 'bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/20 text-purple-700 dark:text-purple-300'
+                } border text-xs font-semibold transition-colors cursor-pointer`}
                 title="View Numbers of Users in Admin Portal"
               >
-                <Users className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                {user?.role === 'superadmin' ? (
+                  <Crown className="w-3.5 h-3.5 text-amber-500" />
+                ) : (
+                  <Users className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                )}
                 <span>{telemetry.totalVisitors} Users</span>
-                <span className="text-[10px] text-purple-600/80 dark:text-purple-400/80 font-normal">
+                <span className={`text-[10px] ${user?.role === 'superadmin' ? 'text-amber-600/80 dark:text-amber-400/80' : 'text-purple-600/80 dark:text-purple-400/80'} font-normal`}>
                   ({telemetry.registeredCount} Reg • {telemetry.unregisteredCount} Guest)
                 </span>
               </button>
@@ -236,27 +245,37 @@ export const Navbar: React.FC<NavbarProps> = ({
                   type="button"
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                   className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border text-xs sm:text-sm font-semibold transition-all ${
-                    user.role === 'admin'
+                    user.role === 'superadmin'
+                      ? 'border-amber-300 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:border-amber-500'
+                      : user.role === 'admin'
                       ? 'border-purple-300 dark:border-purple-800 bg-purple-50/80 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:border-purple-500'
                       : 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:border-emerald-500'
                   }`}
                 >
                   <div
                     className={`w-6 h-6 rounded-lg flex items-center justify-center text-white font-bold text-xs ${
-                      user.role === 'admin' ? 'bg-purple-600' : 'bg-emerald-600'
+                      user.role === 'superadmin' ? 'bg-amber-500' : user.role === 'admin' ? 'bg-purple-600' : 'bg-emerald-600'
                     }`}
                   >
-                    {user.role === 'admin' ? <ShieldCheck className="w-3.5 h-3.5" /> : <UserIcon className="w-3.5 h-3.5" />}
+                    {user.role === 'superadmin' ? (
+                      <Crown className="w-3.5 h-3.5" />
+                    ) : user.role === 'admin' ? (
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                    ) : (
+                      <UserIcon className="w-3.5 h-3.5" />
+                    )}
                   </div>
                   <span className="hidden sm:inline font-bold max-w-[90px] truncate">{user.name}</span>
                   <span
                     className={`text-[9px] uppercase font-extrabold px-1.5 py-0.2 rounded ${
-                      user.role === 'admin'
+                      user.role === 'superadmin'
+                        ? 'bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-200'
+                        : user.role === 'admin'
                         ? 'bg-purple-200 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
                         : 'bg-emerald-200 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200'
                     }`}
                   >
-                    {user.role}
+                    {user.role === 'superadmin' ? 'Super Admin' : user.role}
                   </span>
                   <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                 </button>
@@ -276,26 +295,42 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
 
                       <div className="py-1">
-                        {user.role === 'admin' ? (
+                        {user.role === 'superadmin' || user.role === 'admin' ? (
                           <>
                             <button
                               onClick={() => {
                                 onNavigate('admin');
                                 setUserDropdownOpen(false);
                               }}
-                              className="w-full text-left px-4 py-2 text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 flex items-center justify-between font-medium"
+                              className={`w-full text-left px-4 py-2 text-xs ${
+                                user.role === 'superadmin'
+                                  ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40'
+                                  : 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40'
+                              } flex items-center justify-between font-medium`}
                             >
                               <div className="flex items-center gap-2">
-                                <ShieldCheck className="w-4 h-4" />
-                                <span>Admin Console</span>
+                                {user.role === 'superadmin' ? (
+                                  <Crown className="w-4 h-4 text-amber-500" />
+                                ) : (
+                                  <ShieldCheck className="w-4 h-4" />
+                                )}
+                                <span>{user.role === 'superadmin' ? 'Super Admin Console' : 'Admin Console'}</span>
                               </div>
-                              <span className="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-[10px] font-bold rounded">
+                              <span className={`px-1.5 py-0.5 ${
+                                user.role === 'superadmin'
+                                  ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300'
+                                  : 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
+                              } text-[10px] font-bold rounded`}>
                                 {telemetry.totalVisitors} Users
                               </span>
                             </button>
                             <div className="px-4 py-1.5 text-[10px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 mx-2 my-1 rounded-lg flex items-center justify-between">
                               <span>Users:</span>
-                              <span className="font-semibold text-purple-600 dark:text-purple-400">
+                              <span className={`font-semibold ${
+                                user.role === 'superadmin'
+                                  ? 'text-amber-600 dark:text-amber-400'
+                                  : 'text-purple-600 dark:text-purple-400'
+                              }`}>
                                 {telemetry.registeredCount} Reg • {telemetry.unregisteredCount} Guest
                               </span>
                             </div>

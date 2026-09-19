@@ -22,6 +22,7 @@ import {
   X,
   Lock,
   Users,
+  Crown,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { PageView } from '../../types/navigation';
@@ -57,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   mobileOpen,
   onCloseMobile,
 }) => {
-  const { user, isAuthenticated, isAdmin, logout, savedCalculations } = useAuth();
+  const { user, isAuthenticated, isAdmin, isSuperAdmin, logout, savedCalculations } = useAuth();
   const [calculatorsSubmenuOpen, setCalculatorsSubmenuOpen] = useState(true);
   const telemetry = getTelemetrySummary();
 
@@ -329,21 +330,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
-          {/* Administrator Portal */}
+          {/* Administrator / Super Administrator Portal */}
           {isAdmin && (
             <div className="relative group">
               <button
                 onClick={() => handleNavClick('admin')}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                   currentPage === 'admin'
-                    ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400'
+                    ? isSuperAdmin
+                      ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                      : 'bg-purple-500/15 text-purple-600 dark:text-purple-400'
+                    : isSuperAdmin
+                    ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30'
                     : 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/30'
                 } ${isCollapsed ? 'md:justify-center' : ''}`}
               >
                 <div className="flex items-center gap-3">
-                  <ShieldCheck className="w-5 h-5 shrink-0" />
+                  {isSuperAdmin ? (
+                    <Crown className="w-5 h-5 shrink-0 text-amber-500" />
+                  ) : (
+                    <ShieldCheck className="w-5 h-5 shrink-0" />
+                  )}
                   <span className={`truncate ${isCollapsed ? 'md:hidden' : ''}`}>
-                    Admin Portal
+                    {isSuperAdmin ? 'Super Admin Portal' : 'Admin Portal'}
                   </span>
                 </div>
                 {!isCollapsed && (
@@ -351,9 +360,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
                       {telemetry.totalVisitors} Users
                     </span>
-                    <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-purple-200 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
-                      Admin
-                    </span>
+                    {isSuperAdmin ? (
+                      <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-200">
+                        Super
+                      </span>
+                    ) : (
+                      <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-purple-200 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                        Admin
+                      </span>
+                    )}
                   </div>
                 )}
               </button>
@@ -361,7 +376,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Collapsed Tooltip */}
               {isCollapsed && (
                 <div className="hidden md:block absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                  Admin Portal ({telemetry.totalVisitors} Users)
+                  {isSuperAdmin ? 'Super Admin Portal' : 'Admin Portal'} ({telemetry.totalVisitors} Users)
                 </div>
               )}
             </div>
@@ -402,10 +417,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {/* User Avatar */}
                 <div
                   className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-white font-bold text-xs ${
-                    user.role === 'admin' ? 'bg-purple-600' : 'bg-emerald-600'
+                    user.role === 'superadmin' ? 'bg-amber-500' : user.role === 'admin' ? 'bg-purple-600' : 'bg-emerald-600'
                   }`}
                 >
-                  {user.role === 'admin' ? (
+                  {user.role === 'superadmin' ? (
+                    <Crown className="w-4 h-4 text-white" />
+                  ) : user.role === 'admin' ? (
                     <ShieldCheck className="w-4 h-4" />
                   ) : (
                     <UserIcon className="w-4 h-4" />
@@ -414,14 +431,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 {/* Expanded Details */}
                 <div
-                  onClick={() => handleNavClick(user.role === 'admin' ? 'admin' : 'user')}
+                  onClick={() => handleNavClick((user.role === 'admin' || user.role === 'superadmin') ? 'admin' : 'user')}
                   className={`flex-1 min-w-0 cursor-pointer ${isCollapsed ? 'md:hidden' : ''}`}
                 >
                   <div className="font-bold text-xs text-slate-900 dark:text-white truncate hover:text-emerald-500 transition-colors">
                     {user.name}
                   </div>
                   <div className="text-[10px] text-slate-400 uppercase font-semibold">
-                    {user.role}
+                    {user.role === 'superadmin' ? 'Super Admin' : user.role}
                   </div>
                 </div>
 
@@ -441,7 +458,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Collapsed Tooltip */}
               {isCollapsed && (
                 <div className="hidden md:block absolute left-full ml-3 bottom-2 px-2.5 py-1.5 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                  {user.name} ({user.role})
+                  {user.name} ({user.role === 'superadmin' ? 'Super Admin' : user.role})
                 </div>
               )}
             </div>

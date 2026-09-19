@@ -27,6 +27,7 @@ import {
   UserPlus,
   Calendar,
   Award,
+  Crown,
 } from 'lucide-react';
 import { useAuth, DEMO_ADMIN, DEMO_USER } from '../context/AuthContext';
 import { PageView } from '../types/navigation';
@@ -41,6 +42,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   const {
     user,
     isAdmin,
+    isSuperAdmin,
+    updateUserRole,
     auditLogs,
     platformSettings,
     updatePlatformSettings,
@@ -56,7 +59,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   const [telemetry, setTelemetry] = useState(() => getTelemetrySummary());
   const [joinedSummary, setJoinedSummary] = useState<MemberGrowthSummary>(() => getJoinedMembersSummary());
   const [audienceFilter, setAudienceFilter] = useState<'all' | 'registered' | 'unregistered'>('all');
-  const [memberFilter, setMemberFilter] = useState<'all' | 'user' | 'admin' | 'recent'>('all');
+  const [memberFilter, setMemberFilter] = useState<'all' | 'superadmin' | 'admin' | 'user' | 'recent'>('all');
   const [memberSearch, setMemberSearch] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -145,8 +148,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
         id: DEMO_ADMIN.id,
         name: DEMO_ADMIN.name,
         email: DEMO_ADMIN.email,
-        role: 'admin' as UserRole,
-        title: DEMO_ADMIN.title || 'Lead Fintech Architect',
+        role: (DEMO_ADMIN.role || 'superadmin') as UserRole,
+        title: DEMO_ADMIN.title || 'Lead Fintech Architect & Super Admin',
         status: 'Active',
         lastActive: 'Online',
       },
@@ -171,7 +174,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
             name: u.name,
             email: u.email,
             role: u.role as UserRole,
-            title: u.title || (u.role === 'admin' ? 'Administrator' : 'Standard User'),
+            title: u.title || (u.role === 'superadmin' ? 'Super Administrator' : u.role === 'admin' ? 'Administrator' : 'Standard User'),
             status: 'Active',
             lastActive: new Date(u.lastLogin || u.createdAt || Date.now()).toLocaleDateString(),
           }));
@@ -228,8 +231,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
   const filteredJoinedMembers = useMemo(() => {
     return joinedSummary.members.filter((m) => {
-      if (memberFilter === 'user' && m.role !== 'user') return false;
+      if (memberFilter === 'superadmin' && m.role !== 'superadmin') return false;
       if (memberFilter === 'admin' && m.role !== 'admin') return false;
+      if (memberFilter === 'user' && m.role !== 'user') return false;
       if (memberFilter === 'recent') {
         const diff = Date.now() - new Date(m.joinedAt).getTime();
         if (diff > 30 * 24 * 60 * 60 * 1000) return false;
@@ -249,16 +253,32 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Admin Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 text-white border border-purple-800/40 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className={`p-6 sm:p-8 rounded-3xl ${
+        isSuperAdmin
+          ? 'bg-gradient-to-r from-amber-950 via-slate-900 to-purple-950 border border-amber-500/30'
+          : 'bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 border border-purple-800/40'
+      } text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6`}>
         <div className="space-y-2.5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-semibold">
-            <ShieldCheck className="w-3.5 h-3.5" /> FINCAL Administrative Console
+          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${
+            isSuperAdmin
+              ? 'bg-amber-500/20 border border-amber-500/30 text-amber-300'
+              : 'bg-purple-500/20 border border-purple-500/30 text-purple-300'
+          } text-xs font-semibold`}>
+            {isSuperAdmin ? (
+              <>
+                <Crown className="w-3.5 h-3.5 text-amber-400" /> FINCAL Super Administrative Console (Root Privileges)
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="w-3.5 h-3.5" /> FINCAL Administrative Console
+              </>
+            )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             Platform Operations & Telemetry
           </h1>
           <p className="text-slate-300 text-xs sm:text-sm max-w-2xl">
-            Logged in as <strong className="text-purple-300">{user?.name}</strong> ({user?.email}) • Lead Fintech Architect
+            Logged in as <strong className={isSuperAdmin ? 'text-amber-300' : 'text-purple-300'}>{user?.name}</strong> ({user?.email}) • {user?.title || (isSuperAdmin ? 'Lead Fintech Architect & Super Admin' : 'Lead Fintech Architect')}
           </p>
           {/* Real-Time Audience Usage & Member Growth Badges */}
           <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -498,7 +518,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                   {joinedSummary.totalJoined}
                 </div>
                 <div className="text-xs text-purple-600 dark:text-purple-400 font-medium">
-                  {joinedSummary.standardMembersCount} Standard • {joinedSummary.adminMembersCount} Administrators
+                  {joinedSummary.superAdminMembersCount || 0} Super Admins • {joinedSummary.adminMembersCount} Admins • {joinedSummary.standardMembersCount} Standard
                 </div>
               </div>
 
@@ -594,28 +614,42 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
               {/* Membership Ratio Bar */}
               <div className="space-y-1.5 pt-2">
-                <div className="flex justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
-                  <span className="text-emerald-600 dark:text-emerald-400">
-                    Standard Members: {joinedSummary.standardMembersCount} (
-                    {Math.round((joinedSummary.standardMembersCount / (joinedSummary.totalJoined || 1)) * 100)}%)
+                <div className="flex justify-between text-xs font-semibold text-slate-600 dark:text-slate-400 flex-wrap gap-2">
+                  <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                    <Crown className="w-3 h-3" />
+                    Super Admins: {joinedSummary.superAdminMembersCount || 0} (
+                    {Math.round(((joinedSummary.superAdminMembersCount || 0) / (joinedSummary.totalJoined || 1)) * 100)}%)
                   </span>
                   <span className="text-purple-600 dark:text-purple-400">
                     Administrators: {joinedSummary.adminMembersCount} (
                     {Math.round((joinedSummary.adminMembersCount / (joinedSummary.totalJoined || 1)) * 100)}%)
                   </span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    Standard: {joinedSummary.standardMembersCount} (
+                    {Math.round((joinedSummary.standardMembersCount / (joinedSummary.totalJoined || 1)) * 100)}%)
+                  </span>
                 </div>
                 <div className="w-full h-2.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden flex">
                   <div
                     style={{
-                      width: `${(joinedSummary.standardMembersCount / (joinedSummary.totalJoined || 1)) * 100}%`,
+                      width: `${((joinedSummary.superAdminMembersCount || 0) / (joinedSummary.totalJoined || 1)) * 100}%`,
                     }}
-                    className="bg-emerald-500 h-full"
+                    className="bg-amber-500 h-full"
+                    title={`Super Admins: ${joinedSummary.superAdminMembersCount || 0}`}
                   />
                   <div
                     style={{
                       width: `${(joinedSummary.adminMembersCount / (joinedSummary.totalJoined || 1)) * 100}%`,
                     }}
                     className="bg-purple-600 h-full"
+                    title={`Administrators: ${joinedSummary.adminMembersCount}`}
+                  />
+                  <div
+                    style={{
+                      width: `${(joinedSummary.standardMembersCount / (joinedSummary.totalJoined || 1)) * 100}%`,
+                    }}
+                    className="bg-emerald-500 h-full"
+                    title={`Standard Members: ${joinedSummary.standardMembersCount}`}
                   />
                 </div>
               </div>
@@ -648,14 +682,15 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                   All ({joinedSummary.totalJoined})
                 </button>
                 <button
-                  onClick={() => setMemberFilter('user')}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                    memberFilter === 'user'
-                      ? 'bg-emerald-600 text-white shadow-xs'
+                  onClick={() => setMemberFilter('superadmin')}
+                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1 ${
+                    memberFilter === 'superadmin'
+                      ? 'bg-amber-600 text-white shadow-xs'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  Standard ({joinedSummary.standardMembersCount})
+                  <Crown className="w-3 h-3" />
+                  Super Admins ({joinedSummary.superAdminMembersCount || 0})
                 </button>
                 <button
                   onClick={() => setMemberFilter('admin')}
@@ -666,6 +701,16 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                   }`}
                 >
                   Admins ({joinedSummary.adminMembersCount})
+                </button>
+                <button
+                  onClick={() => setMemberFilter('user')}
+                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+                    memberFilter === 'user'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  Standard ({joinedSummary.standardMembersCount})
                 </button>
                 <button
                   onClick={() => setMemberFilter('recent')}
@@ -703,13 +748,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                     <th className="px-4 py-3">Date Joined</th>
                     <th className="px-4 py-3">Calculations</th>
                     <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3 rounded-r-xl">Device</th>
+                    <th className="px-4 py-3">Device</th>
+                    {isSuperAdmin && <th className="px-4 py-3 rounded-r-xl">Role Authority</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {filteredJoinedMembers.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                      <td colSpan={isSuperAdmin ? 8 : 7} className="px-4 py-8 text-center text-slate-400">
                         No joined members found matching your search or filter.
                       </td>
                     </tr>
@@ -728,7 +774,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                             <div className="flex items-center gap-3">
                               <div
                                 className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white ${
-                                  m.role === 'admin'
+                                  m.role === 'superadmin'
+                                    ? 'bg-amber-500 shadow-sm shadow-amber-500/20'
+                                    : m.role === 'admin'
                                     ? 'bg-purple-600 shadow-sm shadow-purple-500/20'
                                     : 'bg-emerald-600 shadow-sm shadow-emerald-500/20'
                                 }`}
@@ -736,8 +784,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                                 {initials}
                               </div>
                               <div>
-                                <div className="font-bold text-slate-900 dark:text-white">
-                                  {m.name}
+                                <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                  <span>{m.name}</span>
+                                  {m.role === 'superadmin' && (
+                                    <Crown className="w-3.5 h-3.5 text-amber-500 inline-block" />
+                                  )}
                                 </div>
                                 <div className="text-[11px] text-slate-400">
                                   {m.email}
@@ -746,15 +797,19 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                             </div>
                           </td>
                           <td className="px-4 py-3.5">
-                            <span
-                              className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                                m.role === 'admin'
-                                  ? 'bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300'
-                                  : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300'
-                              }`}
-                            >
-                              {m.role === 'admin' ? 'Administrator' : 'Standard Member'}
-                            </span>
+                            {m.role === 'superadmin' ? (
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 inline-flex items-center gap-1">
+                                <Crown className="w-3 h-3 text-amber-500" /> Super Admin
+                              </span>
+                            ) : m.role === 'admin' ? (
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300">
+                                Administrator
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
+                                Standard Member
+                              </span>
+                            )}
                           </td>
                           <td className="px-4 py-3.5 font-medium text-slate-700 dark:text-slate-300">
                             {m.title}
@@ -789,6 +844,24 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                               <span className="text-[11px]">{m.device || 'Desktop'}</span>
                             </div>
                           </td>
+                          {isSuperAdmin && (
+                            <td className="px-4 py-3.5">
+                              <select
+                                value={m.role}
+                                onChange={(e) => {
+                                  const newRole = e.target.value as UserRole;
+                                  updateUserRole(m.id, newRole);
+                                  setJoinedSummary(getJoinedMembersSummary());
+                                }}
+                                className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] font-semibold text-slate-800 dark:text-slate-200 outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer"
+                                title="Reassign user root role"
+                              >
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                                <option value="superadmin">Super Admin</option>
+                              </select>
+                            </td>
+                          )}
                         </tr>
                       );
                     })
@@ -1418,12 +1491,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                       <td className="px-4 py-3.5">
                         <span
                           className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                            u.role === 'admin'
+                            u.role === 'superadmin'
+                              ? 'bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300'
+                              : u.role === 'admin'
                               ? 'bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300'
                               : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300'
                           }`}
                         >
-                          {u.role}
+                          {u.role === 'superadmin' ? 'Super Admin' : u.role}
                         </span>
                       </td>
                       <td className="px-4 py-3.5 font-medium">{u.title}</td>
@@ -1476,7 +1551,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                     <td className="px-4 py-3">
                       <span
                         className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          log.role === 'admin'
+                          log.role === 'superadmin'
+                            ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300'
+                            : log.role === 'admin'
                             ? 'bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300'
                             : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
                         }`}

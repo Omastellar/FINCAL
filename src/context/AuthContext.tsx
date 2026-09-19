@@ -14,6 +14,8 @@ interface AuthContextType {
   role: UserRole | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
+  updateUserRole: (targetUserId: string, newRole: UserRole) => boolean;
   login: (credentials: AuthCredentials) => Promise<{ success: boolean; user?: User; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; user?: User; error?: string }>;
   resetPassword: (email: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -36,13 +38,13 @@ const CALCULATIONS_KEY = 'fincal_saved_calculations';
 const AUDIT_KEY = 'fincal_audit_logs';
 const SETTINGS_KEY = 'fincal_platform_settings';
 
-// Built-in Demo Users
+// Built-in Demo Super Admin & User
 export const DEMO_ADMIN: User = {
   id: 'usr_admin_001',
-  name: 'Chief Administrator',
+  name: 'Chief Super Administrator',
   email: 'admin@fincal.app',
-  role: 'admin',
-  title: 'Lead Fintech Architect',
+  role: 'superadmin',
+  title: 'Lead Fintech Architect & Super Admin',
   createdAt: '2026-01-01T00:00:00.000Z',
   lastLogin: new Date().toISOString(),
 };
@@ -190,14 +192,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { success: false, error: 'Please provide both email address and password.' };
     }
 
-    // Check Demo Admin
-    if (cleanEmail === DEMO_ADMIN.email.toLowerCase() || (cleanEmail === 'admin' && password === 'Admin2026!')) {
+    // Check Demo Super Admin
+    if (
+      cleanEmail === DEMO_ADMIN.email.toLowerCase() ||
+      (cleanEmail === 'admin' && password === 'Admin2026!') ||
+      (cleanEmail === 'superadmin' && password === 'Admin2026!')
+    ) {
       if (password !== 'Admin2026!' && password !== 'admin123' && password !== 'Admin123!') {
-        return { success: false, error: 'Incorrect password for Administrator account.' };
+        return { success: false, error: 'Incorrect password for Super Administrator account.' };
       }
       const adminUser: User = { ...DEMO_ADMIN, lastLogin: new Date().toISOString() };
       setUser(adminUser);
-      addAuditLog('Admin Authentication', adminUser.name, 'admin', 'Administrator signed into session.', 'success');
+      addAuditLog('Super Admin Authentication', adminUser.name, 'superadmin', 'Super Administrator signed into session.', 'success');
       return { success: true, user: adminUser };
     }
 
@@ -371,15 +377,50 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const quickLogin = (roleToLogin: UserRole) => {
-    if (roleToLogin === 'admin') {
+    if (roleToLogin === 'admin' || roleToLogin === 'superadmin') {
       const admin = { ...DEMO_ADMIN, lastLogin: new Date().toISOString() };
       setUser(admin);
-      addAuditLog('Quick Demo Login', admin.name, 'admin', 'Instant Administrator demo session initiated.', 'success');
+      addAuditLog('Quick Demo Login', admin.name, 'superadmin', 'Instant Super Administrator demo session initiated.', 'success');
     } else {
       const demoUsr = { ...DEMO_USER, lastLogin: new Date().toISOString() };
       setUser(demoUsr);
       addAuditLog('Quick Demo Login', demoUsr.name, 'user', 'Instant User demo session initiated.', 'success');
     }
+  };
+
+  const updateUserRole = (targetUserId: string, newRole: UserRole): boolean => {
+    if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
+      return false;
+    }
+    try {
+      const registered = localStorage.getItem(USERS_LIST_KEY);
+      if (registered) {
+        const usersList: Array<User & { passwordHash?: string }> = JSON.parse(registered);
+        const idx = usersList.findIndex((u) => u.id === targetUserId);
+        if (idx !== -1) {
+          const oldRole = usersList[idx].role;
+          usersList[idx].role = newRole;
+          usersList[idx].title =
+            newRole === 'superadmin'
+              ? 'Lead Fintech Architect & Super Admin'
+              : newRole === 'admin'
+              ? 'Platform Administrator'
+              : 'Verified Member';
+          localStorage.setItem(USERS_LIST_KEY, JSON.stringify(usersList));
+          addAuditLog(
+            'User Role Reassigned',
+            user.name,
+            user.role,
+            `Super Admin reassigned ${usersList[idx].name} (${usersList[idx].email}) role from ${oldRole} to ${newRole}.`,
+            'warning'
+          );
+          return true;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return false;
   };
 
   const saveCalculation = (calc: Omit<SavedCalculation, 'id' | 'userId' | 'timestamp'>): boolean => {
@@ -416,7 +457,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const updatePlatformSettings = (newSettings: Partial<PlatformSettings>) => {
     setPlatformSettings((prev) => {
       const updated = { ...prev, ...newSettings };
-      addAuditLog('Settings Updated', user?.name || 'Admin', 'admin', 'Platform parameters reconfigured.', 'warning');
+      addAuditLog('Settings Updated', user?.name || 'Super Admin', user?.role || 'superadmin', 'Platform parameters reconfigured.', 'warning');
       return updated;
     });
   };
@@ -427,7 +468,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user,
         role: user?.role || null,
         isAuthenticated: !!user,
-        isAdmin: user?.role === 'admin',
+        isAdmin: user?.role === 'admin' || user?.role === 'superadmin',
+        isSuperAdmin: user?.role === 'superadmin',
+        updateUserRole,
         login,
         register,
         resetPassword,

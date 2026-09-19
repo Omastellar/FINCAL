@@ -11,8 +11,9 @@ import {
 describe('Module 12: Authentication & Role Management Engine', () => {
   it('[TC-AUTH-001] validates default administrator configuration and roles', () => {
     expect(DEMO_ADMIN.email).toBe('admin@fincal.app');
-    expect(DEMO_ADMIN.role).toBe('admin');
-    expect(DEMO_ADMIN.name).toBe('Chief Administrator');
+    expect(DEMO_ADMIN.role).toBe('superadmin');
+    expect(DEMO_ADMIN.name).toBe('Chief Super Administrator');
+    expect(DEMO_ADMIN.title).toContain('Super Admin');
     expect(DEMO_ADMIN.id).toBeDefined();
   });
 
@@ -23,9 +24,9 @@ describe('Module 12: Authentication & Role Management Engine', () => {
     expect(DEMO_USER.id).toBeDefined();
   });
 
-  it('[TC-AUTH-003] enforces strict role separation between Admin and User', () => {
+  it('[TC-AUTH-003] enforces strict role separation between Super Admin, Admin, and User', () => {
     expect(DEMO_ADMIN.role).not.toBe(DEMO_USER.role);
-    expect(DEMO_ADMIN.role === 'admin').toBe(true);
+    expect(DEMO_ADMIN.role === 'superadmin').toBe(true);
     expect(DEMO_USER.role === 'user').toBe(true);
   });
 
@@ -228,7 +229,10 @@ describe('Module 12: Authentication & Role Management Engine', () => {
     expect(summary.totalJoined).toBeGreaterThanOrEqual(8);
     expect(summary.standardMembersCount).toBeGreaterThanOrEqual(1);
     expect(summary.adminMembersCount).toBeGreaterThanOrEqual(1);
-    expect(summary.totalJoined).toBe(summary.standardMembersCount + summary.adminMembersCount);
+    expect(summary.superAdminMembersCount).toBeGreaterThanOrEqual(1);
+    expect(summary.totalJoined).toBe(
+      summary.standardMembersCount + summary.adminMembersCount + (summary.superAdminMembersCount || 0)
+    );
     expect(summary.joinedThisMonth).toBeGreaterThanOrEqual(1);
     expect(summary.members.length).toBe(summary.totalJoined);
 
@@ -337,8 +341,8 @@ describe('Module 12: Authentication & Role Management Engine', () => {
     expect(telemetry.totalVisitors).toBe(telemetry.registeredCount + telemetry.unregisteredCount);
     expect(telemetry.activeNowCount).toBeGreaterThanOrEqual(0);
 
-    // 2. Role-based visibility check: Admin can access user analytics and totals
-    const canAdminViewNumbersOfUsers = (role?: string) => role === 'admin';
+    // 2. Role-based visibility check: Admin or Super Admin can access user analytics and totals
+    const canAdminViewNumbersOfUsers = (role?: string) => role === 'admin' || role === 'superadmin';
     expect(canAdminViewNumbersOfUsers(DEMO_ADMIN.role)).toBe(true);
     expect(canAdminViewNumbersOfUsers(DEMO_USER.role)).toBe(false);
     expect(canAdminViewNumbersOfUsers(undefined)).toBe(false);
@@ -347,6 +351,34 @@ describe('Module 12: Authentication & Role Management Engine', () => {
     const registeredRatio = (telemetry.registeredCount / telemetry.totalVisitors) * 100;
     const unregisteredRatio = (telemetry.unregisteredCount / telemetry.totalVisitors) * 100;
     expect(registeredRatio + unregisteredRatio).toBeCloseTo(100, 1);
+  });
+
+  it('[TC-AUTH-013] validates Super Admin root authority, role hierarchy, and root role controls', () => {
+    // 1. Super Admin role hierarchy verification
+    const rolePrecedence: Record<string, number> = {
+      superadmin: 3,
+      admin: 2,
+      user: 1,
+    };
+
+    expect(rolePrecedence[DEMO_ADMIN.role]).toBeGreaterThan(rolePrecedence[DEMO_USER.role]);
+    expect(rolePrecedence[DEMO_ADMIN.role]).toBe(3);
+
+    // 2. Super Admin permission checker helper
+    const hasSuperAdminRootAuthority = (role?: string) => role === 'superadmin';
+    const hasAdminAuthority = (role?: string) => role === 'admin' || role === 'superadmin';
+
+    expect(hasSuperAdminRootAuthority(DEMO_ADMIN.role)).toBe(true);
+    expect(hasAdminAuthority(DEMO_ADMIN.role)).toBe(true);
+    expect(hasSuperAdminRootAuthority(DEMO_USER.role)).toBe(false);
+    expect(hasAdminAuthority(DEMO_USER.role)).toBe(false);
+
+    // 3. User role reassignment validity check
+    const isValidRole = (role: string): boolean => ['superadmin', 'admin', 'user'].includes(role);
+    expect(isValidRole('superadmin')).toBe(true);
+    expect(isValidRole('admin')).toBe(true);
+    expect(isValidRole('user')).toBe(true);
+    expect(isValidRole('guest')).toBe(false);
   });
 });
 

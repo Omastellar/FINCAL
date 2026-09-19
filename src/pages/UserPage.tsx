@@ -29,6 +29,7 @@ import {
   ChevronRight,
   Shield,
   Wallet,
+  Crown,
 } from 'lucide-react';
 import { useAuth, DEMO_USER, USERS_LIST_KEY } from '../context/AuthContext';
 import { useCurrency } from '../context/CurrencyContext';
@@ -225,18 +226,28 @@ export const UserPage: React.FC<UserPageProps> = ({ onNavigate }) => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 py-2 sm:py-6">
-      {/* Admin Executive Mode Banner */}
-      {user.role === 'admin' && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 border border-purple-800/40 text-white shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Admin / Super Admin Executive Mode Banner */}
+      {(user.role === 'admin' || user.role === 'superadmin') && (
+        <div className={`p-4 sm:p-5 rounded-2xl ${
+          user.role === 'superadmin'
+            ? 'bg-gradient-to-r from-amber-950 via-slate-900 to-purple-950 border-amber-800/40'
+            : 'bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 border-purple-800/40'
+        } border text-white shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4`}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold shrink-0">
-              <ShieldCheck className="w-5 h-5" />
+            <div className={`w-10 h-10 rounded-xl ${
+              user.role === 'superadmin' ? 'bg-amber-600' : 'bg-purple-600'
+            } text-white flex items-center justify-center font-bold shrink-0`}>
+              {user.role === 'superadmin' ? <Crown className="w-5 h-5 text-amber-200" /> : <ShieldCheck className="w-5 h-5" />}
             </div>
             <div>
               <div className="text-sm font-bold flex items-center gap-2">
-                <span>Administrator Session Active</span>
-                <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded bg-purple-500/30 text-purple-300 border border-purple-500/40">
-                  {telemetry.totalVisitors} Users Tracked
+                <span>{user.role === 'superadmin' ? 'Super Administrator Session Active (Root Privileges)' : 'Administrator Session Active'}</span>
+                <span className={`px-2 py-0.5 text-[10px] font-extrabold uppercase rounded ${
+                  user.role === 'superadmin'
+                    ? 'bg-amber-500/30 text-amber-300 border-amber-500/40'
+                    : 'bg-purple-500/30 text-purple-300 border-purple-500/40'
+                } border`}>
+                  {user.role === 'superadmin' ? '👑 Super Admin' : 'Admin'} • {telemetry.totalVisitors} Users
                 </span>
               </div>
               <div className="text-xs text-slate-300 mt-0.5">
@@ -246,9 +257,13 @@ export const UserPage: React.FC<UserPageProps> = ({ onNavigate }) => {
           </div>
           <button
             onClick={() => onNavigate('admin')}
-            className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-md transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+            className={`px-4 py-2 rounded-xl ${
+              user.role === 'superadmin'
+                ? 'bg-amber-600 hover:bg-amber-700'
+                : 'bg-purple-600 hover:bg-purple-700'
+            } text-white text-xs font-semibold shadow-md transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer`}
           >
-            <span>Open Admin Console & Numbers of Users</span>
+            <span>{user.role === 'superadmin' ? 'Open Super Admin Console' : 'Open Admin Console'}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -261,17 +276,30 @@ export const UserPage: React.FC<UserPageProps> = ({ onNavigate }) => {
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           {/* User Profile Avatar & Name */}
           <div className="flex items-center gap-4 sm:gap-5">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white text-2xl sm:text-3xl font-extrabold shadow-lg shadow-emerald-500/25 shrink-0">
+            <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl ${
+              user.role === 'superadmin'
+                ? 'bg-gradient-to-tr from-amber-500 to-amber-700'
+                : user.role === 'admin'
+                ? 'bg-gradient-to-tr from-purple-600 to-indigo-600'
+                : 'bg-gradient-to-tr from-emerald-600 to-teal-500'
+            } flex items-center justify-center text-white text-2xl sm:text-3xl font-extrabold shadow-lg shadow-emerald-500/25 shrink-0`}>
               {user.name.charAt(0).toUpperCase()}
             </div>
 
             <div className="space-y-1">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                  {user.name}
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-1.5">
+                  <span>{user.name}</span>
+                  {user.role === 'superadmin' && <Crown className="w-4 h-4 text-amber-400 inline-block" />}
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  {user.role === 'admin' ? 'Administrator' : 'Standard Member'}
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                  user.role === 'superadmin'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    : user.role === 'admin'
+                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                }`}>
+                  {user.role === 'superadmin' ? 'Super Administrator' : user.role === 'admin' ? 'Administrator' : 'Standard Member'}
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/10 text-slate-300 border border-white/10">
                   {displayTitle}

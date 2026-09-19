@@ -11,6 +11,7 @@ import {
   KeyRound,
   CheckCircle2,
   ArrowLeft,
+  Crown,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PageView } from '../types/navigation';
@@ -120,8 +121,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialRole = 
         if (res.user?.role) destinationRole = res.user.role;
       }
 
-      // Navigate to destination: Admins -> Admin Portal, Users -> Users Interface
-      if (destinationRole === 'admin') {
+      // Navigate to destination: Admins / Super Admins -> Admin Portal, Users -> Users Interface
+      if (destinationRole === 'admin' || destinationRole === 'superadmin') {
         onNavigate('admin');
       } else {
         onNavigate('user');
@@ -139,20 +140,30 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialRole = 
       {isAuthenticated && user && (
         <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold shrink-0">
-              {user.role === 'admin' ? <ShieldCheck className="w-5 h-5" /> : <UserIcon className="w-5 h-5" />}
+            <div className={`w-10 h-10 rounded-xl ${
+              user.role === 'superadmin' ? 'bg-amber-600' : user.role === 'admin' ? 'bg-purple-600' : 'bg-emerald-500'
+            } text-white flex items-center justify-center font-bold shrink-0`}>
+              {user.role === 'superadmin' ? (
+                <Crown className="w-5 h-5" />
+              ) : user.role === 'admin' ? (
+                <ShieldCheck className="w-5 h-5" />
+              ) : (
+                <UserIcon className="w-5 h-5" />
+              )}
             </div>
             <div>
               <div className="font-semibold text-emerald-900 dark:text-emerald-100 flex items-center gap-2 text-sm">
                 Signed in as {user.name}
                 <span
                   className={`px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-md tracking-wider ${
-                    user.role === 'admin'
+                    user.role === 'superadmin'
+                      ? 'bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300'
+                      : user.role === 'admin'
                       ? 'bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300'
                       : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300'
                   }`}
                 >
-                  {user.role}
+                  {user.role === 'superadmin' ? 'Super Admin' : user.role}
                 </span>
               </div>
               <div className="text-xs text-emerald-700 dark:text-emerald-300">
@@ -161,12 +172,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialRole = 
             </div>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            {user.role === 'admin' ? (
+            {(user.role === 'admin' || user.role === 'superadmin') ? (
               <button
                 onClick={() => onNavigate('admin')}
-                className="flex-1 sm:flex-none px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                className={`flex-1 sm:flex-none px-3.5 py-2 ${
+                  user.role === 'superadmin' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-purple-600 hover:bg-purple-700'
+                } text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-colors cursor-pointer`}
               >
-                Admin Portal <ArrowRight className="w-3.5 h-3.5" />
+                {user.role === 'superadmin' ? 'Super Admin Portal' : 'Admin Portal'} <ArrowRight className="w-3.5 h-3.5" />
               </button>
             ) : (
               <button

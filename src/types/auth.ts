@@ -1,7 +1,7 @@
 import { CalculatorId } from './calculators';
 import { CurrencyCode } from './currency';
 
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'superadmin' | 'admin' | 'user';
 
 export interface User {
   id: string;
@@ -108,6 +108,7 @@ export interface MemberGrowthSummary {
   joinedThisMonth: number;
   standardMembersCount: number;
   adminMembersCount: number;
+  superAdminMembersCount: number;
   monthlyBreakdown: Record<string, number>;
   members: JoinedMemberRecord[];
 }
