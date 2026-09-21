@@ -22,35 +22,35 @@ export const MortgageCalculator: React.FC = () => {
   // Primary Inputs
   const [homePrice, setHomePrice] = useState<number>(() => {
     const val = initialParams.get('price');
-    return val ? parseFloat(val) : 45_000_000;
+    return val ? parseFloat(val) : 0;
   });
   const [downPayment, setDownPayment] = useState<number>(() => {
     const val = initialParams.get('down');
-    return val ? parseFloat(val) : 20;
+    return val ? parseFloat(val) : 0;
   });
   const [downPaymentIsPercent, setDownPaymentIsPercent] = useState<boolean>(true);
   const [interestRate, setInterestRate] = useState<number>(() => {
     const val = initialParams.get('rate');
-    return val ? parseFloat(val) : 15.0;
+    return val ? parseFloat(val) : 0;
   });
   const [loanTermYears, setLoanTermYears] = useState<number>(() => {
     const val = initialParams.get('term');
-    return val ? parseFloat(val) : 20;
+    return val ? parseFloat(val) : 0;
   });
   const [propertyTaxAnnual, setPropertyTaxAnnual] = useState<number>(() => {
     const val = initialParams.get('tax');
-    return val ? parseFloat(val) : 450_000;
+    return val ? parseFloat(val) : 0;
   });
   const [homeInsuranceAnnual, setHomeInsuranceAnnual] = useState<number>(() => {
     const val = initialParams.get('ins');
-    return val ? parseFloat(val) : 250_000;
+    return val ? parseFloat(val) : 0;
   });
   const [hoaMonthly, setHoaMonthly] = useState<number>(() => {
     const val = initialParams.get('hoa');
-    return val ? parseFloat(val) : 35_000;
+    return val ? parseFloat(val) : 0;
   });
-  const [pmiRate, setPmiRate] = useState<number>(0.8);
-  const [closingCostsPct, setClosingCostsPct] = useState<number>(2.5);
+  const [pmiRate, setPmiRate] = useState<number>(0);
+  const [closingCostsPct, setClosingCostsPct] = useState<number>(0);
   const [extraMonthlyPayment, setExtraMonthlyPayment] = useState<number>(0);
 
   useEffect(() => {
@@ -221,9 +221,9 @@ export const MortgageCalculator: React.FC = () => {
                 label="Home Purchase Price"
                 value={homePrice}
                 onChange={setHomePrice}
-                min={5_000_000}
+                min={0}
                 max={250_000_000}
-                step={500_000}
+                step={100_000}
                 prefix={currencyConfig.symbol}
               />
 
@@ -260,9 +260,9 @@ export const MortgageCalculator: React.FC = () => {
                   label={downPaymentIsPercent ? 'Down Payment (%)' : 'Down Payment Cash'}
                   value={downPayment}
                   onChange={setDownPayment}
-                  min={downPaymentIsPercent ? 0 : 0}
-                  max={downPaymentIsPercent ? 50 : homePrice * 0.5}
-                  step={downPaymentIsPercent ? 1 : 250_000}
+                  min={0}
+                  max={downPaymentIsPercent ? 100 : (homePrice > 0 ? homePrice : 100_000_000)}
+                  step={downPaymentIsPercent ? 1 : 50_000}
                   suffix={downPaymentIsPercent ? '%' : ''}
                   prefix={!downPaymentIsPercent ? currencyConfig.symbol : ''}
                   helperText={`${format(results.downPaymentAmount)} (${results.downPaymentPercent.toFixed(1)}%)`}
@@ -273,7 +273,7 @@ export const MortgageCalculator: React.FC = () => {
                 label="Interest Rate"
                 value={interestRate}
                 onChange={setInterestRate}
-                min={1}
+                min={0}
                 max={30}
                 step={0.25}
                 suffix="%"

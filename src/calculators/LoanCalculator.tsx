@@ -31,15 +31,15 @@ export const LoanCalculator: React.FC = () => {
   // State
   const [loanAmount, setLoanAmount] = useState<number>(() => {
     const val = initialParams.get('amount');
-    return val ? parseFloat(val) : 5_000_000;
+    return val ? parseFloat(val) : 0;
   });
   const [interestRate, setInterestRate] = useState<number>(() => {
     const val = initialParams.get('rate');
-    return val ? parseFloat(val) : 14.5;
+    return val ? parseFloat(val) : 0;
   });
   const [loanTermYears, setLoanTermYears] = useState<number>(() => {
     const val = initialParams.get('term');
-    return val ? parseFloat(val) : 5;
+    return val ? parseInt(val, 10) : 0;
   });
   const [paymentFrequency, setPaymentFrequency] = useState<PaymentFrequency>(() => {
     const val = initialParams.get('freq') as PaymentFrequency;
@@ -164,9 +164,9 @@ export const LoanCalculator: React.FC = () => {
   };
 
   const resetDefaults = () => {
-    setLoanAmount(5_000_000);
-    setInterestRate(14.5);
-    setLoanTermYears(5);
+    setLoanAmount(0);
+    setInterestRate(0);
+    setLoanTermYears(0);
     setPaymentFrequency('monthly');
     setExtraPayment(0);
     setLumpSumAmount(0);
@@ -221,9 +221,9 @@ export const LoanCalculator: React.FC = () => {
               label="Loan Amount"
               value={loanAmount}
               onChange={setLoanAmount}
-              min={50_000}
+              min={0}
               max={100_000_000}
-              step={50_000}
+              step={10_000}
               prefix={currencyConfig.symbol}
             />
 
@@ -244,7 +244,7 @@ export const LoanCalculator: React.FC = () => {
               label="Loan Term (Years)"
               value={loanTermYears}
               onChange={setLoanTermYears}
-              min={1}
+              min={0}
               max={30}
               step={1}
               suffix=" yrs"

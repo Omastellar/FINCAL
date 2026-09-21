@@ -14,13 +14,8 @@ export const MultiDebtPayoffCalculator: React.FC = () => {
   const { currencyConfig, format } = useCurrency();
   const { copyShareableLink, copied } = useShareableState();
 
-  const [debts, setDebts] = useState<DebtItem[]>([
-    { id: '1', name: 'Credit Card (High APR)', balance: 1_200_000, interestRate: 24.0, minimumPayment: 45_000 },
-    { id: '2', name: 'Personal Loan', balance: 3_500_000, interestRate: 16.5, minimumPayment: 90_000 },
-    { id: '3', name: 'Auto Loan', balance: 5_000_000, interestRate: 11.0, minimumPayment: 115_000 },
-  ]);
-
-  const [extraMonthlyPayment, setExtraMonthlyPayment] = useState<number>(50_000);
+  const [debts, setDebts] = useState<DebtItem[]>([]);
+  const [extraMonthlyPayment, setExtraMonthlyPayment] = useState<number>(0);
   const [activeStrategy, setActiveStrategy] = useState<'avalanche' | 'snowball'>('avalanche');
 
   const [newDebtName, setNewDebtName] = useState('');
@@ -290,23 +285,31 @@ export const MultiDebtPayoffCalculator: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {debts.map((d) => (
-                    <tr key={d.id}>
-                      <td className="py-2.5 font-medium text-slate-900 dark:text-white">{d.name}</td>
-                      <td className="py-2.5 text-right font-mono">{format(d.balance)}</td>
-                      <td className="py-2.5 text-right font-mono">{d.interestRate}%</td>
-                      <td className="py-2.5 text-right font-mono">{format(d.minimumPayment)}</td>
-                      <td className="py-2.5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveDebt(d.id)}
-                          className="text-red-500 hover:text-red-700 p-1"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                  {debts.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-6 text-center text-slate-400 dark:text-slate-500">
+                        No debts added yet. Enter your debt details below to begin strategy analysis.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    debts.map((d) => (
+                      <tr key={d.id}>
+                        <td className="py-2.5 font-medium text-slate-900 dark:text-white">{d.name}</td>
+                        <td className="py-2.5 text-right font-mono">{format(d.balance)}</td>
+                        <td className="py-2.5 text-right font-mono">{d.interestRate}%</td>
+                        <td className="py-2.5 text-right font-mono">{format(d.minimumPayment)}</td>
+                        <td className="py-2.5 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveDebt(d.id)}
+                            className="text-red-500 hover:text-red-700 p-1"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

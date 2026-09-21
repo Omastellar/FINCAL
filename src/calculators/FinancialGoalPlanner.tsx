@@ -14,36 +14,8 @@ export const FinancialGoalPlanner: React.FC = () => {
   const { currencyConfig, format } = useCurrency();
   const { copyShareableLink, copied } = useShareableState();
 
-  const [monthlySavingsBudget, setMonthlySavingsBudget] = useState<number>(450_000);
-  const [goals, setGoals] = useState<FinancialGoalItem[]>([
-    {
-      id: '1',
-      title: 'Emergency Safety Reserve (6 Months)',
-      category: 'Emergency',
-      targetAmount: 3_500_000,
-      currentAmount: 1_200_000,
-      targetDate: '2026-12',
-      priority: 'high',
-    },
-    {
-      id: '2',
-      title: 'Home Down Payment Fund',
-      category: 'Home',
-      targetAmount: 12_000_000,
-      currentAmount: 3_000_000,
-      targetDate: '2028-06',
-      priority: 'high',
-    },
-    {
-      id: '3',
-      title: 'Family Vacation & Travel',
-      category: 'Travel',
-      targetAmount: 2_000_000,
-      currentAmount: 500_000,
-      targetDate: '2027-04',
-      priority: 'low',
-    },
-  ]);
+  const [monthlySavingsBudget, setMonthlySavingsBudget] = useState<number>(0);
+  const [goals, setGoals] = useState<FinancialGoalItem[]>([]);
 
   // Form State
   const [newTitle, setNewTitle] = useState('');
@@ -182,8 +154,8 @@ export const FinancialGoalPlanner: React.FC = () => {
           label="Your Monthly Dedicated Savings Budget"
           value={monthlySavingsBudget}
           onChange={setMonthlySavingsBudget}
-          min={50_000}
-          max={5_000_000}
+          min={0}
+          max={10_000_000}
           step={25_000}
           prefix={currencyConfig.symbol}
           suffix="/mo"
@@ -198,7 +170,12 @@ export const FinancialGoalPlanner: React.FC = () => {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {results.goals.map((item) => {
+          {results.goals.length === 0 ? (
+            <div className="col-span-full p-8 text-center rounded-2xl bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500">
+              No financial goals added yet. Fill out the target form below to configure your savings milestones.
+            </div>
+          ) : (
+            results.goals.map((item) => {
             const pct = item.goal.targetAmount > 0 ? (item.goal.currentAmount / item.goal.targetAmount) * 100 : 0;
             return (
               <div
@@ -264,7 +241,7 @@ export const FinancialGoalPlanner: React.FC = () => {
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
 
         {/* Add Goal Form */}

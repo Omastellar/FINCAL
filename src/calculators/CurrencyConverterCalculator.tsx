@@ -37,7 +37,7 @@ export const CurrencyConverterCalculator: React.FC = () => {
   // State
   const [amount, setAmount] = useState<number>(() => {
     const val = initialParams.get('amount');
-    return val ? parseFloat(val) : 1000;
+    return val ? parseFloat(val) : 0;
   });
 
   const [fromCurrency, setFromCurrency] = useState<CurrencyCode>(() => {
@@ -103,10 +103,10 @@ export const CurrencyConverterCalculator: React.FC = () => {
   };
 
   const handleReset = () => {
-    setAmount(100_000);
+    setAmount(0);
     setFromCurrency('NGN');
     setToCurrency('USD');
-    setTransferFeePct(1.5);
+    setTransferFeePct(0);
     setUseCustomRate(false);
     setCustomRate(0);
     setGuestSavePrompt(false);
@@ -235,7 +235,8 @@ export const CurrencyConverterCalculator: React.FC = () => {
                     type="number"
                     min="0"
                     step="any"
-                    value={amount}
+                    value={amount === 0 ? '' : amount}
+                    placeholder="0"
                     onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />

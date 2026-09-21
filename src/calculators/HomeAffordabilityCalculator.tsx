@@ -18,26 +18,26 @@ export const HomeAffordabilityCalculator: React.FC = () => {
 
   const [annualGrossIncome, setAnnualGrossIncome] = useState<number>(() => {
     const val = initialParams.get('income');
-    return val ? parseFloat(val) : 18_000_000;
+    return val ? parseFloat(val) : 0;
   });
   const [monthlyDebts, setMonthlyDebts] = useState<number>(() => {
     const val = initialParams.get('debts');
-    return val ? parseFloat(val) : 250_000;
+    return val ? parseFloat(val) : 0;
   });
   const [downPaymentSaved, setDownPaymentSaved] = useState<number>(() => {
     const val = initialParams.get('saved');
-    return val ? parseFloat(val) : 10_000_000;
+    return val ? parseFloat(val) : 0;
   });
   const [interestRate, setInterestRate] = useState<number>(() => {
     const val = initialParams.get('rate');
-    return val ? parseFloat(val) : 14.5;
+    return val ? parseFloat(val) : 0;
   });
   const [loanTermYears, setLoanTermYears] = useState<number>(() => {
     const val = initialParams.get('term');
-    return val ? parseFloat(val) : 20;
+    return val ? parseFloat(val) : 0;
   });
-  const [propertyTaxRate, setPropertyTaxRate] = useState<number>(1.2);
-  const [homeInsuranceAnnual, setHomeInsuranceAnnual] = useState<number>(300_000);
+  const [propertyTaxRate, setPropertyTaxRate] = useState<number>(0);
+  const [homeInsuranceAnnual, setHomeInsuranceAnnual] = useState<number>(0);
 
   useEffect(() => {
     updateUrlParams({
@@ -174,9 +174,9 @@ export const HomeAffordabilityCalculator: React.FC = () => {
                 label="Annual Gross Household Income"
                 value={annualGrossIncome}
                 onChange={setAnnualGrossIncome}
-                min={2_000_000}
+                min={0}
                 max={150_000_000}
-                step={500_000}
+                step={100_000}
                 prefix={currencyConfig.symbol}
                 helperText={`${format(monthlyGrossIncome)} / month`}
               />
@@ -187,7 +187,7 @@ export const HomeAffordabilityCalculator: React.FC = () => {
                 onChange={setMonthlyDebts}
                 min={0}
                 max={5_000_000}
-                step={25_000}
+                step={10_000}
                 prefix={currencyConfig.symbol}
               />
 
@@ -195,9 +195,9 @@ export const HomeAffordabilityCalculator: React.FC = () => {
                 label="Cash Saved for Down Payment"
                 value={downPaymentSaved}
                 onChange={setDownPaymentSaved}
-                min={500_000}
+                min={0}
                 max={50_000_000}
-                step={250_000}
+                step={100_000}
                 prefix={currencyConfig.symbol}
               />
 
@@ -205,7 +205,7 @@ export const HomeAffordabilityCalculator: React.FC = () => {
                 label="Expected Mortgage Interest Rate"
                 value={interestRate}
                 onChange={setInterestRate}
-                min={1}
+                min={0}
                 max={30}
                 step={0.25}
                 suffix="%"
@@ -215,9 +215,9 @@ export const HomeAffordabilityCalculator: React.FC = () => {
                 label="Loan Term"
                 value={loanTermYears}
                 onChange={setLoanTermYears}
-                min={5}
+                min={0}
                 max={30}
-                step={5}
+                step={1}
                 suffix=" Years"
               />
             </div>

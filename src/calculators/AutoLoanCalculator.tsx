@@ -19,30 +19,30 @@ export const AutoLoanCalculator: React.FC = () => {
 
   const [vehiclePrice, setVehiclePrice] = useState<number>(() => {
     const val = initialParams.get('price');
-    return val ? parseFloat(val) : 18_000_000;
+    return val ? parseFloat(val) : 0;
   });
   const [downPayment, setDownPayment] = useState<number>(() => {
     const val = initialParams.get('down');
-    return val ? parseFloat(val) : 3_000_000;
+    return val ? parseFloat(val) : 0;
   });
   const [tradeInValue, setTradeInValue] = useState<number>(() => {
     const val = initialParams.get('trade');
-    return val ? parseFloat(val) : 4_000_000;
+    return val ? parseFloat(val) : 0;
   });
   const [tradeInBalanceOwed, setTradeInBalanceOwed] = useState<number>(() => {
     const val = initialParams.get('tradeOwed');
-    return val ? parseFloat(val) : 1_500_000;
+    return val ? parseFloat(val) : 0;
   });
-  const [salesTaxPct, setSalesTaxPct] = useState<number>(7.5);
-  const [dealerFees, setDealerFees] = useState<number>(250_000);
+  const [salesTaxPct, setSalesTaxPct] = useState<number>(0);
+  const [dealerFees, setDealerFees] = useState<number>(0);
   const [cashRebate, setCashRebate] = useState<number>(0);
   const [interestRate, setInterestRate] = useState<number>(() => {
     const val = initialParams.get('rate');
-    return val ? parseFloat(val) : 16.0;
+    return val ? parseFloat(val) : 0;
   });
   const [loanTermMonths, setLoanTermMonths] = useState<number>(() => {
     const val = initialParams.get('term');
-    return val ? parseInt(val, 10) : 48;
+    return val ? parseInt(val, 10) : 0;
   });
 
   useEffect(() => {
@@ -194,9 +194,9 @@ export const AutoLoanCalculator: React.FC = () => {
                 label="Vehicle Purchase Price"
                 value={vehiclePrice}
                 onChange={setVehiclePrice}
-                min={1_000_000}
+                min={0}
                 max={100_000_000}
-                step={250_000}
+                step={100_000}
                 prefix={currencyConfig.symbol}
               />
 
@@ -206,7 +206,7 @@ export const AutoLoanCalculator: React.FC = () => {
                 onChange={setDownPayment}
                 min={0}
                 max={30_000_000}
-                step={100_000}
+                step={50_000}
                 prefix={currencyConfig.symbol}
               />
 
@@ -214,7 +214,7 @@ export const AutoLoanCalculator: React.FC = () => {
                 label="Interest Rate (APR)"
                 value={interestRate}
                 onChange={setInterestRate}
-                min={1}
+                min={0}
                 max={35}
                 step={0.25}
                 suffix="%"

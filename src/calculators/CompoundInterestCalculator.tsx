@@ -21,15 +21,15 @@ export const CompoundInterestCalculator: React.FC = () => {
   // State
   const [principal, setPrincipal] = useState<number>(() => {
     const val = initialParams.get('principal');
-    return val ? parseFloat(val) : 1_000_000;
+    return val ? parseFloat(val) : 0;
   });
   const [interestRate, setInterestRate] = useState<number>(() => {
     const val = initialParams.get('rate');
-    return val ? parseFloat(val) : 11.5;
+    return val ? parseFloat(val) : 0;
   });
   const [additionalContribution, setAdditionalContribution] = useState<number>(() => {
     const val = initialParams.get('contrib');
-    return val ? parseFloat(val) : 100_000;
+    return val ? parseFloat(val) : 0;
   });
   const [contributionFrequency, setContributionFrequency] = useState<'monthly' | 'annually'>(() => {
     const val = initialParams.get('freq') as 'monthly' | 'annually';
@@ -37,7 +37,7 @@ export const CompoundInterestCalculator: React.FC = () => {
   });
   const [investmentPeriodYears, setInvestmentPeriodYears] = useState<number>(() => {
     const val = initialParams.get('years');
-    return val ? parseFloat(val) : 10;
+    return val ? parseFloat(val) : 0;
   });
   const [compoundingFrequency, setCompoundingFrequency] = useState<CompoundingFrequency>(() => {
     const val = initialParams.get('compound') as CompoundingFrequency;
@@ -50,7 +50,7 @@ export const CompoundInterestCalculator: React.FC = () => {
   });
   const [inflationRate, setInflationRate] = useState<number>(() => {
     const val = initialParams.get('inflationRate');
-    return val ? parseFloat(val) : 7.0;
+    return val ? parseFloat(val) : 0;
   });
 
   // Sync state to URL
@@ -133,14 +133,14 @@ export const CompoundInterestCalculator: React.FC = () => {
   }, [results, investmentPeriodYears, adjustInflation, inflationRate, finalRealPower, format]);
 
   const resetDefaults = () => {
-    setPrincipal(1_000_000);
-    setInterestRate(11.5);
-    setAdditionalContribution(100_000);
+    setPrincipal(0);
+    setInterestRate(0);
+    setAdditionalContribution(0);
     setContributionFrequency('monthly');
-    setInvestmentPeriodYears(10);
+    setInvestmentPeriodYears(0);
     setCompoundingFrequency('monthly');
     setAdjustInflation(false);
-    setInflationRate(7.0);
+    setInflationRate(0);
   };
 
   return (
@@ -240,7 +240,7 @@ export const CompoundInterestCalculator: React.FC = () => {
               label="Investment Horizon (Years)"
               value={investmentPeriodYears}
               onChange={setInvestmentPeriodYears}
-              min={1}
+              min={0}
               max={40}
               step={1}
               suffix=" yrs"

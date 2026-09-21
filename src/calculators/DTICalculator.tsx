@@ -18,17 +18,17 @@ export const DTICalculator: React.FC = () => {
 
   const [grossMonthlyIncome, setGrossMonthlyIncome] = useState<number>(() => {
     const val = initialParams.get('income');
-    return val ? parseFloat(val) : 2_000_000;
+    return val ? parseFloat(val) : 0;
   });
   const [monthlyMortgageOrRent, setMonthlyMortgageOrRent] = useState<number>(() => {
     const val = initialParams.get('housing');
-    return val ? parseFloat(val) : 450_000;
+    return val ? parseFloat(val) : 0;
   });
-  const [propertyTaxMonthly, setPropertyTaxMonthly] = useState<number>(30_000);
-  const [homeInsuranceMonthly, setHomeInsuranceMonthly] = useState<number>(20_000);
-  const [autoLoanMonthly, setAutoLoanMonthly] = useState<number>(120_000);
-  const [studentLoanMonthly, setStudentLoanMonthly] = useState<number>(40_000);
-  const [creditCardMinMonthly, setCreditCardMinMonthly] = useState<number>(60_000);
+  const [propertyTaxMonthly, setPropertyTaxMonthly] = useState<number>(0);
+  const [homeInsuranceMonthly, setHomeInsuranceMonthly] = useState<number>(0);
+  const [autoLoanMonthly, setAutoLoanMonthly] = useState<number>(0);
+  const [studentLoanMonthly, setStudentLoanMonthly] = useState<number>(0);
+  const [creditCardMinMonthly, setCreditCardMinMonthly] = useState<number>(0);
   const [otherDebtMonthly, setOtherDebtMonthly] = useState<number>(0);
 
   useEffect(() => {
@@ -220,7 +220,7 @@ export const DTICalculator: React.FC = () => {
                 label="Gross Monthly Income"
                 value={grossMonthlyIncome}
                 onChange={setGrossMonthlyIncome}
-                min={200_000}
+                min={0}
                 max={20_000_000}
                 step={50_000}
                 prefix={currencyConfig.symbol}

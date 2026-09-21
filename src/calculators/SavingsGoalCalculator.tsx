@@ -18,19 +18,19 @@ export const SavingsGoalCalculator: React.FC = () => {
 
   const [targetAmount, setTargetAmount] = useState<number>(() => {
     const val = initialParams.get('target');
-    return val ? parseFloat(val) : 10_000_000;
+    return val ? parseFloat(val) : 0;
   });
   const [currentSavings, setCurrentSavings] = useState<number>(() => {
     const val = initialParams.get('current');
-    return val ? parseFloat(val) : 1_500_000;
+    return val ? parseFloat(val) : 0;
   });
   const [timeframeMonths, setTimeframeMonths] = useState<number>(() => {
     const val = initialParams.get('months');
-    return val ? parseInt(val, 10) : 24;
+    return val ? parseInt(val, 10) : 0;
   });
   const [annualReturnRate, setAnnualReturnRate] = useState<number>(() => {
     const val = initialParams.get('rate');
-    return val ? parseFloat(val) : 12.0;
+    return val ? parseFloat(val) : 0;
   });
 
   useEffect(() => {
@@ -167,9 +167,9 @@ export const SavingsGoalCalculator: React.FC = () => {
                 label="Target Financial Goal"
                 value={targetAmount}
                 onChange={setTargetAmount}
-                min={500_000}
+                min={0}
                 max={100_000_000}
-                step={250_000}
+                step={100_000}
                 prefix={currencyConfig.symbol}
               />
 

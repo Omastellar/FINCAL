@@ -26,15 +26,26 @@ export const InputField: React.FC<InputFieldProps> = ({
   min = 0,
   max,
   step = 1,
-  placeholder,
+  placeholder = '0',
   helperText,
   error,
   required = false,
 }) => {
   const inputId = id || `input-${label.toLowerCase().replace(/\s+/g, '-')}`;
+  const numValue = typeof value === 'number' ? value : parseFloat(value) || 0;
+  const [localVal, setLocalVal] = React.useState<string>(numValue === 0 ? '' : String(value));
+  const [isFocused, setIsFocused] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (!isFocused) {
+      const n = typeof value === 'number' ? value : parseFloat(value) || 0;
+      setLocalVal(n === 0 ? '' : String(value));
+    }
+  }, [value, isFocused]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawVal = e.target.value;
+    setLocalVal(rawVal);
     if (rawVal === '') {
       onChange(0);
       return;
@@ -42,6 +53,18 @@ export const InputField: React.FC<InputFieldProps> = ({
     const parsed = parseFloat(rawVal);
     if (!isNaN(parsed)) {
       onChange(parsed);
+    }
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    if (localVal === '' || isNaN(parseFloat(localVal))) {
+      onChange(0);
+      setLocalVal('');
+    } else {
+      const parsed = parseFloat(localVal);
+      onChange(parsed);
+      setLocalVal(parsed === 0 ? '' : String(parsed));
     }
   };
 
@@ -68,10 +91,12 @@ export const InputField: React.FC<InputFieldProps> = ({
         <input
           id={inputId}
           type="number"
-          min={min}
+          min={Math.min(0, min)}
           max={max}
-          step={step}
-          value={value === 0 && placeholder ? '' : value}
+          step="any"
+          value={isFocused ? localVal : (numValue === 0 ? '' : numValue)}
+          onFocus={() => setIsFocused(true)}
+          onBlur={handleBlur}
           onChange={handleChange}
           placeholder={placeholder}
           className={`w-full rounded-xl border bg-white dark:bg-slate-900/90 text-slate-900 dark:text-slate-100 py-2.5 text-base tabular-nums transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${

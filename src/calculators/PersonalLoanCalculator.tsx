@@ -19,19 +19,19 @@ export const PersonalLoanCalculator: React.FC = () => {
 
   const [loanAmount, setLoanAmount] = useState<number>(() => {
     const val = initialParams.get('amount');
-    return val ? parseFloat(val) : 3_000_000;
+    return val ? parseFloat(val) : 0;
   });
   const [interestRate, setInterestRate] = useState<number>(() => {
     const val = initialParams.get('rate');
-    return val ? parseFloat(val) : 18.0;
+    return val ? parseFloat(val) : 0;
   });
   const [loanTermMonths, setLoanTermMonths] = useState<number>(() => {
     const val = initialParams.get('term');
-    return val ? parseInt(val, 10) : 24;
+    return val ? parseInt(val, 10) : 0;
   });
   const [originationFeePct, setOriginationFeePct] = useState<number>(() => {
     const val = initialParams.get('fee');
-    return val ? parseFloat(val) : 3.0;
+    return val ? parseFloat(val) : 0;
   });
 
   useEffect(() => {
@@ -168,9 +168,9 @@ export const PersonalLoanCalculator: React.FC = () => {
                 label="Requested Loan Amount"
                 value={loanAmount}
                 onChange={setLoanAmount}
-                min={200_000}
+                min={0}
                 max={25_000_000}
-                step={100_000}
+                step={50_000}
                 prefix={currencyConfig.symbol}
               />
 
@@ -178,9 +178,9 @@ export const PersonalLoanCalculator: React.FC = () => {
                 label="Nominal Annual Interest Rate"
                 value={interestRate}
                 onChange={setInterestRate}
-                min={2}
+                min={0}
                 max={40}
-                step={0.5}
+                step={0.25}
                 suffix="%"
               />
 

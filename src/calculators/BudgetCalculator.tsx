@@ -21,41 +21,41 @@ export const BudgetCalculator: React.FC = () => {
   // Income state
   const [salary, setSalary] = useState<number>(() => {
     const val = initialParams.get('salary');
-    return val ? parseFloat(val) : 650_000;
+    return val ? parseFloat(val) : 0;
   });
   const [otherIncome, setOtherIncome] = useState<number>(() => {
     const val = initialParams.get('other');
-    return val ? parseFloat(val) : 100_000;
+    return val ? parseFloat(val) : 0;
   });
 
   // Expense state
   const [housing, setHousing] = useState<number>(() => {
     const val = initialParams.get('housing');
-    return val ? parseFloat(val) : 200_000;
+    return val ? parseFloat(val) : 0;
   });
   const [food, setFood] = useState<number>(() => {
     const val = initialParams.get('food');
-    return val ? parseFloat(val) : 110_000;
+    return val ? parseFloat(val) : 0;
   });
   const [transportation, setTransportation] = useState<number>(() => {
     const val = initialParams.get('transport');
-    return val ? parseFloat(val) : 55_000;
+    return val ? parseFloat(val) : 0;
   });
   const [utilities, setUtilities] = useState<number>(() => {
     const val = initialParams.get('utils');
-    return val ? parseFloat(val) : 40_000;
+    return val ? parseFloat(val) : 0;
   });
   const [debtPayments, setDebtPayments] = useState<number>(() => {
     const val = initialParams.get('debt');
-    return val ? parseFloat(val) : 35_000;
+    return val ? parseFloat(val) : 0;
   });
   const [entertainment, setEntertainment] = useState<number>(() => {
     const val = initialParams.get('fun');
-    return val ? parseFloat(val) : 45_000;
+    return val ? parseFloat(val) : 0;
   });
   const [otherExpenses, setOtherExpenses] = useState<number>(() => {
     const val = initialParams.get('misc');
-    return val ? parseFloat(val) : 30_000;
+    return val ? parseFloat(val) : 0;
   });
 
   useEffect(() => {
@@ -158,15 +158,15 @@ export const BudgetCalculator: React.FC = () => {
   }, [results, format]);
 
   const resetDefaults = () => {
-    setSalary(650_000);
-    setOtherIncome(100_000);
-    setHousing(200_000);
-    setFood(110_000);
-    setTransportation(55_000);
-    setUtilities(40_000);
-    setDebtPayments(35_000);
-    setEntertainment(45_000);
-    setOtherExpenses(30_000);
+    setSalary(0);
+    setOtherIncome(0);
+    setHousing(0);
+    setFood(0);
+    setTransportation(0);
+    setUtilities(0);
+    setDebtPayments(0);
+    setEntertainment(0);
+    setOtherExpenses(0);
   };
 
   return (

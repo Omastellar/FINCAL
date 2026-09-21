@@ -19,29 +19,29 @@ export const RetirementCalculator: React.FC = () => {
 
   const [currentAge, setCurrentAge] = useState<number>(() => {
     const val = initialParams.get('age');
-    return val ? parseInt(val, 10) : 32;
+    return val ? parseInt(val, 10) : 0;
   });
   const [retirementAge, setRetirementAge] = useState<number>(() => {
     const val = initialParams.get('retAge');
-    return val ? parseInt(val, 10) : 60;
+    return val ? parseInt(val, 10) : 0;
   });
-  const [lifeExpectancy, setLifeExpectancy] = useState<number>(85);
+  const [lifeExpectancy, setLifeExpectancy] = useState<number>(0);
   const [currentNestEgg, setCurrentNestEgg] = useState<number>(() => {
     const val = initialParams.get('nest');
-    return val ? parseFloat(val) : 5_000_000;
+    return val ? parseFloat(val) : 0;
   });
   const [monthlyContribution, setMonthlyContribution] = useState<number>(() => {
     const val = initialParams.get('contrib');
-    return val ? parseFloat(val) : 150_000;
+    return val ? parseFloat(val) : 0;
   });
-  const [expectedAnnualReturnPre, setExpectedAnnualReturnPre] = useState<number>(10.0);
-  const [expectedAnnualReturnPost, setExpectedAnnualReturnPost] = useState<number>(6.0);
+  const [expectedAnnualReturnPre, setExpectedAnnualReturnPre] = useState<number>(0);
+  const [expectedAnnualReturnPost, setExpectedAnnualReturnPost] = useState<number>(0);
   const [desiredMonthlyRetirementIncome, setDesiredMonthlyRetirementIncome] = useState<number>(() => {
     const val = initialParams.get('income');
-    return val ? parseFloat(val) : 800_000;
+    return val ? parseFloat(val) : 0;
   });
-  const [inflationRate, setInflationRate] = useState<number>(4.0);
-  const [pensionOrSocialSecurityMonthly, setPensionOrSocialSecurityMonthly] = useState<number>(100_000);
+  const [inflationRate, setInflationRate] = useState<number>(0);
+  const [pensionOrSocialSecurityMonthly, setPensionOrSocialSecurityMonthly] = useState<number>(0);
 
   useEffect(() => {
     updateUrlParams({
@@ -219,8 +219,8 @@ export const RetirementCalculator: React.FC = () => {
                   label="Current Age"
                   value={currentAge}
                   onChange={setCurrentAge}
-                  min={18}
-                  max={75}
+                  min={0}
+                  max={100}
                   step={1}
                   suffix=" yrs"
                 />
@@ -228,8 +228,8 @@ export const RetirementCalculator: React.FC = () => {
                   label="Retirement Age"
                   value={retirementAge}
                   onChange={setRetirementAge}
-                  min={currentAge + 1}
-                  max={80}
+                  min={0}
+                  max={100}
                   step={1}
                   suffix=" yrs"
                 />
@@ -239,8 +239,8 @@ export const RetirementCalculator: React.FC = () => {
                 label="Life Expectancy"
                 value={lifeExpectancy}
                 onChange={setLifeExpectancy}
-                min={retirementAge + 1}
-                max={100}
+                min={0}
+                max={120}
                 step={1}
                 suffix=" yrs"
               />
@@ -252,7 +252,7 @@ export const RetirementCalculator: React.FC = () => {
                   onChange={setCurrentNestEgg}
                   min={0}
                   max={100_000_000}
-                  step={500_000}
+                  step={50_000}
                   prefix={currencyConfig.symbol}
                 />
 
@@ -261,8 +261,8 @@ export const RetirementCalculator: React.FC = () => {
                   value={monthlyContribution}
                   onChange={setMonthlyContribution}
                   min={0}
-                  max={2_000_000}
-                  step={10_000}
+                  max={5_000_000}
+                  step={5_000}
                   prefix={currencyConfig.symbol}
                 />
 
@@ -270,9 +270,9 @@ export const RetirementCalculator: React.FC = () => {
                   label="Desired Monthly Retirement Income (Today's Value)"
                   value={desiredMonthlyRetirementIncome}
                   onChange={setDesiredMonthlyRetirementIncome}
-                  min={100_000}
-                  max={5_000_000}
-                  step={50_000}
+                  min={0}
+                  max={10_000_000}
+                  step={10_000}
                   prefix={currencyConfig.symbol}
                 />
 
@@ -281,10 +281,40 @@ export const RetirementCalculator: React.FC = () => {
                   value={pensionOrSocialSecurityMonthly}
                   onChange={setPensionOrSocialSecurityMonthly}
                   min={0}
-                  max={2_000_000}
-                  step={25_000}
+                  max={5_000_000}
+                  step={5_000}
                   prefix={currencyConfig.symbol}
                 />
+
+                <div className="grid grid-cols-3 gap-3 pt-2">
+                  <SliderField
+                    label="Pre-Ret Return"
+                    value={expectedAnnualReturnPre}
+                    onChange={setExpectedAnnualReturnPre}
+                    min={0}
+                    max={30}
+                    step={0.1}
+                    suffix="%"
+                  />
+                  <SliderField
+                    label="Post-Ret Return"
+                    value={expectedAnnualReturnPost}
+                    onChange={setExpectedAnnualReturnPost}
+                    min={0}
+                    max={25}
+                    step={0.1}
+                    suffix="%"
+                  />
+                  <SliderField
+                    label="Inflation Rate"
+                    value={inflationRate}
+                    onChange={setInflationRate}
+                    min={0}
+                    max={25}
+                    step={0.1}
+                    suffix="%"
+                  />
+                </div>
               </div>
             </div>
           </Card>

@@ -20,19 +20,19 @@ export const InvestmentCalculator: React.FC = () => {
   // State
   const [initialInvestment, setInitialInvestment] = useState<number>(() => {
     const val = initialParams.get('initial');
-    return val ? parseFloat(val) : 1_500_000;
+    return val ? parseFloat(val) : 0;
   });
   const [monthlyContribution, setMonthlyContribution] = useState<number>(() => {
     const val = initialParams.get('monthly');
-    return val ? parseFloat(val) : 75_000;
+    return val ? parseFloat(val) : 0;
   });
   const [expectedAnnualReturn, setExpectedAnnualReturn] = useState<number>(() => {
     const val = initialParams.get('returnRate');
-    return val ? parseFloat(val) : 12.0;
+    return val ? parseFloat(val) : 0;
   });
   const [investmentDurationYears, setInvestmentDurationYears] = useState<number>(() => {
     const val = initialParams.get('duration');
-    return val ? parseFloat(val) : 8;
+    return val ? parseFloat(val) : 0;
   });
 
   // Inflation State
@@ -41,7 +41,7 @@ export const InvestmentCalculator: React.FC = () => {
   });
   const [inflationRate, setInflationRate] = useState<number>(() => {
     const val = initialParams.get('inflationRate');
-    return val ? parseFloat(val) : 6.5;
+    return val ? parseFloat(val) : 0;
   });
 
   // Sync state to URL
@@ -115,12 +115,12 @@ export const InvestmentCalculator: React.FC = () => {
   }, [results, expectedAnnualReturn, adjustInflation, inflationRate, finalRealPower, format]);
 
   const resetDefaults = () => {
-    setInitialInvestment(1_500_000);
-    setMonthlyContribution(75_000);
-    setExpectedAnnualReturn(12.0);
-    setInvestmentDurationYears(8);
+    setInitialInvestment(0);
+    setMonthlyContribution(0);
+    setExpectedAnnualReturn(0);
+    setInvestmentDurationYears(0);
     setAdjustInflation(false);
-    setInflationRate(6.5);
+    setInflationRate(0);
   };
 
   return (
@@ -197,7 +197,7 @@ export const InvestmentCalculator: React.FC = () => {
               label="Investment Duration (Years)"
               value={investmentDurationYears}
               onChange={setInvestmentDurationYears}
-              min={1}
+              min={0}
               max={40}
               step={1}
               suffix=" yrs"

@@ -19,19 +19,19 @@ export const SavingsCalculator: React.FC = () => {
   // State
   const [initialDeposit, setInitialDeposit] = useState<number>(() => {
     const val = initialParams.get('initial');
-    return val ? parseFloat(val) : 200_000;
+    return val ? parseFloat(val) : 0;
   });
   const [monthlyContribution, setMonthlyContribution] = useState<number>(() => {
     const val = initialParams.get('monthly');
-    return val ? parseFloat(val) : 50_000;
+    return val ? parseFloat(val) : 0;
   });
   const [interestRate, setInterestRate] = useState<number>(() => {
     const val = initialParams.get('rate');
-    return val ? parseFloat(val) : 9.0;
+    return val ? parseFloat(val) : 0;
   });
   const [savingsPeriodYears, setSavingsPeriodYears] = useState<number>(() => {
     const val = initialParams.get('years');
-    return val ? parseFloat(val) : 5;
+    return val ? parseFloat(val) : 0;
   });
   const [compoundingFrequency, setCompoundingFrequency] = useState<'monthly' | 'quarterly' | 'annually'>(() => {
     const val = initialParams.get('freq') as 'monthly' | 'quarterly' | 'annually';
@@ -44,7 +44,7 @@ export const SavingsCalculator: React.FC = () => {
   });
   const [inflationRate, setInflationRate] = useState<number>(() => {
     const val = initialParams.get('inflationRate');
-    return val ? parseFloat(val) : 6.0;
+    return val ? parseFloat(val) : 0;
   });
 
   // Sync state to URL
@@ -115,13 +115,13 @@ export const SavingsCalculator: React.FC = () => {
   }, [results, savingsPeriodYears, adjustInflation, inflationRate, finalRealPower, format]);
 
   const resetDefaults = () => {
-    setInitialDeposit(200_000);
-    setMonthlyContribution(50_000);
-    setInterestRate(9.0);
-    setSavingsPeriodYears(5);
+    setInitialDeposit(0);
+    setMonthlyContribution(0);
+    setInterestRate(0);
+    setSavingsPeriodYears(0);
     setCompoundingFrequency('monthly');
     setAdjustInflation(false);
-    setInflationRate(6.0);
+    setInflationRate(0);
   };
 
   return (
@@ -198,7 +198,7 @@ export const SavingsCalculator: React.FC = () => {
               label="Savings Period (Years)"
               value={savingsPeriodYears}
               onChange={setSavingsPeriodYears}
-              min={1}
+              min={0}
               max={30}
               step={1}
               suffix=" yrs"

@@ -30,19 +30,19 @@ export const DebtPayoffCalculator: React.FC = () => {
   // State
   const [currentDebt, setCurrentDebt] = useState<number>(() => {
     const val = initialParams.get('debt');
-    return val ? parseFloat(val) : 2_500_000;
+    return val ? parseFloat(val) : 0;
   });
   const [interestRate, setInterestRate] = useState<number>(() => {
     const val = initialParams.get('rate');
-    return val ? parseFloat(val) : 18.0;
+    return val ? parseFloat(val) : 0;
   });
   const [monthlyPayment, setMonthlyPayment] = useState<number>(() => {
     const val = initialParams.get('payment');
-    return val ? parseFloat(val) : 75_000;
+    return val ? parseFloat(val) : 0;
   });
   const [additionalMonthlyPayment, setAdditionalMonthlyPayment] = useState<number>(() => {
     const val = initialParams.get('extra');
-    return val ? parseFloat(val) : 25_000;
+    return val ? parseFloat(val) : 0;
   });
 
   useEffect(() => {
@@ -67,6 +67,10 @@ export const DebtPayoffCalculator: React.FC = () => {
 
   // Insights
   const insights = useMemo(() => {
+    if (currentDebt <= 0) {
+      return ['Enter your debt balance, interest rate, and monthly payment to view payoff insights.'];
+    }
+
     if (!results.isValidPayment) {
       return [
         `Warning: Your monthly payment of ${format(monthlyPayment)} is insufficient to cover the monthly interest of ${format(results.minMonthlyInterest)}. At this rate, debt balance will grow indefinitely.`,
@@ -88,13 +92,13 @@ export const DebtPayoffCalculator: React.FC = () => {
       );
     }
     return list;
-  }, [results, monthlyPayment, additionalMonthlyPayment, format]);
+  }, [currentDebt, results, monthlyPayment, additionalMonthlyPayment, format]);
 
   const resetDefaults = () => {
-    setCurrentDebt(2_500_000);
-    setInterestRate(18.0);
-    setMonthlyPayment(75_000);
-    setAdditionalMonthlyPayment(25_000);
+    setCurrentDebt(0);
+    setInterestRate(0);
+    setMonthlyPayment(0);
+    setAdditionalMonthlyPayment(0);
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -161,7 +165,7 @@ export const DebtPayoffCalculator: React.FC = () => {
               label="Current Debt Balance"
               value={currentDebt}
               onChange={setCurrentDebt}
-              min={10_000}
+              min={0}
               max={25_000_000}
               step={20_000}
               prefix={currencyConfig.symbol}
@@ -184,12 +188,12 @@ export const DebtPayoffCalculator: React.FC = () => {
               label="Standard Monthly Payment"
               value={monthlyPayment}
               onChange={setMonthlyPayment}
-              min={1_000}
+              min={0}
               max={1_000_000}
               step={2_500}
               prefix={currencyConfig.symbol}
               helperText={
-                !results.isValidPayment
+                currentDebt > 0 && !results.isValidPayment
                   ? `Min required: ${format(results.minMonthlyInterest)}`
                   : undefined
               }
@@ -212,7 +216,7 @@ export const DebtPayoffCalculator: React.FC = () => {
         {/* Right Results Column */}
         <div className="lg:col-span-7 space-y-6">
           {/* Validation Warning if Payment is too low */}
-          {!results.isValidPayment ? (
+          {currentDebt > 0 && !results.isValidPayment ? (
             <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200">
               <div className="flex items-start gap-3">
                 <ShieldAlert className="w-6 h-6 text-rose-600 dark:text-rose-400 shrink-0" />

@@ -3,6 +3,7 @@ import { Columns3, Plus, ArrowRightLeft, DollarSign, Calendar, TrendingUp, Award
 import { useCurrency } from '../context/CurrencyContext';
 import { compareScenarios } from '../utils/financialMath';
 import { Card } from '../components/common/Card';
+import { InputField } from '../components/common/InputField';
 import { ScenarioCompareCard } from '../components/common/ScenarioCompareCard';
 import { ExplainableResult } from '../components/common/ExplainableResult';
 import { ShareButton, PrintButton } from '../components/common/ShareButton';
@@ -15,6 +16,34 @@ export const ScenarioComparisonCalculator: React.FC = () => {
   const { copyShareableLink, copied } = useShareableState();
 
   const presets: Record<string, { title: string; horizon: number; scenarios: ScenarioOption[] }> = {
+    custom: {
+      title: 'Custom Decision Comparison',
+      horizon: 10,
+      scenarios: [
+        {
+          id: 'optA',
+          name: 'Option A',
+          category: 'Custom',
+          upfrontCost: 0,
+          monthlyOngoingCost: 0,
+          termYears: 0,
+          projectedEndingNetValue: 0,
+          totalCostOverTerm: 0,
+          notes: 'Enter figures for Option A below.',
+        },
+        {
+          id: 'optB',
+          name: 'Option B',
+          category: 'Custom',
+          upfrontCost: 0,
+          monthlyOngoingCost: 0,
+          termYears: 0,
+          projectedEndingNetValue: 0,
+          totalCostOverTerm: 0,
+          notes: 'Enter figures for Option B below.',
+        },
+      ],
+    },
     mortgage: {
       title: '15-Year Fixed vs 30-Year Fixed Mortgage',
       horizon: 15,
@@ -103,12 +132,18 @@ export const ScenarioComparisonCalculator: React.FC = () => {
     },
   };
 
-  const [activePresetKey, setActivePresetKey] = useState<string>('mortgage');
-  const [scenarios, setScenarios] = useState<ScenarioOption[]>(presets.mortgage.scenarios);
+  const [activePresetKey, setActivePresetKey] = useState<string>('custom');
+  const [scenarios, setScenarios] = useState<ScenarioOption[]>(presets.custom.scenarios);
 
   const handleSelectPreset = (key: string) => {
     setActivePresetKey(key);
     setScenarios(presets[key].scenarios);
+  };
+
+  const updateScenario = (id: string, field: keyof ScenarioOption, value: any) => {
+    setScenarios((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
+    );
   };
 
   const results = useMemo(() => {
@@ -194,6 +229,17 @@ export const ScenarioComparisonCalculator: React.FC = () => {
         </span>
         <button
           type="button"
+          onClick={() => handleSelectPreset('custom')}
+          className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all ${
+            activePresetKey === 'custom'
+              ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
+              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-500'
+          }`}
+        >
+          Custom (Start at Zero)
+        </button>
+        <button
+          type="button"
           onClick={() => handleSelectPreset('mortgage')}
           className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all ${
             activePresetKey === 'mortgage'
@@ -237,6 +283,57 @@ export const ScenarioComparisonCalculator: React.FC = () => {
             isHighestValue={scen.id === results.highestEndingValueScenarioId}
             baselineScenario={results.scenarios[0]}
           />
+        ))}
+      </div>
+
+      {/* Scenario Inputs Configurator */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {scenarios.map((scen, idx) => (
+          <Card key={scen.id} className="space-y-4">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center justify-between">
+              <span>{scen.name} Figures</span>
+              <span className="text-xs text-slate-400 font-normal">Scenario {idx + 1}</span>
+            </h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-1">Scenario Label</label>
+                <input
+                  type="text"
+                  value={scen.name}
+                  onChange={(e) => updateScenario(scen.id, 'name', e.target.value)}
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <InputField
+                  label="Upfront Cost"
+                  value={scen.upfrontCost}
+                  onChange={(val) => updateScenario(scen.id, 'upfrontCost', val)}
+                  prefix={currencyConfig.symbol}
+                />
+                <InputField
+                  label="Monthly Cost"
+                  value={scen.monthlyOngoingCost}
+                  onChange={(val) => updateScenario(scen.id, 'monthlyOngoingCost', val)}
+                  prefix={currencyConfig.symbol}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <InputField
+                  label="Term (Years)"
+                  value={scen.termYears}
+                  onChange={(val) => updateScenario(scen.id, 'termYears', val)}
+                  suffix=" yrs"
+                />
+                <InputField
+                  label="Ending Net Value"
+                  value={scen.projectedEndingNetValue}
+                  onChange={(val) => updateScenario(scen.id, 'projectedEndingNetValue', val)}
+                  prefix={currencyConfig.symbol}
+                />
+              </div>
+            </div>
+          </Card>
         ))}
       </div>
 

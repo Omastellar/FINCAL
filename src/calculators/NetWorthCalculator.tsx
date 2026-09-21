@@ -16,19 +16,19 @@ export const NetWorthCalculator: React.FC = () => {
   const { copyShareableLink, copied } = useShareableState();
 
   const [assets, setAssets] = useState<AssetBreakdown>({
-    cashAndSavings: 4_500_000,
-    realEstate: 45_000_000,
-    retirementAccounts: 12_000_000,
-    taxableInvestments: 6_000_000,
-    vehiclesAndValuables: 8_000_000,
+    cashAndSavings: 0,
+    realEstate: 0,
+    retirementAccounts: 0,
+    taxableInvestments: 0,
+    vehiclesAndValuables: 0,
     businessEquity: 0,
   });
 
   const [liabilities, setLiabilities] = useState<LiabilityBreakdown>({
-    mortgages: 22_000_000,
-    autoLoans: 2_500_000,
+    mortgages: 0,
+    autoLoans: 0,
     studentLoans: 0,
-    creditCards: 600_000,
+    creditCards: 0,
     personalLoans: 0,
     otherLiabilities: 0,
   });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface SliderFieldProps {
   label: string;
@@ -10,6 +10,7 @@ interface SliderFieldProps {
   prefix?: string;
   suffix?: string;
   helperText?: string;
+  placeholder?: string;
 }
 
 export const SliderField: React.FC<SliderFieldProps> = ({
@@ -22,21 +23,47 @@ export const SliderField: React.FC<SliderFieldProps> = ({
   prefix,
   suffix,
   helperText,
+  placeholder = '0',
 }) => {
+  const effectiveMin = Math.min(0, min);
+  const [localVal, setLocalVal] = useState<string>(value === 0 ? '' : String(value));
+  const [isFocused, setIsFocused] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!isFocused) {
+      setLocalVal(value === 0 ? '' : String(value));
+    }
+  }, [value, isFocused]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
+    setLocalVal(raw);
     if (raw === '') {
       onChange(0);
       return;
     }
     const parsed = parseFloat(raw);
     if (!isNaN(parsed)) {
-      onChange(Math.max(0, Math.min(max, parsed)));
+      onChange(parsed);
+    }
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    if (localVal === '' || isNaN(parseFloat(localVal))) {
+      onChange(0);
+      setLocalVal('');
+    } else {
+      const parsed = parseFloat(localVal);
+      onChange(parsed);
+      setLocalVal(parsed === 0 ? '' : String(parsed));
     }
   };
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(parseFloat(e.target.value));
+    const num = parseFloat(e.target.value);
+    onChange(num);
+    setLocalVal(num === 0 ? '' : String(num));
   };
 
   return (
@@ -51,10 +78,13 @@ export const SliderField: React.FC<SliderFieldProps> = ({
           )}
           <input
             type="number"
-            value={value}
-            min={min}
+            value={isFocused ? localVal : (value === 0 ? '' : value)}
+            placeholder={placeholder}
+            min={effectiveMin}
             max={max}
-            step={step}
+            step="any"
+            onFocus={() => setIsFocused(true)}
+            onBlur={handleBlur}
             onChange={handleInputChange}
             className={`w-32 sm:w-36 text-right ${
               String(value).length > 8 ? 'text-xs' : 'text-sm'
@@ -72,7 +102,7 @@ export const SliderField: React.FC<SliderFieldProps> = ({
 
       <input
         type="range"
-        min={min}
+        min={effectiveMin}
         max={max}
         step={step}
         value={value}
@@ -83,7 +113,7 @@ export const SliderField: React.FC<SliderFieldProps> = ({
       <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
         <span>
           {prefix}
-          {min.toLocaleString()}
+          {effectiveMin.toLocaleString()}
           {suffix}
         </span>
         {helperText && <span>{helperText}</span>}
