@@ -24,13 +24,13 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
       <div className="text-center space-y-4">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold uppercase tracking-wider">
           <ShieldCheck className="w-3.5 h-3.5" />
-          Financial Precision & Privacy
+          Institutional Financial Precision & Privacy
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          About Finance Calculator
+          About FINCAL Platform
         </h1>
         <p className="text-base text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          A modern fintech application engineered to deliver mathematically verified financial computations, transparent methodologies, and plain-English financial insights.
+          An institutional-grade Financial Planning & Decision-Support Platform engineered to deliver mathematically verified computations, transparent underwriting methodologies, and explainable decision insights across 18 financial engines.
         </p>
       </div>
 

@@ -28,40 +28,53 @@ function parseCalculatorFromQuery(searchQuery: string): CalculatorId | null {
 
 describe('Module 13: UI Navigation, Categories & Amount Box Resilience', () => {
   describe('[TC-CAT-001] Category Filtering & Directory Integrity', () => {
-    it('returns all 7 calculators when "All" category is selected', () => {
+    it('returns all 18 calculators when "All" category is selected', () => {
       const allCalcs = CALCULATORS_LIST;
-      expect(allCalcs.length).toBe(7);
-      expect(allCalcs.map((c) => c.id)).toEqual([
-        'loan',
-        'savings',
-        'compound-interest',
-        'investment',
-        'debt-payoff',
-        'budget',
-        'currency-converter',
-      ]);
+      expect(allCalcs.length).toBe(18);
+      expect(allCalcs.map((c) => c.id)).toContain('loan');
+      expect(allCalcs.map((c) => c.id)).toContain('mortgage');
+      expect(allCalcs.map((c) => c.id)).toContain('savings');
+      expect(allCalcs.map((c) => c.id)).toContain('budget');
+      expect(allCalcs.map((c) => c.id)).toContain('currency-converter');
     });
 
     it('filters correctly for "Borrowing" category', () => {
       const borrowing = CALCULATORS_LIST.filter((c) => c.category === 'Borrowing');
-      expect(borrowing.length).toBe(2);
+      expect(borrowing.length).toBe(8);
       expect(borrowing.map((c) => c.id)).toContain('loan');
+      expect(borrowing.map((c) => c.id)).toContain('mortgage');
       expect(borrowing.map((c) => c.id)).toContain('debt-payoff');
     });
 
     it('filters correctly for "Growth" (mapped to "Growing") category', () => {
       const growth = CALCULATORS_LIST.filter((c) => c.category === 'Growing');
-      expect(growth.length).toBe(3);
+      expect(growth.length).toBe(5);
       expect(growth.map((c) => c.id)).toContain('savings');
       expect(growth.map((c) => c.id)).toContain('compound-interest');
       expect(growth.map((c) => c.id)).toContain('investment');
+      expect(growth.map((c) => c.id)).toContain('retirement');
     });
 
     it('filters correctly for "Planning" category', () => {
       const planning = CALCULATORS_LIST.filter((c) => c.category === 'Planning');
-      expect(planning.length).toBe(2);
+      expect(planning.length).toBe(5);
       expect(planning.map((c) => c.id)).toContain('budget');
       expect(planning.map((c) => c.id)).toContain('currency-converter');
+      expect(planning.map((c) => c.id)).toContain('financial-goals');
+      expect(planning.map((c) => c.id)).toContain('scenarios');
+    });
+
+    it('groups accurately into the 4 official financial suites', () => {
+      const loans = CALCULATORS_LIST.filter((c) => c.suite === 'Loans');
+      const savings = CALCULATORS_LIST.filter((c) => c.suite === 'Savings & Investments');
+      const budgetDebt = CALCULATORS_LIST.filter((c) => c.suite === 'Budget & Debt');
+      const planningDecisions = CALCULATORS_LIST.filter((c) => c.suite === 'Planning & Decisions');
+
+      expect(loans.length).toBe(5);
+      expect(savings.length).toBe(5);
+      expect(budgetDebt.length).toBe(5);
+      expect(planningDecisions.length).toBe(3);
+      expect(loans.length + savings.length + budgetDebt.length + planningDecisions.length).toBe(18);
     });
   });
 

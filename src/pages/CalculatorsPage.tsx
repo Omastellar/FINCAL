@@ -11,17 +11,38 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
+  Home,
+  Compass,
+  Car,
+  Target,
+  UserCheck,
+  Activity,
+  Landmark,
+  Columns3,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PageView } from '../types/navigation';
 import { CALCULATORS_LIST } from '../data/calculatorMetadata';
-import { CalculatorId } from '../types/calculators';
+import { CalculatorId, CalculatorSuite } from '../types/calculators';
+
+// All Calculator Modules
 import { LoanCalculator } from '../calculators/LoanCalculator';
+import { MortgageCalculator } from '../calculators/MortgageCalculator';
+import { HomeAffordabilityCalculator } from '../calculators/HomeAffordabilityCalculator';
+import { AutoLoanCalculator } from '../calculators/AutoLoanCalculator';
+import { PersonalLoanCalculator } from '../calculators/PersonalLoanCalculator';
 import { SavingsCalculator } from '../calculators/SavingsCalculator';
+import { SavingsGoalCalculator } from '../calculators/SavingsGoalCalculator';
 import { CompoundInterestCalculator } from '../calculators/CompoundInterestCalculator';
 import { InvestmentCalculator } from '../calculators/InvestmentCalculator';
-import { DebtPayoffCalculator } from '../calculators/DebtPayoffCalculator';
+import { RetirementCalculator } from '../calculators/RetirementCalculator';
 import { BudgetCalculator } from '../calculators/BudgetCalculator';
+import { DebtPayoffCalculator } from '../calculators/DebtPayoffCalculator';
+import { MultiDebtPayoffCalculator } from '../calculators/MultiDebtPayoffCalculator';
+import { DTICalculator } from '../calculators/DTICalculator';
+import { NetWorthCalculator } from '../calculators/NetWorthCalculator';
+import { FinancialGoalPlanner } from '../calculators/FinancialGoalPlanner';
+import { ScenarioComparisonCalculator } from '../calculators/ScenarioComparisonCalculator';
 import { CurrencyConverterCalculator } from '../calculators/CurrencyConverterCalculator';
 
 interface CalculatorsPageProps {
@@ -35,17 +56,30 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
   onSelectCalculator,
   onNavigate,
 }) => {
-  const { user, isAuthenticated, quickLogin } = useAuth();
+  const { isAuthenticated } = useAuth();
+
   const getCalcFromUrl = (): CalculatorId | null => {
     try {
       const search = new URLSearchParams(window.location.search);
       const param = search.get('calc');
+      if (!param) return null;
       if (param === 'loan') return 'loan';
+      if (param === 'mortgage') return 'mortgage';
+      if (param === 'home-affordability' || param === 'affordability') return 'home-affordability';
+      if (param === 'auto-loan' || param === 'auto') return 'auto-loan';
+      if (param === 'personal-loan' || param === 'personal') return 'personal-loan';
       if (param === 'savings') return 'savings';
+      if (param === 'savings-goal' || param === 'goal') return 'savings-goal';
       if (param === 'compound' || param === 'compound-interest') return 'compound-interest';
       if (param === 'investment') return 'investment';
-      if (param === 'debt' || param === 'debt-payoff') return 'debt-payoff';
+      if (param === 'retirement') return 'retirement';
       if (param === 'budget') return 'budget';
+      if (param === 'debt' || param === 'debt-payoff') return 'debt-payoff';
+      if (param === 'multi-debt-payoff' || param === 'multi-debt') return 'multi-debt-payoff';
+      if (param === 'dti') return 'dti';
+      if (param === 'net-worth') return 'net-worth';
+      if (param === 'financial-goals' || param === 'goals') return 'financial-goals';
+      if (param === 'scenarios' || param === 'scenario') return 'scenarios';
       if (param === 'currency' || param === 'currency-converter') return 'currency-converter';
     } catch {
       // ignore
@@ -56,7 +90,18 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
   const [activeCalcId, setActiveCalcId] = useState<CalculatorId | null>(() => {
     return initialCalculatorId !== undefined ? initialCalculatorId : getCalcFromUrl();
   });
-  const categories = ['All', 'Borrowing', 'Growth', 'Planning'] as const;
+
+  const categories = [
+    'All',
+    'Loans',
+    'Savings & Investments',
+    'Budget & Debt',
+    'Planning & Decisions',
+    'Borrowing',
+    'Growth',
+    'Planning',
+  ] as const;
+
   type CategoryTab = (typeof categories)[number];
 
   const [selectedCategory, setSelectedCategory] = useState<CategoryTab>('All');
@@ -70,8 +115,14 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
 
   const filteredCalculators = CALCULATORS_LIST.filter((calc) => {
     if (selectedCategory === 'All') return true;
-    if (selectedCategory === 'Growth') return calc.category === 'Growing';
-    return calc.category === selectedCategory;
+    if (selectedCategory === 'Loans') return calc.suite === 'Loans';
+    if (selectedCategory === 'Savings & Investments') return calc.suite === 'Savings & Investments';
+    if (selectedCategory === 'Budget & Debt') return calc.suite === 'Budget & Debt';
+    if (selectedCategory === 'Planning & Decisions') return calc.suite === 'Planning & Decisions';
+    if (selectedCategory === 'Growth') return calc.category === 'Growing' || calc.suite === 'Savings & Investments';
+    if (selectedCategory === 'Borrowing') return calc.category === 'Borrowing' || calc.suite === 'Loans';
+    if (selectedCategory === 'Planning') return calc.category === 'Planning' || calc.suite === 'Planning & Decisions';
+    return calc.category === selectedCategory || calc.suite === selectedCategory;
   });
 
   const handleCategoryClick = (cat: CategoryTab) => {
@@ -87,16 +138,38 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
     switch (id) {
       case 'loan':
         return <CreditCard className="w-4 h-4" />;
+      case 'mortgage':
+        return <Home className="w-4 h-4" />;
+      case 'home-affordability':
+        return <Compass className="w-4 h-4" />;
+      case 'auto-loan':
+        return <Car className="w-4 h-4" />;
+      case 'personal-loan':
+        return <CreditCard className="w-4 h-4" />;
       case 'savings':
         return <PiggyBank className="w-4 h-4" />;
+      case 'savings-goal':
+        return <Target className="w-4 h-4" />;
       case 'compound-interest':
         return <Zap className="w-4 h-4" />;
       case 'investment':
         return <BarChart3 className="w-4 h-4" />;
-      case 'debt-payoff':
-        return <Flame className="w-4 h-4" />;
+      case 'retirement':
+        return <UserCheck className="w-4 h-4" />;
       case 'budget':
         return <Wallet className="w-4 h-4" />;
+      case 'debt-payoff':
+        return <Flame className="w-4 h-4" />;
+      case 'multi-debt-payoff':
+        return <Flame className="w-4 h-4 text-orange-500" />;
+      case 'dti':
+        return <Activity className="w-4 h-4" />;
+      case 'net-worth':
+        return <Landmark className="w-4 h-4" />;
+      case 'financial-goals':
+        return <Target className="w-4 h-4 text-purple-500" />;
+      case 'scenarios':
+        return <Columns3 className="w-4 h-4" />;
       case 'currency-converter':
         return <ArrowRightLeft className="w-4 h-4" />;
       default:
@@ -109,16 +182,38 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
     switch (activeCalcId) {
       case 'loan':
         return <LoanCalculator />;
+      case 'mortgage':
+        return <MortgageCalculator />;
+      case 'home-affordability':
+        return <HomeAffordabilityCalculator />;
+      case 'auto-loan':
+        return <AutoLoanCalculator />;
+      case 'personal-loan':
+        return <PersonalLoanCalculator />;
       case 'savings':
         return <SavingsCalculator />;
+      case 'savings-goal':
+        return <SavingsGoalCalculator />;
       case 'compound-interest':
         return <CompoundInterestCalculator />;
       case 'investment':
         return <InvestmentCalculator />;
-      case 'debt-payoff':
-        return <DebtPayoffCalculator />;
+      case 'retirement':
+        return <RetirementCalculator />;
       case 'budget':
         return <BudgetCalculator />;
+      case 'debt-payoff':
+        return <DebtPayoffCalculator />;
+      case 'multi-debt-payoff':
+        return <MultiDebtPayoffCalculator />;
+      case 'dti':
+        return <DTICalculator />;
+      case 'net-worth':
+        return <NetWorthCalculator />;
+      case 'financial-goals':
+        return <FinancialGoalPlanner />;
+      case 'scenarios':
+        return <ScenarioComparisonCalculator />;
       case 'currency-converter':
         return <CurrencyConverterCalculator />;
       default:
@@ -134,7 +229,7 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
           <div className="flex items-center gap-2.5 text-slate-700 dark:text-slate-300">
             <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
             <span>
-              <strong>Guest Access Active:</strong> You have full access to all 7 calculators. Your calculation data will not be saved to your portfolio until you{' '}
+              <strong>Guest Access Active:</strong> You have unrestricted access to all 18 institutional financial engines. Your calculation data will not be saved permanently to your portfolio until you{' '}
               <button
                 type="button"
                 onClick={() => onNavigate?.('login')}
@@ -169,13 +264,6 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
                       ? 'bg-emerald-600 text-white shadow-xs'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
-                  title={
-                    isSelected
-                      ? isCollapsed
-                        ? `Expand ${cat}`
-                        : `Collapse ${cat}`
-                      : `Filter by ${cat}`
-                  }
                 >
                   <span>{cat}</span>
                   {isSelected &&
@@ -197,11 +285,6 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
               type="button"
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-              title={
-                isCollapsed
-                  ? `Expand ${selectedCategory} calculators`
-                  : `Collapse ${selectedCategory} calculators`
-              }
               aria-expanded={!isCollapsed}
             >
               <span>{isCollapsed ? 'Expand' : 'Collapse'}</span>
@@ -216,7 +299,7 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
 
         {/* Calculator Tab Buttons Bar (Collapsible) */}
         {!isCollapsed ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 transition-all">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 transition-all">
             {filteredCalculators.map((calc) => {
               const isActive = activeCalcId === calc.id;
               return (
@@ -244,7 +327,7 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
                       {getCalcIcon(calc.id)}
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      {calc.category === 'Growing' ? 'GROWTH' : calc.category}
+                      {calc.suite ? calc.suite.split(' ')[0] : calc.category}
                     </span>
                   </div>
                   <span className="text-xs font-bold leading-snug line-clamp-1">
@@ -258,7 +341,6 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
           <div
             onClick={() => setIsCollapsed(false)}
             className="p-3.5 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 flex items-center justify-between cursor-pointer hover:border-emerald-500/40 hover:bg-slate-100/60 dark:hover:bg-slate-900/60 transition-all"
-            title="Click to expand calculators"
           >
             <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
               <span className="font-bold text-slate-800 dark:text-slate-200">
@@ -286,10 +368,10 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
             <TrendingUp className="w-6 h-6" />
           </div>
           <h3 className="text-base font-bold text-slate-900 dark:text-white">
-            Choose a Calculator to Get Started
+            Choose a Financial Engine to Get Started
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
-            Select any financial tool from the options above or the sidebar to view calculations, schedules, and charts.
+            Select any tool from the 4 suites above or use the sidebar navigation to run simulations, view schedules, and inspect mathematical proofs.
           </p>
         </div>
       )}

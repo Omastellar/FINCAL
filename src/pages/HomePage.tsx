@@ -13,6 +13,15 @@ import {
   Globe,
   Sparkles,
   ArrowRightLeft,
+  Home,
+  Compass,
+  Car,
+  Target,
+  UserCheck,
+  Activity,
+  Landmark,
+  Columns3,
+  LayoutDashboard,
 } from 'lucide-react';
 import { CALCULATORS_LIST } from '../data/calculatorMetadata';
 import { CalculatorId } from '../types/calculators';
@@ -29,21 +38,43 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const getCalculatorIcon = (id: CalculatorId) => {
     switch (id) {
       case 'loan':
-        return <CreditCard className="w-6 h-6 text-emerald-500" />;
+        return <CreditCard className="w-5 h-5 text-emerald-500" />;
+      case 'mortgage':
+        return <Home className="w-5 h-5 text-emerald-500" />;
+      case 'home-affordability':
+        return <Compass className="w-5 h-5 text-emerald-500" />;
+      case 'auto-loan':
+        return <Car className="w-5 h-5 text-emerald-500" />;
+      case 'personal-loan':
+        return <CreditCard className="w-5 h-5 text-emerald-500" />;
       case 'savings':
-        return <PiggyBank className="w-6 h-6 text-teal-500" />;
+        return <PiggyBank className="w-5 h-5 text-teal-500" />;
+      case 'savings-goal':
+        return <Target className="w-5 h-5 text-teal-500" />;
       case 'compound-interest':
-        return <Zap className="w-6 h-6 text-indigo-500" />;
+        return <Zap className="w-5 h-5 text-indigo-500" />;
       case 'investment':
-        return <BarChart3 className="w-6 h-6 text-blue-500" />;
-      case 'debt-payoff':
-        return <Flame className="w-6 h-6 text-rose-500" />;
+        return <BarChart3 className="w-5 h-5 text-blue-500" />;
+      case 'retirement':
+        return <UserCheck className="w-5 h-5 text-blue-500" />;
       case 'budget':
-        return <Wallet className="w-6 h-6 text-amber-500" />;
+        return <Wallet className="w-5 h-5 text-purple-500" />;
+      case 'debt-payoff':
+        return <Flame className="w-5 h-5 text-rose-500" />;
+      case 'multi-debt-payoff':
+        return <Flame className="w-5 h-5 text-orange-500" />;
+      case 'dti':
+        return <Activity className="w-5 h-5 text-purple-500" />;
+      case 'net-worth':
+        return <Landmark className="w-5 h-5 text-purple-500" />;
+      case 'financial-goals':
+        return <Target className="w-5 h-5 text-amber-500" />;
+      case 'scenarios':
+        return <Columns3 className="w-5 h-5 text-amber-500" />;
       case 'currency-converter':
-        return <ArrowRightLeft className="w-6 h-6 text-teal-500" />;
+        return <ArrowRightLeft className="w-5 h-5 text-teal-500" />;
       default:
-        return <TrendingUp className="w-6 h-6 text-emerald-500" />;
+        return <TrendingUp className="w-5 h-5 text-emerald-500" />;
     }
   };
 
@@ -51,36 +82,36 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     <div className="space-y-20">
       {/* Hero Section */}
       <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden rounded-3xl bg-gradient-to-b from-emerald-500/10 via-slate-500/5 to-transparent border border-emerald-500/10 dark:border-emerald-500/5 px-6 sm:px-12 text-center">
-        {/* Subtle Background Glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/15 dark:bg-emerald-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold uppercase tracking-wider mb-6">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold uppercase tracking-wider mb-6">
           <Sparkles className="w-3.5 h-3.5" />
-          Modern Fintech Decision Suite
+          FINCAL Institutional Planning Platform
         </div>
 
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-tight sm:leading-tight">
-          Make Better Financial Decisions
+          Financial Planning & Decision-Support Platform
         </h1>
 
-        <p className="text-base sm:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-6 leading-relaxed font-normal">
-          Simple, accurate calculators to help you understand loans, savings, investments, debt and your everyday finances.
+        <p className="text-base sm:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto mt-6 leading-relaxed font-normal">
+          Institutional-grade modeling across 18 specialized engines. Analyze mortgage PITI, simulate multi-debt payoffs without bias, model retirement horizons, and compare complex financial scenarios side-by-side.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
           <button
-            onClick={() => onNavigate('calculators')}
-            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base shadow-lg shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+            onClick={() => onNavigate('dashboard')}
+            className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base shadow-lg shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 group cursor-pointer"
           >
-            <span>Explore Calculators</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <LayoutDashboard className="w-4 h-4" />
+            <span>Open Financial Dashboard</span>
           </button>
 
           <button
-            onClick={() => onNavigate('about')}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 font-semibold text-base transition-colors"
+            onClick={() => onNavigate('calculators')}
+            className="w-full sm:w-auto px-7 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 font-semibold text-base transition-colors flex items-center justify-center gap-2"
           >
-            How It Works
+            <span>Explore 18 Engines</span>
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
@@ -88,7 +119,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         <div className="flex items-center justify-center gap-2 mt-8 text-xs text-slate-500 dark:text-slate-400 font-medium">
           <Globe className="w-4 h-4 text-emerald-500" />
           <span>
-            Active currency: <strong className="text-slate-700 dark:text-slate-200">{currencyConfig.name}</strong> (switchable anytime to NGN, USD, GBP, EUR)
+            Default institutional currency: <strong className="text-slate-700 dark:text-slate-200">{currencyConfig.name} ({currencyConfig.symbol})</strong> • Live cross-rates for USD, GBP, EUR
           </span>
         </div>
       </section>
@@ -103,7 +134,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             Mathematically Exact
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Real actuarial and compounding formulas with 0% interest handling and zero fake figures.
+            Real actuarial amortization and compounding formulas with 0% interest handling and zero dummy figures.
           </p>
         </div>
 
@@ -112,22 +143,22 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <BarChart3 className="w-5 h-5" />
           </div>
           <h3 className="font-bold text-slate-900 dark:text-white text-base">
-            Interactive Visuals
+            Explainable Results
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Dynamic Recharts visualizations for growth projections, principal breakdowns, and timelines.
+            Transparent "How this was calculated" breakdowns showing underlying assumptions and step-by-step formulas.
           </p>
         </div>
 
         <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
           <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-4">
-            <Sparkles className="w-5 h-5" />
+            <Columns3 className="w-5 h-5" />
           </div>
           <h3 className="font-bold text-slate-900 dark:text-white text-base">
-            Plain-English Insights
+            Scenario Modeling
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Clear, actionable takeaways explaining the impact of extra payments, rates, and time horizons.
+            Side-by-side comparative modeling for Buy vs Rent, 15 vs 30-year mortgages, and debt acceleration strategies.
           </p>
         </div>
 
@@ -136,30 +167,30 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <ShieldCheck className="w-5 h-5" />
           </div>
           <h3 className="font-bold text-slate-900 dark:text-white text-base">
-            Open Access, Saved Portfolios
+            Guest Access & Portfolios
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Free interactive calculator access for all visitors. Register to save custom models and track scenarios across devices.
+            Immediate calculator access for all guests with registered portfolios for saving models across devices.
           </p>
         </div>
       </section>
 
-      {/* Calculators Explorer Grid */}
+      {/* 18 Calculators Explorer Grid */}
       <section className="space-y-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Financial Calculators
+              The 18 Financial Planning Engines
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Select a specialized calculator to run accurate projections and scenarios.
+              Select any specialized engine to run simulations, view schedules, and inspect mathematical proofs.
             </p>
           </div>
           <button
             onClick={() => onNavigate('calculators')}
-            className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 flex items-center gap-1"
+            className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 flex items-center gap-1 cursor-pointer"
           >
-            <span>View All Calculators</span>
+            <span>View All by Suite</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -176,14 +207,19 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 group-hover:scale-105 transition-transform">
                     {getCalculatorIcon(calc.id)}
                   </div>
-                  {calc.badge && (
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                      {calc.badge}
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                      {calc.suite}
                     </span>
-                  )}
+                    {calc.badge && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                        {calc.badge}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                   {calc.title}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
@@ -192,7 +228,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               </div>
 
               <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                <span>Launch Calculator</span>
+                <span>Launch Engine</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
               </div>
             </div>

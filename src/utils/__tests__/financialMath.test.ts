@@ -11,6 +11,17 @@ import {
   calculateCurrencyConversion,
   getCurrencyExchangeRate,
   sanitizeNumber,
+  calculateMortgage,
+  calculateHomeAffordability,
+  calculateAutoLoan,
+  calculatePersonalLoan,
+  calculateSavingsGoal,
+  calculateRetirement,
+  calculateMultiDebtPayoff,
+  calculateDTI,
+  calculateNetWorth,
+  calculateFinancialGoals,
+  compareScenarios,
 } from '../financialMath';
 import { formatCurrency, formatDurationMonths } from '../formatters';
 
@@ -371,4 +382,234 @@ describe('Module 10: Currency Converter & FX Valuation Engine', () => {
     expect(ngnRow?.amount).toBe(154_000);
   });
 });
+
+describe('Module 14: Mortgage & PITI Engine', () => {
+  it('[TC-MTG-001] calculates monthly PITI payment with PMI and taxes', () => {
+    const result = calculateMortgage({
+      homePrice: 500_000,
+      downPayment: 50_000, // 10% down -> PMI required
+      downPaymentIsPercent: false,
+      interestRate: 6.5,
+      loanTermYears: 30,
+      propertyTaxAnnual: 6000,
+      homeInsuranceAnnual: 1200,
+      hoaMonthly: 150,
+      pmiRate: 0.8,
+      closingCostsPct: 2.5,
+      extraMonthlyPayment: 200,
+    });
+
+    expect(result.loanAmount).toBe(450_000);
+    expect(result.downPaymentPercent).toBe(10);
+    expect(result.principalAndInterest).toBeGreaterThan(2800);
+    expect(result.monthlyPropertyTax).toBe(500);
+    expect(result.monthlyHomeInsurance).toBe(100);
+    expect(result.monthlyHOA).toBe(150);
+    expect(result.monthlyPMI).toBeGreaterThan(0);
+    expect(result.totalMonthlyPITI).toBeGreaterThan(3500);
+    expect(result.upfrontClosingCosts).toBe(11_250);
+    expect(result.totalCashNeededToClose).toBe(61_250);
+    expect(result.interestSaved).toBeGreaterThan(50_000);
+    expect(result.payoffMonthsSaved).toBeGreaterThan(30);
+  });
+});
+
+describe('Module 15: Home Affordability Engine', () => {
+  it('[TC-AFF-001] calculates purchase ceiling based on 28/36 DTI limits', () => {
+    const result = calculateHomeAffordability({
+      annualGrossIncome: 120_000,
+      monthlyDebts: 600,
+      downPaymentSaved: 60_000,
+      interestRate: 6.5,
+      loanTermYears: 30,
+      propertyTaxRate: 1.2,
+      homeInsuranceAnnual: 1200,
+      targetFrontEndDti: 28,
+      targetBackEndDti: 36,
+    });
+
+    expect(result.maxHomePurchasePrice).toBeGreaterThan(250_000);
+    expect(result.maxLoanAmount).toBeGreaterThan(200_000);
+    expect(result.conservativePrice).toBeLessThanOrEqual(result.moderatePrice);
+    expect(result.moderatePrice).toBeLessThanOrEqual(result.aggressivePrice);
+  });
+});
+
+describe('Module 16: Auto Loan & Trade-In Engine', () => {
+  it('[TC-AUTO-001] calculates payment factoring in trade-in and fees', () => {
+    const result = calculateAutoLoan({
+      vehiclePrice: 35_000,
+      downPayment: 5_000,
+      tradeInValue: 8_000,
+      tradeInBalanceOwed: 2_000, // +6,000 net equity
+      salesTaxPct: 7.0,
+      dealerFees: 500,
+      cashRebate: 1_000,
+      interestRate: 5.5,
+      loanTermMonths: 60,
+    });
+
+    expect(result.netTradeIn).toBe(6_000);
+    expect(result.totalFinanced).toBeLessThan(30_000);
+    expect(result.monthlyPayment).toBeGreaterThan(400);
+    expect(result.amortizationSchedule.length).toBe(60);
+  });
+});
+
+describe('Module 17: Personal Loan & APR Engine', () => {
+  it('[TC-PERS-001] calculates effective APR factoring upfront origination fees', () => {
+    const result = calculatePersonalLoan({
+      loanAmount: 20_000,
+      interestRate: 10.0,
+      loanTermMonths: 36,
+      originationFeePct: 3.0,
+    });
+
+    expect(result.originationFeeAmount).toBe(600);
+    expect(result.netDisbursedAmount).toBe(19_400);
+    expect(result.monthlyPayment).toBeGreaterThan(600);
+    expect(result.effectiveAPR).toBeGreaterThan(10.0);
+  });
+});
+
+describe('Module 18: Savings Goal & Target Engine', () => {
+  it('[TC-GOAL-001] determines required monthly savings to reach future target', () => {
+    const result = calculateSavingsGoal({
+      targetAmount: 50_000,
+      currentSavings: 10_000,
+      timeframeMonths: 24,
+      annualReturnRate: 6.0,
+    });
+
+    expect(result.progressPercentage).toBe(20);
+    expect(result.requiredMonthlyDeposit).toBeGreaterThan(1400);
+    expect(result.requiredMonthlyDeposit).toBeLessThan(1700);
+    expect(result.lumpSumNeededToday).toBeLessThan(50_000);
+    expect(result.monthlySchedule.length).toBe(24);
+  });
+});
+
+describe('Module 19: Retirement & Nest Egg Engine', () => {
+  it('[TC-RET-001] projects nest egg and funding gap', () => {
+    const result = calculateRetirement({
+      currentAge: 30,
+      retirementAge: 65,
+      lifeExpectancy: 85,
+      currentNestEgg: 25_000,
+      monthlyContribution: 500,
+      expectedAnnualReturnPre: 7.0,
+      expectedAnnualReturnPost: 4.5,
+      desiredMonthlyRetirementIncome: 4_000,
+      inflationRate: 2.5,
+      pensionOrSocialSecurityMonthly: 1_200,
+    });
+
+    expect(result.nestEggAtRetirement).toBeGreaterThan(500_000);
+    expect(result.yearsInRetirement).toBe(20);
+    expect(result.timeline.length).toBe(56);
+  });
+});
+
+describe('Module 20: Multi-Debt Payoff Engine', () => {
+  it('[TC-DEBT-001] compares Avalanche vs Snowball vs Minimum', () => {
+    const debts = [
+      { id: '1', name: 'Credit Card', balance: 5_000, interestRate: 22.0, minimumPayment: 150 },
+      { id: '2', name: 'Car Loan', balance: 12_000, interestRate: 6.5, minimumPayment: 250 },
+      { id: '3', name: 'Personal Loan', balance: 8_000, interestRate: 14.0, minimumPayment: 200 },
+    ];
+
+    const result = calculateMultiDebtPayoff({
+      debts,
+      extraMonthlyPayment: 300,
+    });
+
+    expect(result.avalanche.totalInterestPaid).toBeLessThanOrEqual(result.snowball.totalInterestPaid);
+    expect(result.snowball.totalInterestPaid).toBeLessThan(result.minimumOnly.totalInterestPaid);
+    expect(result.avalanche.totalMonths).toBeLessThan(result.minimumOnly.totalMonths);
+    expect(result.interestSavedAvalancheVsMinimum).toBeGreaterThan(0);
+  });
+});
+
+describe('Module 21: Debt-to-Income Diagnostic Engine', () => {
+  it('[TC-DTI-001] evaluates front-end and back-end ratios and assigns health status', () => {
+    const result = calculateDTI({
+      grossMonthlyIncome: 8_000,
+      monthlyMortgageOrRent: 2_000,
+      propertyTaxMonthly: 200,
+      homeInsuranceMonthly: 80,
+      autoLoanMonthly: 400,
+      studentLoanMonthly: 250,
+      creditCardMinMonthly: 120,
+      otherDebtMonthly: 0,
+    });
+
+    expect(result.frontEndDTI).toBeCloseTo(28.5, 1);
+    expect(result.backEndDTI).toBeCloseTo(38.1, 1);
+    expect(result.status).toBe('moderate');
+    expect(result.recommendations.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Module 22: Net Worth & Allocation Engine', () => {
+  it('[TC-NW-001] calculates total net worth and asset allocation breakdown', () => {
+    const result = calculateNetWorth({
+      assets: {
+        cashAndSavings: 25_000,
+        realEstate: 400_000,
+        retirementAccounts: 120_000,
+        taxableInvestments: 45_000,
+        vehiclesAndValuables: 30_000,
+        businessEquity: 0,
+      },
+      liabilities: {
+        mortgages: 280_000,
+        autoLoans: 15_000,
+        studentLoans: 20_000,
+        creditCards: 3_000,
+        personalLoans: 0,
+        otherLiabilities: 0,
+      },
+    });
+
+    expect(result.totalAssets).toBe(620_000);
+    expect(result.totalLiabilities).toBe(318_000);
+    expect(result.netWorth).toBe(302_000);
+    expect(result.debtToAssetRatio).toBeCloseTo(51.29, 1);
+    expect(result.liquidAssets).toBe(25_000);
+    expect(result.assetDistribution.length).toBe(5);
+  });
+});
+
+describe('Module 23: Financial Goals & Scenario Comparison', () => {
+  it('[TC-GOALS-001] prioritizes goals and calculates surplus or shortfall against monthly budget', () => {
+    const result = calculateFinancialGoals({
+      monthlySavingsBudget: 1_200,
+      goals: [
+        { id: '1', title: 'Emergency Fund', category: 'Emergency', targetAmount: 15_000, currentAmount: 6_000, targetDate: '2027-12', priority: 'high' },
+        { id: '2', title: 'Vacation', category: 'Travel', targetAmount: 4_000, currentAmount: 1_000, targetDate: '2027-06', priority: 'low' },
+      ],
+    });
+
+    expect(result.totalTargetAmount).toBe(19_000);
+    expect(result.totalCurrentAmount).toBe(7_000);
+    expect(result.goals.length).toBe(2);
+    expect(result.overallProgressPct).toBeCloseTo(36.8, 1);
+  });
+
+  it('[TC-SCEN-001] compares side-by-side financial options', () => {
+    const result = compareScenarios({
+      comparisonTitle: '15-Year vs 30-Year Mortgage',
+      horizonYears: 15,
+      scenarios: [
+        { id: '15yr', name: '15-Year Fixed', category: 'Mortgage Term', upfrontCost: 10_000, monthlyOngoingCost: 2_600, termYears: 15, projectedEndingNetValue: 400_000, totalCostOverTerm: 478_000 },
+        { id: '30yr', name: '30-Year Fixed', category: 'Mortgage Term', upfrontCost: 10_000, monthlyOngoingCost: 1_850, termYears: 15, projectedEndingNetValue: 250_000, totalCostOverTerm: 343_000 },
+      ],
+    });
+
+    expect(result.lowestCostScenarioId).toBe('30yr');
+    expect(result.highestEndingValueScenarioId).toBe('15yr');
+    expect(result.deltaSummary.length).toBe(3);
+  });
+});
+
 

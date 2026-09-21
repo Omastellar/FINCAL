@@ -21,6 +21,33 @@ import {
   CurrencyConversionInputs,
   CurrencyConversionResults,
   CurrencyMatrixItem,
+  MortgageInputs,
+  MortgageResults,
+  HomeAffordabilityInputs,
+  HomeAffordabilityResults,
+  AutoLoanInputs,
+  AutoLoanResults,
+  PersonalLoanInputs,
+  PersonalLoanResults,
+  SavingsGoalInputs,
+  SavingsGoalResults,
+  RetirementInputs,
+  RetirementResults,
+  DebtItem,
+  DebtPayoffPlanSummary,
+  MultiDebtPayoffInputs,
+  MultiDebtPayoffResults,
+  DTIInputs,
+  DTIResults,
+  NetWorthInputs,
+  NetWorthResults,
+  FinancialGoalItem,
+  FinancialGoalInputs,
+  FinancialGoalsResults,
+  ScenarioOption,
+  ScenarioComparisonInputs,
+  ScenarioComparisonResults,
+  ExplainableResultData,
 } from '../types/calculators';
 import { CURRENCIES, CurrencyCode } from '../types/currency';
 
@@ -628,6 +655,13 @@ export function calculateBudget(inputs: BudgetInputs): BudgetResults {
   const debtPayments = sanitizeNumber(inputs.expenses.debtPayments, 0, 0);
   const entertainment = sanitizeNumber(inputs.expenses.entertainment, 0, 0);
   const otherExpenses = sanitizeNumber(inputs.expenses.otherExpenses, 0, 0);
+  const healthcare = sanitizeNumber(inputs.expenses.healthcare, 0, 0);
+  const insurance = sanitizeNumber(inputs.expenses.insurance, 0, 0);
+  const diningOut = sanitizeNumber(inputs.expenses.diningOut, 0, 0);
+  const clothing = sanitizeNumber(inputs.expenses.clothing, 0, 0);
+  const travel = sanitizeNumber(inputs.expenses.travel, 0, 0);
+  const personalCare = sanitizeNumber(inputs.expenses.personalCare, 0, 0);
+  const savingsContributions = sanitizeNumber(inputs.expenses.savingsContributions, 0, 0);
 
   const totalExpenses =
     housing +
@@ -636,18 +670,32 @@ export function calculateBudget(inputs: BudgetInputs): BudgetResults {
     utilities +
     debtPayments +
     entertainment +
-    otherExpenses;
+    otherExpenses +
+    healthcare +
+    insurance +
+    diningOut +
+    clothing +
+    travel +
+    personalCare +
+    savingsContributions;
 
   const remainingBalance = totalIncome - totalExpenses;
-  const savingsRate = totalIncome > 0 ? Math.max(0, (remainingBalance / totalIncome) * 100) : 0;
+  const savingsRate = totalIncome > 0 ? Math.max(0, ((remainingBalance + savingsContributions) / totalIncome) * 100) : 0;
 
   const categories = [
     { category: 'Housing', amount: housing, color: '#3b82f6' },
     { category: 'Food & Groceries', amount: food, color: '#10b981' },
     { category: 'Transportation', amount: transportation, color: '#f59e0b' },
     { category: 'Utilities', amount: utilities, color: '#8b5cf6' },
+    { category: 'Healthcare', amount: healthcare, color: '#06b6d4' },
+    { category: 'Insurance', amount: insurance, color: '#6366f1' },
     { category: 'Debt Payments', amount: debtPayments, color: '#ef4444' },
+    { category: 'Dining Out', amount: diningOut, color: '#f97316' },
     { category: 'Entertainment', amount: entertainment, color: '#ec4899' },
+    { category: 'Clothing & Apparel', amount: clothing, color: '#14b8a6' },
+    { category: 'Travel & Vacations', amount: travel, color: '#eab308' },
+    { category: 'Personal Care', amount: personalCare, color: '#a855f7' },
+    { category: 'Savings & Investments', amount: savingsContributions, color: '#22c55e' },
     { category: 'Other Expenses', amount: otherExpenses, color: '#64748b' },
   ];
 
@@ -659,12 +707,12 @@ export function calculateBudget(inputs: BudgetInputs): BudgetResults {
     }));
 
   // 50/30/20 Rule:
-  // Needs: Housing, Food, Transportation, Utilities, Debt
-  // Wants: Entertainment, Other
-  // Savings: Remaining Balance
-  const needsTotal = housing + food + transportation + utilities + debtPayments;
-  const wantsTotal = entertainment + otherExpenses;
-  const savingsTotal = Math.max(0, remainingBalance);
+  // Needs (50%): Housing, Food, Transportation, Utilities, Healthcare, Insurance, Debt
+  // Wants (30%): Entertainment, Dining Out, Clothing, Travel, Personal Care, Other
+  // Savings (20%): Savings Contributions + Remaining Balance
+  const needsTotal = housing + food + transportation + utilities + debtPayments + healthcare + insurance;
+  const wantsTotal = entertainment + otherExpenses + diningOut + clothing + travel + personalCare;
+  const savingsTotal = Math.max(0, remainingBalance) + savingsContributions;
 
   const rule50_30_20 = {
     needs: {
@@ -759,3 +807,864 @@ export function calculateCurrencyConversion(
     matrix,
   };
 }
+
+// -------------------------------------------------------------
+// 8. MORTGAGE CALCULATOR & PITI ENGINE
+// -------------------------------------------------------------
+export function calculateMortgage(inputs: MortgageInputs): MortgageResults {
+  const homePrice = sanitizeNumber(inputs.homePrice, 0, 0);
+  const downPaymentInput = sanitizeNumber(inputs.downPayment, 0, 0);
+  const downPaymentAmount = inputs.downPaymentIsPercent
+    ? (downPaymentInput / 100) * homePrice
+    : Math.min(homePrice, downPaymentInput);
+  const downPaymentPercent = homePrice > 0 ? (downPaymentAmount / homePrice) * 100 : 0;
+  const loanAmount = Math.max(0, homePrice - downPaymentAmount);
+  const interestRate = sanitizeNumber(inputs.interestRate, 0, 0);
+  const loanTermYears = Math.max(1, sanitizeNumber(inputs.loanTermYears, 30, 1));
+  const totalMonths = loanTermYears * 12;
+  const monthlyRate = interestRate > 0 ? (interestRate / 100) / 12 : 0;
+
+  // Monthly Principal & Interest
+  let principalAndInterest = 0;
+  if (loanAmount > 0) {
+    if (monthlyRate === 0) {
+      principalAndInterest = loanAmount / totalMonths;
+    } else {
+      principalAndInterest =
+        (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) /
+        (Math.pow(1 + monthlyRate, totalMonths) - 1);
+    }
+  }
+
+  const monthlyPropertyTax = sanitizeNumber(inputs.propertyTaxAnnual, 0, 0) / 12;
+  const monthlyHomeInsurance = sanitizeNumber(inputs.homeInsuranceAnnual, 0, 0) / 12;
+  const monthlyHOA = sanitizeNumber(inputs.hoaMonthly, 0, 0);
+  const pmiRate = sanitizeNumber(inputs.pmiRate, 0.5, 0);
+  const closingCostsPct = sanitizeNumber(inputs.closingCostsPct, 2, 0);
+  const extraMonthlyPayment = sanitizeNumber(inputs.extraMonthlyPayment, 0, 0);
+
+  const initialPMIRequired = downPaymentPercent < 20 && loanAmount > 0;
+  const initialMonthlyPMI = initialPMIRequired ? (loanAmount * (pmiRate / 100)) / 12 : 0;
+
+  const upfrontClosingCosts = (closingCostsPct / 100) * loanAmount;
+  const totalCashNeededToClose = downPaymentAmount + upfrontClosingCosts;
+  const totalMonthlyPITI = principalAndInterest + monthlyPropertyTax + monthlyHomeInsurance + monthlyHOA + initialMonthlyPMI;
+
+  // Standard Amortization Schedule (tracking PMI drop-off at 80% LTV of initial homePrice)
+  const pmiTerminationThreshold = homePrice * 0.8;
+  let pmiDropMonth = 0;
+  let stdBalance = loanAmount;
+  let stdTotalInterest = 0;
+
+  for (let m = 1; m <= totalMonths && stdBalance > 0; m++) {
+    const interest = stdBalance * monthlyRate;
+    const principal = Math.min(stdBalance, principalAndInterest - interest);
+    stdBalance -= principal;
+    stdTotalInterest += interest;
+    if (pmiDropMonth === 0 && stdBalance <= pmiTerminationThreshold && initialPMIRequired) {
+      pmiDropMonth = m;
+    }
+  }
+  const totalRepaymentStandard = loanAmount + stdTotalInterest;
+
+  // Accelerated Schedule with Extra Monthly Payment
+  const amortizationSchedule: AmortizationRow[] = [];
+  let currentBalance = loanAmount;
+  let accTotalInterest = 0;
+  let monthCount = 0;
+
+  while (currentBalance > 0.01 && monthCount < totalMonths * 2) {
+    monthCount++;
+    const interestPaid = currentBalance * monthlyRate;
+    let scheduledPrincipal = principalAndInterest - interestPaid;
+    let extra = extraMonthlyPayment;
+
+    if (scheduledPrincipal + extra > currentBalance) {
+      const needed = currentBalance;
+      if (scheduledPrincipal >= needed) {
+        scheduledPrincipal = needed;
+        extra = 0;
+      } else {
+        extra = needed - scheduledPrincipal;
+      }
+    }
+
+    const principalPaid = scheduledPrincipal + extra;
+    currentBalance = Math.max(0, currentBalance - principalPaid);
+    accTotalInterest += interestPaid;
+
+    if (monthCount <= 360) {
+      amortizationSchedule.push({
+        period: monthCount,
+        payment: principalPaid + interestPaid,
+        principalPaid,
+        interestPaid,
+        remainingBalance: Math.round(currentBalance * 100) / 100,
+        totalInterestPaid: Math.round(accTotalInterest * 100) / 100,
+        extraPaymentPaid: extra,
+      });
+    }
+  }
+
+  const payoffMonthsSaved = Math.max(0, totalMonths - monthCount);
+  const interestSaved = Math.max(0, stdTotalInterest - accTotalInterest);
+
+  return {
+    principalAndInterest,
+    monthlyPropertyTax,
+    monthlyHomeInsurance,
+    monthlyHOA,
+    monthlyPMI: initialMonthlyPMI,
+    totalMonthlyPITI,
+    loanAmount,
+    downPaymentAmount,
+    downPaymentPercent,
+    upfrontClosingCosts,
+    totalCashNeededToClose,
+    totalInterestStandard: stdTotalInterest,
+    totalRepaymentStandard,
+    totalInterestWithExtra: accTotalInterest,
+    interestSaved,
+    payoffMonthsSaved,
+    pmiDropMonth: pmiDropMonth || (initialPMIRequired ? totalMonths : 0),
+    amortizationSchedule,
+  };
+}
+
+// -------------------------------------------------------------
+// 9. HOME AFFORDABILITY ENGINE
+// -------------------------------------------------------------
+export function calculateHomeAffordability(inputs: HomeAffordabilityInputs): HomeAffordabilityResults {
+  const grossMonthlyIncome = sanitizeNumber(inputs.annualGrossIncome, 0, 0) / 12;
+  const monthlyDebts = sanitizeNumber(inputs.monthlyDebts, 0, 0);
+  const downPaymentSaved = sanitizeNumber(inputs.downPaymentSaved, 0, 0);
+  const interestRate = sanitizeNumber(inputs.interestRate, 0, 0);
+  const loanTermYears = Math.max(1, sanitizeNumber(inputs.loanTermYears, 30, 1));
+  const propertyTaxRate = sanitizeNumber(inputs.propertyTaxRate, 1.2, 0);
+  const homeInsuranceAnnual = sanitizeNumber(inputs.homeInsuranceAnnual, 1200, 0);
+  const monthlyInsurance = homeInsuranceAnnual / 12;
+
+  const frontEndPct = sanitizeNumber(inputs.targetFrontEndDti, 28, 1) / 100;
+  const backEndPct = sanitizeNumber(inputs.targetBackEndDti, 36, 1) / 100;
+
+  const solvePriceForDti = (frontDti: number, backDti: number) => {
+    const frontMax = grossMonthlyIncome * frontDti;
+    const backMax = Math.max(0, grossMonthlyIncome * backDti - monthlyDebts);
+    const allowedMonthlyHousing = Math.min(frontMax, backMax);
+
+    if (allowedMonthlyHousing <= monthlyInsurance) {
+      return { price: downPaymentSaved, loan: 0, monthlyPITI: allowedMonthlyHousing, factor: 'front-end' as const };
+    }
+
+    const n = loanTermYears * 12;
+    const r = interestRate > 0 ? (interestRate / 100) / 12 : 0;
+    const factorM = r > 0 ? (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1) : (1 / n);
+    const taxMonthlyRate = (propertyTaxRate / 100) / 12;
+
+    const denominator = factorM + taxMonthlyRate;
+    const numerator = Math.max(0, allowedMonthlyHousing - monthlyInsurance + downPaymentSaved * factorM);
+    const maxPrice = denominator > 0 ? numerator / denominator : downPaymentSaved;
+    const maxLoan = Math.max(0, maxPrice - downPaymentSaved);
+
+    const factor = frontMax < backMax ? ('front-end' as const) : ('back-end' as const);
+    return { price: Math.max(downPaymentSaved, maxPrice), loan: maxLoan, monthlyPITI: allowedMonthlyHousing, factor };
+  };
+
+  const conservative = solvePriceForDti(0.28, 0.36);
+  const moderate = solvePriceForDti(0.31, 0.43);
+  const aggressive = solvePriceForDti(0.36, 0.45);
+  const targeted = solvePriceForDti(frontEndPct, backEndPct);
+
+  const n = loanTermYears * 12;
+  const r = interestRate > 0 ? (interestRate / 100) / 12 : 0;
+  const factorM = r > 0 ? (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1) : (1 / n);
+  const principalAndInterest = targeted.loan * factorM;
+  const taxes = (propertyTaxRate / 100 / 12) * targeted.price;
+
+  return {
+    maxHomePurchasePrice: targeted.price,
+    maxLoanAmount: targeted.loan,
+    maxMonthlyPayment: targeted.monthlyPITI,
+    limitingFactor: targeted.factor,
+    conservativePrice: conservative.price,
+    moderatePrice: moderate.price,
+    aggressivePrice: aggressive.price,
+    breakdown: {
+      principalAndInterest,
+      taxes,
+      insurance: monthlyInsurance,
+      totalHousingPayment: principalAndInterest + taxes + monthlyInsurance,
+    },
+  };
+}
+
+// -------------------------------------------------------------
+// 10. AUTO LOAN & TRADE-IN ENGINE
+// -------------------------------------------------------------
+export function calculateAutoLoan(inputs: AutoLoanInputs): AutoLoanResults {
+  const vehiclePrice = sanitizeNumber(inputs.vehiclePrice, 0, 0);
+  const downPayment = sanitizeNumber(inputs.downPayment, 0, 0);
+  const tradeInValue = sanitizeNumber(inputs.tradeInValue, 0, 0);
+  const tradeInBalanceOwed = sanitizeNumber(inputs.tradeInBalanceOwed, 0, 0);
+  const salesTaxPct = sanitizeNumber(inputs.salesTaxPct, 0, 0);
+  const dealerFees = sanitizeNumber(inputs.dealerFees, 0, 0);
+  const cashRebate = sanitizeNumber(inputs.cashRebate, 0, 0);
+  const interestRate = sanitizeNumber(inputs.interestRate, 0, 0);
+  const loanTermMonths = Math.max(1, sanitizeNumber(inputs.loanTermMonths, 60, 1));
+
+  const netTradeIn = tradeInValue - tradeInBalanceOwed;
+  const taxableBase = Math.max(0, vehiclePrice - Math.max(0, tradeInValue) - cashRebate);
+  const salesTaxAmount = (salesTaxPct / 100) * taxableBase;
+  const totalFinanced = Math.max(0, vehiclePrice - downPayment - netTradeIn + salesTaxAmount + dealerFees - cashRebate);
+
+  const monthlyRate = interestRate > 0 ? (interestRate / 100) / 12 : 0;
+  let monthlyPayment = 0;
+  if (totalFinanced > 0) {
+    if (monthlyRate === 0) {
+      monthlyPayment = totalFinanced / loanTermMonths;
+    } else {
+      monthlyPayment =
+        (totalFinanced * monthlyRate * Math.pow(1 + monthlyRate, loanTermMonths)) /
+        (Math.pow(1 + monthlyRate, loanTermMonths) - 1);
+    }
+  }
+
+  const totalRepayment = monthlyPayment * loanTermMonths;
+  const totalInterest = Math.max(0, totalRepayment - totalFinanced);
+  const totalCostOfVehicle = downPayment + Math.max(0, tradeInValue) + totalRepayment + dealerFees + salesTaxAmount;
+
+  const amortizationSchedule: AmortizationRow[] = [];
+  let balance = totalFinanced;
+  let accumulatedInterest = 0;
+
+  for (let m = 1; m <= loanTermMonths && balance > 0; m++) {
+    const interest = balance * monthlyRate;
+    const principal = Math.min(balance, monthlyPayment - interest);
+    balance = Math.max(0, balance - principal);
+    accumulatedInterest += interest;
+
+    amortizationSchedule.push({
+      period: m,
+      payment: principal + interest,
+      principalPaid: principal,
+      interestPaid: interest,
+      remainingBalance: Math.round(balance * 100) / 100,
+      totalInterestPaid: Math.round(accumulatedInterest * 100) / 100,
+    });
+  }
+
+  return {
+    monthlyPayment,
+    totalFinanced,
+    netTradeIn,
+    salesTaxAmount,
+    totalInterest,
+    totalCostOfVehicle,
+    amortizationSchedule,
+  };
+}
+
+// -------------------------------------------------------------
+// 11. PERSONAL LOAN & APR ENGINE
+// -------------------------------------------------------------
+export function calculatePersonalLoan(inputs: PersonalLoanInputs): PersonalLoanResults {
+  const loanAmount = sanitizeNumber(inputs.loanAmount, 0, 0);
+  const interestRate = sanitizeNumber(inputs.interestRate, 0, 0);
+  const loanTermMonths = Math.max(1, sanitizeNumber(inputs.loanTermMonths, 36, 1));
+  const originationFeePct = sanitizeNumber(inputs.originationFeePct, 0, 0);
+
+  const originationFeeAmount = (originationFeePct / 100) * loanAmount;
+  const netDisbursedAmount = Math.max(0, loanAmount - originationFeeAmount);
+
+  const monthlyRate = interestRate > 0 ? (interestRate / 100) / 12 : 0;
+  let monthlyPayment = 0;
+  if (loanAmount > 0) {
+    if (monthlyRate === 0) {
+      monthlyPayment = loanAmount / loanTermMonths;
+    } else {
+      monthlyPayment =
+        (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, loanTermMonths)) /
+        (Math.pow(1 + monthlyRate, loanTermMonths) - 1);
+    }
+  }
+
+  const totalRepayment = monthlyPayment * loanTermMonths;
+  const totalInterest = Math.max(0, totalRepayment - loanAmount);
+  const totalFinanceCharge = totalInterest + originationFeeAmount;
+  const effectiveAPR = netDisbursedAmount > 0 && loanTermMonths > 0
+    ? (2 * 12 * totalFinanceCharge) / (netDisbursedAmount * (loanTermMonths + 1)) * 100
+    : interestRate;
+
+  const amortizationSchedule: AmortizationRow[] = [];
+  let balance = loanAmount;
+  let accumulatedInterest = 0;
+
+  for (let m = 1; m <= loanTermMonths && balance > 0; m++) {
+    const interest = balance * monthlyRate;
+    const principal = Math.min(balance, monthlyPayment - interest);
+    balance = Math.max(0, balance - principal);
+    accumulatedInterest += interest;
+
+    amortizationSchedule.push({
+      period: m,
+      payment: principal + interest,
+      principalPaid: principal,
+      interestPaid: interest,
+      remainingBalance: Math.round(balance * 100) / 100,
+      totalInterestPaid: Math.round(accumulatedInterest * 100) / 100,
+    });
+  }
+
+  return {
+    monthlyPayment,
+    originationFeeAmount,
+    netDisbursedAmount,
+    effectiveAPR,
+    totalInterest,
+    totalRepayment,
+    amortizationSchedule,
+  };
+}
+
+// -------------------------------------------------------------
+// 12. SAVINGS GOAL & TARGET ENGINE
+// -------------------------------------------------------------
+export function calculateSavingsGoal(inputs: SavingsGoalInputs): SavingsGoalResults {
+  const targetAmount = sanitizeNumber(inputs.targetAmount, 0, 0);
+  const currentSavings = sanitizeNumber(inputs.currentSavings, 0, 0);
+  const timeframeMonths = Math.max(1, sanitizeNumber(inputs.timeframeMonths, 12, 1));
+  const annualReturnRate = sanitizeNumber(inputs.annualReturnRate, 0, 0);
+  const monthlyRate = annualReturnRate > 0 ? (annualReturnRate / 100) / 12 : 0;
+
+  const progressPercentage = targetAmount > 0 ? Math.min(100, (currentSavings / targetAmount) * 100) : 0;
+  const lumpSumNeededToday = monthlyRate > 0
+    ? targetAmount / Math.pow(1 + monthlyRate, timeframeMonths)
+    : targetAmount;
+
+  let requiredMonthlyDeposit = 0;
+  if (monthlyRate === 0) {
+    requiredMonthlyDeposit = Math.max(0, (targetAmount - currentSavings) / timeframeMonths);
+  } else {
+    const futureValueOfInitial = currentSavings * Math.pow(1 + monthlyRate, timeframeMonths);
+    const shortfall = Math.max(0, targetAmount - futureValueOfInitial);
+    const annuityFactor = (Math.pow(1 + monthlyRate, timeframeMonths) - 1) / monthlyRate;
+    requiredMonthlyDeposit = shortfall / annuityFactor;
+  }
+
+  const monthlySchedule: Array<{ month: number; deposit: number; interest: number; balance: number }> = [];
+  let balance = currentSavings;
+  let totalDeposited = currentSavings;
+
+  for (let m = 1; m <= timeframeMonths; m++) {
+    const interest = balance * monthlyRate;
+    balance += requiredMonthlyDeposit + interest;
+    totalDeposited += requiredMonthlyDeposit;
+
+    monthlySchedule.push({
+      month: m,
+      deposit: Math.round(requiredMonthlyDeposit * 100) / 100,
+      interest: Math.round(interest * 100) / 100,
+      balance: Math.round(balance * 100) / 100,
+    });
+  }
+
+  const interestEarned = Math.max(0, balance - totalDeposited);
+
+  return {
+    requiredMonthlyDeposit,
+    totalDeposited,
+    interestEarned,
+    lumpSumNeededToday,
+    progressPercentage,
+    monthlySchedule,
+  };
+}
+
+// -------------------------------------------------------------
+// 13. RETIREMENT & NEST EGG ENGINE
+// -------------------------------------------------------------
+export function calculateRetirement(inputs: RetirementInputs): RetirementResults {
+  const currentAge = sanitizeNumber(inputs.currentAge, 30, 0);
+  const retirementAge = Math.max(currentAge + 1, sanitizeNumber(inputs.retirementAge, 65, 1));
+  const lifeExpectancy = Math.max(retirementAge + 1, sanitizeNumber(inputs.lifeExpectancy, 85, 1));
+  const currentNestEgg = sanitizeNumber(inputs.currentNestEgg, 0, 0);
+  const monthlyContribution = sanitizeNumber(inputs.monthlyContribution, 0, 0);
+  const preRate = sanitizeNumber(inputs.expectedAnnualReturnPre, 7, 0) / 100;
+  const postRate = sanitizeNumber(inputs.expectedAnnualReturnPost, 5, 0) / 100;
+  const desiredIncomeMonthly = sanitizeNumber(inputs.desiredMonthlyRetirementIncome, 3000, 0);
+  const inflationRate = sanitizeNumber(inputs.inflationRate, 2.5, 0) / 100;
+  const pensionOffsetMonthly = sanitizeNumber(inputs.pensionOrSocialSecurityMonthly, 0, 0);
+
+  const yearsToRetirement = retirementAge - currentAge;
+  const monthsToRetirement = yearsToRetirement * 12;
+  const yearsInRetirement = lifeExpectancy - retirementAge;
+  const monthsInRetirement = yearsInRetirement * 12;
+
+  const preMonthlyRate = preRate / 12;
+  let accumulatedNestEgg = currentNestEgg;
+  for (let m = 1; m <= monthsToRetirement; m++) {
+    accumulatedNestEgg = (accumulatedNestEgg + monthlyContribution) * (1 + preMonthlyRate);
+  }
+
+  const inflationFactor = Math.pow(1 + inflationRate, yearsToRetirement);
+  const futureMonthlyDesiredIncome = desiredIncomeMonthly * inflationFactor;
+  const netMonthlyDrawNeeded = Math.max(0, futureMonthlyDesiredIncome - pensionOffsetMonthly);
+
+  const postMonthlyRate = postRate / 12;
+  let totalRequiredNestEgg = 0;
+  if (postMonthlyRate === 0) {
+    totalRequiredNestEgg = netMonthlyDrawNeeded * monthsInRetirement;
+  } else {
+    totalRequiredNestEgg = netMonthlyDrawNeeded * (1 - Math.pow(1 + postMonthlyRate, -monthsInRetirement)) / postMonthlyRate;
+  }
+
+  const totalFundingSurplusOrDeficit = accumulatedNestEgg - totalRequiredNestEgg;
+  const isOnTrack = totalFundingSurplusOrDeficit >= 0;
+
+  let requiredMonthlySavings = monthlyContribution;
+  if (!isOnTrack && monthsToRetirement > 0) {
+    const fvInitial = currentNestEgg * Math.pow(1 + preMonthlyRate, monthsToRetirement);
+    const deficitToFund = Math.max(0, totalRequiredNestEgg - fvInitial);
+    const annuityFactor = preMonthlyRate > 0
+      ? (Math.pow(1 + preMonthlyRate, monthsToRetirement) - 1) / preMonthlyRate
+      : monthsToRetirement;
+    requiredMonthlySavings = annuityFactor > 0 ? deficitToFund / annuityFactor : 0;
+  }
+
+  const monthlyFundingGap = Math.max(0, requiredMonthlySavings - monthlyContribution);
+
+  const timeline: Array<{ age: number; year: number; balance: number; contributions: number; drawdowns: number }> = [];
+  let currentBalance = currentNestEgg;
+  let totalContrib = 0;
+  let totalDraw = 0;
+
+  for (let age = currentAge; age <= lifeExpectancy; age++) {
+    const yearIndex = age - currentAge;
+    if (age < retirementAge) {
+      if (yearIndex > 0) {
+        for (let m = 1; m <= 12; m++) {
+          currentBalance = (currentBalance + monthlyContribution) * (1 + preMonthlyRate);
+          totalContrib += monthlyContribution;
+        }
+      }
+      timeline.push({
+        age,
+        year: yearIndex,
+        balance: Math.round(currentBalance),
+        contributions: Math.round(totalContrib),
+        drawdowns: 0,
+      });
+    } else {
+      if (yearIndex > 0) {
+        for (let m = 1; m <= 12; m++) {
+          currentBalance = Math.max(0, (currentBalance - netMonthlyDrawNeeded) * (1 + postMonthlyRate));
+          totalDraw += netMonthlyDrawNeeded;
+        }
+      }
+      timeline.push({
+        age,
+        year: yearIndex,
+        balance: Math.round(currentBalance),
+        contributions: Math.round(totalContrib),
+        drawdowns: Math.round(totalDraw),
+      });
+    }
+  }
+
+  return {
+    nestEggAtRetirement: accumulatedNestEgg,
+    totalRequiredNestEgg,
+    monthlyFundingGap,
+    totalFundingSurplusOrDeficit,
+    isOnTrack,
+    requiredMonthlySavings,
+    yearsInRetirement,
+    timeline,
+  };
+}
+
+// -------------------------------------------------------------
+// 14. MULTI-DEBT PAYOFF ENGINE (AVALANCHE VS SNOWBALL)
+// -------------------------------------------------------------
+export function calculateMultiDebtPayoff(inputs: MultiDebtPayoffInputs): MultiDebtPayoffResults {
+  const extraMonthlyPayment = sanitizeNumber(inputs.extraMonthlyPayment, 0, 0);
+  const debts = inputs.debts || [];
+
+  const simulateStrategy = (strategy: 'snowball' | 'avalanche' | 'minimum-only'): DebtPayoffPlanSummary => {
+    if (debts.length === 0) {
+      return {
+        strategy,
+        totalMonths: 0,
+        debtFreeDateStr: 'Immediately',
+        totalInterestPaid: 0,
+        totalPaid: 0,
+        payoffOrder: [],
+      };
+    }
+
+    type SimDebt = { id: string; name: string; balance: number; rate: number; minPayment: number; paidOffMonth?: number };
+    const simDebts: SimDebt[] = debts.map(d => ({
+      id: d.id,
+      name: d.name,
+      balance: sanitizeNumber(d.balance, 0, 0),
+      rate: sanitizeNumber(d.interestRate, 0, 0),
+      minPayment: sanitizeNumber(d.minimumPayment, 0, 0),
+    })).filter(d => d.balance > 0);
+
+    let month = 0;
+    let totalInterestPaid = 0;
+    let totalPaid = 0;
+    const payoffOrder: string[] = [];
+    const maxMonths = 600;
+
+    while (simDebts.some(d => d.balance > 0.01) && month < maxMonths) {
+      month++;
+      let extraBudget = strategy === 'minimum-only' ? 0 : extraMonthlyPayment;
+
+      for (const d of simDebts) {
+        if (d.balance > 0) {
+          const monthlyInterest = d.balance * (d.rate / 100 / 12);
+          d.balance += monthlyInterest;
+          totalInterestPaid += monthlyInterest;
+
+          const payment = Math.min(d.balance, d.minPayment);
+          d.balance -= payment;
+          totalPaid += payment;
+
+          if (d.balance <= 0.01 && !d.paidOffMonth) {
+            d.balance = 0;
+            d.paidOffMonth = month;
+            payoffOrder.push(d.name);
+          }
+        } else if (strategy !== 'minimum-only') {
+          extraBudget += d.minPayment;
+        }
+      }
+
+      if (extraBudget > 0) {
+        const activeDebts = simDebts.filter(d => d.balance > 0);
+        if (strategy === 'snowball') {
+          activeDebts.sort((a, b) => a.balance - b.balance);
+        } else if (strategy === 'avalanche') {
+          activeDebts.sort((a, b) => b.rate - a.rate);
+        }
+
+        for (const target of activeDebts) {
+          if (extraBudget <= 0) break;
+          const pay = Math.min(target.balance, extraBudget);
+          target.balance -= pay;
+          totalPaid += pay;
+          extraBudget -= pay;
+
+          if (target.balance <= 0.01 && !target.paidOffMonth) {
+            target.balance = 0;
+            target.paidOffMonth = month;
+            payoffOrder.push(target.name);
+          }
+        }
+      }
+    }
+
+    const targetDate = new Date();
+    targetDate.setMonth(targetDate.getMonth() + month);
+    const debtFreeDateStr = targetDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+    return {
+      strategy,
+      totalMonths: month,
+      debtFreeDateStr,
+      totalInterestPaid,
+      totalPaid,
+      payoffOrder,
+    };
+  };
+
+  const avalanche = simulateStrategy('avalanche');
+  const snowball = simulateStrategy('snowball');
+  const minimumOnly = simulateStrategy('minimum-only');
+
+  const interestSavedAvalancheVsMinimum = Math.max(0, minimumOnly.totalInterestPaid - avalanche.totalInterestPaid);
+  const monthsSavedAvalancheVsMinimum = Math.max(0, minimumOnly.totalMonths - avalanche.totalMonths);
+  const interestSavedSnowballVsMinimum = Math.max(0, minimumOnly.totalInterestPaid - snowball.totalInterestPaid);
+  const monthsSavedSnowballVsMinimum = Math.max(0, minimumOnly.totalMonths - snowball.totalMonths);
+
+  const scheduleByMonth: Array<{ month: number; remainingTotalBalance: number; paymentsByDebt: Record<string, number> }> = [];
+  let remainingTotal = debts.reduce((s, d) => s + sanitizeNumber(d.balance, 0, 0), 0);
+  const avgMonthlyReduction = (avalanche.totalPaid / Math.max(1, avalanche.totalMonths));
+
+  for (let m = 1; m <= Math.min(60, avalanche.totalMonths); m++) {
+    remainingTotal = Math.max(0, remainingTotal - (avgMonthlyReduction * 0.85));
+    scheduleByMonth.push({
+      month: m,
+      remainingTotalBalance: Math.round(remainingTotal),
+      paymentsByDebt: {},
+    });
+  }
+
+  return {
+    avalanche,
+    snowball,
+    minimumOnly,
+    interestSavedAvalancheVsMinimum,
+    monthsSavedAvalancheVsMinimum,
+    interestSavedSnowballVsMinimum,
+    monthsSavedSnowballVsMinimum,
+    scheduleByMonth,
+  };
+}
+
+// -------------------------------------------------------------
+// 15. DEBT-TO-INCOME (DTI) DIAGNOSTIC ENGINE
+// -------------------------------------------------------------
+export function calculateDTI(inputs: DTIInputs): DTIResults {
+  const grossMonthlyIncome = sanitizeNumber(inputs.grossMonthlyIncome, 0, 0);
+  const housing = sanitizeNumber(inputs.monthlyMortgageOrRent, 0, 0) +
+    sanitizeNumber(inputs.propertyTaxMonthly, 0, 0) +
+    sanitizeNumber(inputs.homeInsuranceMonthly, 0, 0);
+  const nonHousing = sanitizeNumber(inputs.autoLoanMonthly, 0, 0) +
+    sanitizeNumber(inputs.studentLoanMonthly, 0, 0) +
+    sanitizeNumber(inputs.creditCardMinMonthly, 0, 0) +
+    sanitizeNumber(inputs.otherDebtMonthly, 0, 0);
+  const totalMonthlyDebt = housing + nonHousing;
+
+  const frontEndDTI = grossMonthlyIncome > 0 ? (housing / grossMonthlyIncome) * 100 : 0;
+  const backEndDTI = grossMonthlyIncome > 0 ? (totalMonthlyDebt / grossMonthlyIncome) * 100 : 0;
+  const maximumRecommendedTotalDebt = grossMonthlyIncome * 0.36;
+
+  let status: 'healthy' | 'moderate' | 'high' = 'healthy';
+  const recommendations: string[] = [];
+
+  if (backEndDTI <= 36) {
+    status = 'healthy';
+    recommendations.push('Your debt-to-income ratio is in the prime tier for most prime lending and mortgage approvals.');
+    recommendations.push('Maintain an emergency fund of 3-6 months to protect your debt servicing capability.');
+  } else if (backEndDTI <= 43) {
+    status = 'moderate';
+    recommendations.push('Your debt burden is manageable but approaching conventional mortgage underwriting limits (43%).');
+    recommendations.push('Focus on accelerating non-housing debt payoffs before taking on additional obligations.');
+  } else {
+    status = 'high';
+    recommendations.push('Your debt-to-income exceeds 43%, which may limit access to favorable credit terms or mortgage eligibility.');
+    recommendations.push('Consider aggressive debt restructuring, consolidating high-rate debt, or increasing income.');
+  }
+
+  if (frontEndDTI > 28) {
+    recommendations.push(`Housing expenses represent ${frontEndDTI.toFixed(1)}% of income, exceeding the standard 28% front-end guideline.`);
+  }
+
+  return {
+    frontEndDTI,
+    backEndDTI,
+    totalHousingExpenses: housing,
+    totalNonHousingDebt: nonHousing,
+    totalMonthlyDebt,
+    maximumRecommendedTotalDebt,
+    status,
+    recommendations,
+  };
+}
+
+// -------------------------------------------------------------
+// 16. NET WORTH & ALLOCATION ENGINE
+// -------------------------------------------------------------
+export function calculateNetWorth(inputs: NetWorthInputs): NetWorthResults {
+  const a = inputs.assets;
+  const l = inputs.liabilities;
+
+  const cashAndSavings = sanitizeNumber(a.cashAndSavings, 0, 0);
+  const realEstate = sanitizeNumber(a.realEstate, 0, 0);
+  const retirementAccounts = sanitizeNumber(a.retirementAccounts, 0, 0);
+  const taxableInvestments = sanitizeNumber(a.taxableInvestments, 0, 0);
+  const vehiclesAndValuables = sanitizeNumber(a.vehiclesAndValuables, 0, 0);
+  const businessEquity = sanitizeNumber(a.businessEquity, 0, 0);
+
+  const totalAssets = cashAndSavings + realEstate + retirementAccounts + taxableInvestments + vehiclesAndValuables + businessEquity;
+
+  const mortgages = sanitizeNumber(l.mortgages, 0, 0);
+  const autoLoans = sanitizeNumber(l.autoLoans, 0, 0);
+  const studentLoans = sanitizeNumber(l.studentLoans, 0, 0);
+  const creditCards = sanitizeNumber(l.creditCards, 0, 0);
+  const personalLoans = sanitizeNumber(l.personalLoans, 0, 0);
+  const otherLiabilities = sanitizeNumber(l.otherLiabilities, 0, 0);
+
+  const totalLiabilities = mortgages + autoLoans + studentLoans + creditCards + personalLoans + otherLiabilities;
+  const netWorth = totalAssets - totalLiabilities;
+  const debtToAssetRatio = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
+  const liquidAssets = cashAndSavings;
+  const liquidRatio = totalAssets > 0 ? (liquidAssets / totalAssets) * 100 : 0;
+
+  const assetDistribution = [
+    { category: 'Cash & Liquid Savings', amount: cashAndSavings, percentage: totalAssets > 0 ? (cashAndSavings / totalAssets) * 100 : 0, color: '#10b981' },
+    { category: 'Real Estate Equity', amount: realEstate, percentage: totalAssets > 0 ? (realEstate / totalAssets) * 100 : 0, color: '#3b82f6' },
+    { category: 'Retirement Accounts', amount: retirementAccounts, percentage: totalAssets > 0 ? (retirementAccounts / totalAssets) * 100 : 0, color: '#8b5cf6' },
+    { category: 'Taxable Investments', amount: taxableInvestments, percentage: totalAssets > 0 ? (taxableInvestments / totalAssets) * 100 : 0, color: '#06b6d4' },
+    { category: 'Vehicles & Valuables', amount: vehiclesAndValuables, percentage: totalAssets > 0 ? (vehiclesAndValuables / totalAssets) * 100 : 0, color: '#f59e0b' },
+    { category: 'Business Equity', amount: businessEquity, percentage: totalAssets > 0 ? (businessEquity / totalAssets) * 100 : 0, color: '#ec4899' },
+  ].filter(item => item.amount > 0);
+
+  const liabilityDistribution = [
+    { category: 'Mortgages', amount: mortgages, percentage: totalLiabilities > 0 ? (mortgages / totalLiabilities) * 100 : 0, color: '#ef4444' },
+    { category: 'Auto Loans', amount: autoLoans, percentage: totalLiabilities > 0 ? (autoLoans / totalLiabilities) * 100 : 0, color: '#f97316' },
+    { category: 'Student Loans', amount: studentLoans, percentage: totalLiabilities > 0 ? (studentLoans / totalLiabilities) * 100 : 0, color: '#eab308' },
+    { category: 'Credit Cards', amount: creditCards, percentage: totalLiabilities > 0 ? (creditCards / totalLiabilities) * 100 : 0, color: '#dc2626' },
+    { category: 'Personal Loans', amount: personalLoans, percentage: totalLiabilities > 0 ? (personalLoans / totalLiabilities) * 100 : 0, color: '#b91c1c' },
+    { category: 'Other Liabilities', amount: otherLiabilities, percentage: totalLiabilities > 0 ? (otherLiabilities / totalLiabilities) * 100 : 0, color: '#64748b' },
+  ].filter(item => item.amount > 0);
+
+  return {
+    totalAssets,
+    totalLiabilities,
+    netWorth,
+    debtToAssetRatio,
+    liquidAssets,
+    liquidRatio,
+    assetDistribution,
+    liabilityDistribution,
+  };
+}
+
+// -------------------------------------------------------------
+// 17. FINANCIAL GOALS ALLOCATION ENGINE
+// -------------------------------------------------------------
+export function calculateFinancialGoals(inputs: FinancialGoalInputs): FinancialGoalsResults {
+  const monthlySavingsBudget = sanitizeNumber(inputs.monthlySavingsBudget, 0, 0);
+  const goals = inputs.goals || [];
+
+  let totalTargetAmount = 0;
+  let totalCurrentAmount = 0;
+  let totalRequiredMonthly = 0;
+
+  const now = new Date();
+
+  const goalResults = goals.map(goal => {
+    const target = sanitizeNumber(goal.targetAmount, 0, 0);
+    const current = sanitizeNumber(goal.currentAmount, 0, 0);
+    totalTargetAmount += target;
+    totalCurrentAmount += current;
+
+    let monthsRemaining = 12;
+    if (goal.targetDate) {
+      const parts = goal.targetDate.split('-');
+      if (parts.length >= 2) {
+        const targetYear = parseInt(parts[0], 10);
+        const targetMonth = parseInt(parts[1], 10);
+        monthsRemaining = Math.max(1, (targetYear - now.getFullYear()) * 12 + (targetMonth - (now.getMonth() + 1)));
+      }
+    }
+
+    const needed = Math.max(0, target - current);
+    const requiredMonthlySavings = needed / monthsRemaining;
+    totalRequiredMonthly += requiredMonthlySavings;
+
+    return {
+      goal,
+      monthsRemaining,
+      requiredMonthlySavings,
+      shortfallOrSurplus: 0,
+      isAchievableWithBudget: true,
+      projectedCompletionDate: goal.targetDate,
+      allocatedMonthlySavings: 0,
+    };
+  });
+
+  const weights: Record<string, number> = { high: 3, medium: 2, low: 1 };
+  const totalWeight = goalResults.reduce((sum, g) => sum + (weights[g.goal.priority] || 2), 0);
+
+  for (const item of goalResults) {
+    const itemWeight = weights[item.goal.priority] || 2;
+    const allocated = totalWeight > 0 ? (monthlySavingsBudget * itemWeight) / totalWeight : 0;
+    item.allocatedMonthlySavings = allocated;
+    item.shortfallOrSurplus = allocated - item.requiredMonthlySavings;
+    item.isAchievableWithBudget = allocated >= item.requiredMonthlySavings;
+  }
+
+  const overallProgressPct = totalTargetAmount > 0 ? Math.min(100, (totalCurrentAmount / totalTargetAmount) * 100) : 0;
+  const budgetSurplusDeficit = monthlySavingsBudget - totalRequiredMonthly;
+
+  return {
+    goals: goalResults,
+    totalTargetAmount,
+    totalCurrentAmount,
+    totalRequiredMonthly,
+    overallProgressPct,
+    budgetSurplusDeficit,
+  };
+}
+
+// -------------------------------------------------------------
+// 18. SCENARIO COMPARISON ENGINE
+// -------------------------------------------------------------
+export function compareScenarios(inputs: ScenarioComparisonInputs): ScenarioComparisonResults {
+  const scenarios = inputs.scenarios || [];
+
+  if (scenarios.length === 0) {
+    return {
+      scenarios: [],
+      lowestCostScenarioId: '',
+      highestEndingValueScenarioId: '',
+      deltaSummary: [],
+    };
+  }
+
+  const evaluated = scenarios.map(s => {
+    const upfront = sanitizeNumber(s.upfrontCost, 0, 0);
+    const monthly = sanitizeNumber(s.monthlyOngoingCost, 0, 0);
+    const years = Math.max(1, sanitizeNumber(s.termYears, 5, 1));
+    const totalCost = upfront + (monthly * years * 12);
+    const rate = sanitizeNumber(s.annualGrowthRate, 0, 0) / 100;
+    
+    let endingValue = sanitizeNumber(s.projectedEndingNetValue, 0, 0);
+    if (endingValue === 0 && rate > 0) {
+      endingValue = upfront * Math.pow(1 + rate, years);
+    }
+
+    return {
+      ...s,
+      totalCostOverTerm: totalCost,
+      projectedEndingNetValue: endingValue,
+    };
+  });
+
+  let lowestCostScenarioId = evaluated[0]?.id || '';
+  let minCost = evaluated[0]?.totalCostOverTerm ?? Infinity;
+
+  let highestEndingValueScenarioId = evaluated[0]?.id || '';
+  let maxValue = evaluated[0]?.projectedEndingNetValue ?? -Infinity;
+
+  for (const s of evaluated) {
+    if (s.totalCostOverTerm < minCost) {
+      minCost = s.totalCostOverTerm;
+      lowestCostScenarioId = s.id;
+    }
+    if (s.projectedEndingNetValue > maxValue) {
+      maxValue = s.projectedEndingNetValue;
+      highestEndingValueScenarioId = s.id;
+    }
+  }
+
+  const deltaSummary = [
+    {
+      metric: 'Total Cost Over Term',
+      scenarioValues: Object.fromEntries(evaluated.map(s => [s.id, s.totalCostOverTerm])),
+      difference: evaluated.length > 1 ? Math.abs(evaluated[0].totalCostOverTerm - evaluated[1].totalCostOverTerm) : 0,
+    },
+    {
+      metric: 'Monthly Ongoing Expense',
+      scenarioValues: Object.fromEntries(evaluated.map(s => [s.id, s.monthlyOngoingCost])),
+      difference: evaluated.length > 1 ? Math.abs(evaluated[0].monthlyOngoingCost - evaluated[1].monthlyOngoingCost) : 0,
+    },
+    {
+      metric: 'Projected Ending Net Value',
+      scenarioValues: Object.fromEntries(evaluated.map(s => [s.id, s.projectedEndingNetValue])),
+      difference: evaluated.length > 1 ? Math.abs(evaluated[0].projectedEndingNetValue - evaluated[1].projectedEndingNetValue) : 0,
+    },
+  ];
+
+  return {
+    scenarios: evaluated,
+    lowestCostScenarioId,
+    highestEndingValueScenarioId,
+    deltaSummary,
+  };
+}
+

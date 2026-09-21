@@ -19,70 +19,70 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <Calculator className="w-4 h-4" />
               </div>
               <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white">
-                Finance<span className="text-emerald-500">Calc</span>
+                FIN<span className="text-emerald-500">CAL</span>
               </span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md leading-relaxed">
-              Modern, mathematically sound financial tools designed to help individuals and businesses make smarter borrowing, savings, investment, and budgeting decisions.
+              FINCAL is a professional Financial Planning & Decision-Support Platform providing mathematically exact amortization, wealth accumulation simulations, debt optimization models, and side-by-side scenario evaluations.
             </p>
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              <span>Independent formulas • Zero tracking • Default currency: NGN (₦)</span>
+              <span>Institutional-grade formulas • 18 Financial Engines • Default Currency: NGN (₦)</span>
             </div>
           </div>
 
           {/* Quick Calculators Links */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-3">
-              Calculators
+              The 4 Suites
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <button
-                  onClick={() => onNavigate('calculators', 'loan')}
+                  onClick={() => onNavigate('calculators', 'mortgage')}
                   className="hover:text-emerald-500 transition-colors"
                 >
-                  Loan Calculator
+                  Mortgage & PITI Analysis
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate('calculators', 'savings')}
+                  onClick={() => onNavigate('calculators', 'home-affordability')}
                   className="hover:text-emerald-500 transition-colors"
                 >
-                  Savings Calculator
+                  Home Affordability (28/36 DTI)
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate('calculators', 'compound-interest')}
+                  onClick={() => onNavigate('calculators', 'multi-debt-payoff')}
                   className="hover:text-emerald-500 transition-colors"
                 >
-                  Compound Interest
+                  Multi-Debt Payoff Planner
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate('calculators', 'investment')}
+                  onClick={() => onNavigate('calculators', 'retirement')}
                   className="hover:text-emerald-500 transition-colors"
                 >
-                  Investment Calculator
+                  Retirement & Nest Egg
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate('calculators', 'debt-payoff')}
+                  onClick={() => onNavigate('calculators', 'net-worth')}
                   className="hover:text-emerald-500 transition-colors"
                 >
-                  Debt Payoff Calculator
+                  Net Worth & Asset Allocation
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate('calculators', 'budget')}
+                  onClick={() => onNavigate('calculators', 'scenarios')}
                   className="hover:text-emerald-500 transition-colors"
                 >
-                  Budget Calculator
+                  Scenario Comparison Tool
                 </button>
               </li>
             </ul>
@@ -91,9 +91,17 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           {/* Platform & Disclaimers */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-3">
-              Resources & About
+              Platform & Workspace
             </h4>
             <ul className="space-y-2 text-sm">
+              <li>
+                <button
+                  onClick={() => onNavigate('dashboard')}
+                  className="hover:text-emerald-500 transition-colors"
+                >
+                  Financial Dashboard
+                </button>
+              </li>
               <li>
                 <button
                   onClick={() => onNavigate('about')}
@@ -108,18 +116,16 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   className="hover:text-purple-500 transition-colors flex items-center gap-1.5"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-purple-500" />
-                  <span>Admin Console</span>
+                  <span>Admin Intelligence Portal</span>
                 </button>
               </li>
               <li>
-                <span className="text-slate-400 dark:text-slate-500 cursor-not-allowed">
-                  API & Integrations (Coming soon)
-                </span>
-              </li>
-              <li>
-                <span className="text-slate-400 dark:text-slate-500 cursor-not-allowed">
-                  Export to PDF (Coming soon)
-                </span>
+                <button
+                  onClick={() => onNavigate('saved')}
+                  className="hover:text-emerald-500 transition-colors"
+                >
+                  Saved Models & Portfolio
+                </button>
               </li>
             </ul>
           </div>
@@ -127,10 +133,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
         <div className="pt-8 border-t border-slate-200 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
           <p>
-            © {new Date().getFullYear()} Finance Calculator. All rights reserved.
+            © {new Date().getFullYear()} FINCAL — Financial Planning & Decision-Support Platform. All rights reserved.
           </p>
           <p className="text-center sm:text-right max-w-xl text-[11px] leading-normal">
-            Disclaimer: The tools and figures provided are for informational purposes only and do not constitute formal financial, legal, or investment advice. Investment projections are estimates and never guaranteed.
+            Advisory Notice: FINCAL tools and models are designed for informational, educational, and decision-support modeling. All simulations provide mathematical estimates and do not constitute formal fiduciary, legal, tax, or mortgage lending advice.
           </p>
         </div>
       </div>

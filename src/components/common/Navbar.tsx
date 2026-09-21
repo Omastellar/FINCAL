@@ -59,24 +59,30 @@ export const Navbar: React.FC<NavbarProps> = ({
     switch (currentPage) {
       case 'home':
         return 'Home';
+      case 'dashboard':
+        return 'Financial Dashboard';
+      case 'scenarios':
+        return 'Scenario Comparison';
+      case 'goals':
+        return 'Financial Goals';
       case 'calculators': {
         const match = activeCalcId ? CALCULATORS_LIST.find((c) => c.id === activeCalcId) : null;
-        return match ? match.title : 'Calculators';
+        return match ? match.title : 'Financial Engines Hub';
       }
       case 'about':
-        return 'About FINCAL';
+        return 'About FINCAL Platform';
       case 'login':
         return 'User Sign In';
       case 'admin-login':
-        return 'Admin Portal Sign In';
+        return 'Super Admin Sign In';
       case 'admin':
-        return 'Administrative Portal';
+        return 'Super Admin Portal';
       case 'saved':
-        return 'My Calculations';
+        return 'My Saved Calculations';
       case 'user':
-        return 'User Dashboard';
+        return 'User Portfolio';
       default:
-        return 'Finance Calculator';
+        return 'FINCAL Platform';
     }
   };
 

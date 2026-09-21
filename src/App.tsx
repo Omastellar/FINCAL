@@ -12,6 +12,7 @@ import { LoginPage } from './pages/LoginPage';
 import { AdminPage } from './pages/AdminPage';
 import { SavedCalculationsPage } from './pages/SavedCalculationsPage';
 import { UserPage } from './pages/UserPage';
+import { DashboardPage } from './pages/DashboardPage';
 import { PageView } from './types/navigation';
 import { CalculatorId } from './types/calculators';
 import { initOrUpdateVisitorSession } from './utils/telemetry';
@@ -23,7 +24,7 @@ export const AppContent: React.FC = () => {
       const search = new URLSearchParams(window.location.search);
       if (search.get('calc')) return 'calculators';
       const page = search.get('page') as PageView;
-      if (page && ['home', 'calculators', 'about', 'login', 'admin', 'admin-login', 'saved', 'user'].includes(page)) {
+      if (page && ['home', 'dashboard', 'calculators', 'about', 'login', 'admin', 'admin-login', 'saved', 'user', 'scenarios', 'goals'].includes(page)) {
         return page;
       }
     } catch {
@@ -48,10 +49,21 @@ export const AppContent: React.FC = () => {
     try {
       const calcNameMap: Record<string, string> = {
         loan: 'Loan Calculator',
+        mortgage: 'Mortgage & PITI Calculator',
+        'home-affordability': 'Home Affordability Calculator',
+        'auto-loan': 'Auto Loan & Trade-In',
+        'personal-loan': 'Personal Loan & APR',
         savings: 'Savings Growth',
+        'savings-goal': 'Savings Goal Planner',
         'compound-interest': 'Compound Interest',
         investment: 'Investment Returns',
+        retirement: 'Retirement & Nest Egg',
         'debt-payoff': 'Debt Payoff',
+        'multi-debt-payoff': 'Multi-Debt Payoff Planner',
+        dti: 'Debt-to-Income Diagnostic',
+        'net-worth': 'Net Worth Calculator',
+        'financial-goals': 'Financial Goals Planner',
+        scenarios: 'Scenario Comparison Tool',
         budget: 'Budget 50/30/20',
         'currency-converter': 'Currency Converter',
       };
@@ -133,6 +145,24 @@ export const AppContent: React.FC = () => {
                 // ignore
               }
             }}
+          />
+        );
+      case 'dashboard':
+        return <DashboardPage onNavigate={handleNavigate} />;
+      case 'scenarios':
+        return (
+          <CalculatorsPage
+            key="scenarios"
+            initialCalculatorId="scenarios"
+            onNavigate={handleNavigate}
+          />
+        );
+      case 'goals':
+        return (
+          <CalculatorsPage
+            key="financial-goals"
+            initialCalculatorId="financial-goals"
+            onNavigate={handleNavigate}
           />
         );
       case 'about':
