@@ -741,6 +741,23 @@ describe('Direct Month Selection & Sub-Annual Term Verification', () => {
     expect(result.interestEarned).toBeGreaterThan(0);
     expect(result.growthTimeline[result.growthTimeline.length - 1].year).toBe(0.5);
   });
+
+  it('[TC-MONTHS-006] calculates accurate 1-month short-term loan (1/12 yr)', () => {
+    const result = calculateLoanPayment(100_000, 12, 1 / 12, 'monthly');
+    expect(result.amortizationSchedule.length).toBe(1);
+    expect(result.amortizationSchedule[0].remainingBalance).toBe(0);
+    expect(result.totalRepayment).toBeCloseTo(101_000, 0); // 100k principal + 1% monthly interest
+  });
+
+  it('[TC-MONTHS-007] calculates accurate 12-month loan (1 yr) and yearly multi-year loans', () => {
+    const result12m = calculateLoanPayment(120_000, 10, 12 / 12, 'monthly');
+    expect(result12m.amortizationSchedule.length).toBe(12);
+    expect(result12m.amortizationSchedule[11].remainingBalance).toBe(0);
+
+    const result5y = calculateLoanPayment(500_000, 10, 5, 'monthly');
+    expect(result5y.amortizationSchedule.length).toBe(60);
+    expect(result5y.amortizationSchedule[59].remainingBalance).toBe(0);
+  });
 });
 
 
