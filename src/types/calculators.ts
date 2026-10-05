@@ -1,4 +1,6 @@
-export type PaymentFrequency = 'monthly' | 'bi-weekly' | 'weekly';
+export type PaymentFrequency = 'monthly' | 'quarterly' | 'yearly' | 'bi-weekly' | 'weekly';
+
+export type ContributionFrequency = 'monthly' | 'quarterly' | 'annually' | 'yearly';
 
 export type CompoundingFrequency = 'daily' | 'monthly' | 'quarterly' | 'annually';
 
@@ -87,6 +89,7 @@ export interface LoanResults {
 export interface SavingsInputs {
   initialDeposit: number;
   monthlyContribution: number;
+  contributionFrequency?: ContributionFrequency;
   interestRate: number; // annual percentage
   savingsPeriodYears: number;
   compoundingFrequency: 'monthly' | 'quarterly' | 'annually';
@@ -104,7 +107,7 @@ export interface CompoundInterestInputs {
   principal: number;
   interestRate: number;
   additionalContribution: number;
-  contributionFrequency: 'monthly' | 'annually';
+  contributionFrequency: ContributionFrequency;
   investmentPeriodYears: number;
   compoundingFrequency: CompoundingFrequency;
 }
@@ -121,6 +124,7 @@ export interface CompoundInterestResults {
 export interface InvestmentInputs {
   initialInvestment: number;
   monthlyContribution: number;
+  contributionFrequency?: ContributionFrequency;
   expectedAnnualReturn: number;
   investmentDurationYears: number;
 }
@@ -347,10 +351,13 @@ export interface SavingsGoalInputs {
   currentSavings: number;
   timeframeMonths: number;
   annualReturnRate: number;
+  depositFrequency?: 'monthly' | 'quarterly' | 'yearly';
 }
 
 export interface SavingsGoalResults {
   requiredMonthlyDeposit: number;
+  requiredPeriodicDeposit: number;
+  depositFrequency: 'monthly' | 'quarterly' | 'yearly';
   totalDeposited: number;
   interestEarned: number;
   lumpSumNeededToday: number;

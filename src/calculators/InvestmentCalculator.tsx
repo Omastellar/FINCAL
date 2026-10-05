@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { BarChart3, RotateCcw, AlertCircle, Sparkles } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
 import { calculateInvestment } from '../utils/financialMath';
+import { ContributionFrequency } from '../types/calculators';
 import { Card } from '../components/common/Card';
 import { SliderField } from '../components/common/SliderField';
 import { MetricCard } from '../components/common/MetricCard';
@@ -25,6 +26,10 @@ export const InvestmentCalculator: React.FC = () => {
   const [monthlyContribution, setMonthlyContribution] = useState<number>(() => {
     const val = initialParams.get('monthly');
     return val ? parseFloat(val) : 0;
+  });
+  const [contributionFrequency, setContributionFrequency] = useState<ContributionFrequency>(() => {
+    const val = initialParams.get('c_freq') as ContributionFrequency;
+    return val === 'quarterly' || val === 'yearly' || val === 'annually' ? val : 'monthly';
   });
   const [expectedAnnualReturn, setExpectedAnnualReturn] = useState<number>(() => {
     const val = initialParams.get('returnRate');
@@ -50,6 +55,7 @@ export const InvestmentCalculator: React.FC = () => {
       calc: 'investment',
       initial: initialInvestment,
       monthly: monthlyContribution,
+      c_freq: contributionFrequency,
       returnRate: expectedAnnualReturn,
       duration: investmentDurationYears,
       inflation: adjustInflation ? '1' : '',
@@ -58,6 +64,7 @@ export const InvestmentCalculator: React.FC = () => {
   }, [
     initialInvestment,
     monthlyContribution,
+    contributionFrequency,
     expectedAnnualReturn,
     investmentDurationYears,
     adjustInflation,
@@ -72,7 +79,8 @@ export const InvestmentCalculator: React.FC = () => {
       monthlyContribution,
       expectedAnnualReturn,
       investmentDurationYears,
-      adjustInflation ? inflationRate : 0
+      adjustInflation ? inflationRate : 0,
+      contributionFrequency
     );
   }, [
     initialInvestment,
@@ -81,6 +89,7 @@ export const InvestmentCalculator: React.FC = () => {
     investmentDurationYears,
     adjustInflation,
     inflationRate,
+    contributionFrequency,
   ]);
 
   const finalRealPower = useMemo(() => {
@@ -117,6 +126,7 @@ export const InvestmentCalculator: React.FC = () => {
   const resetDefaults = () => {
     setInitialInvestment(0);
     setMonthlyContribution(0);
+    setContributionFrequency('monthly');
     setExpectedAnnualReturn(0);
     setInvestmentDurationYears(0);
     setAdjustInflation(false);
@@ -169,9 +179,9 @@ export const InvestmentCalculator: React.FC = () => {
               prefix={currencyConfig.symbol}
             />
 
-            {/* Monthly Contribution */}
+            {/* Contribution */}
             <SliderField
-              label="Monthly Contribution"
+              label={`${contributionFrequency === 'quarterly' ? 'Quarterly' : contributionFrequency === 'yearly' || contributionFrequency === 'annually' ? 'Yearly' : 'Monthly'} Contribution`}
               value={monthlyContribution}
               onChange={setMonthlyContribution}
               min={0}
@@ -179,6 +189,29 @@ export const InvestmentCalculator: React.FC = () => {
               step={5_000}
               prefix={currencyConfig.symbol}
             />
+
+            {/* Contribution Frequency */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                Contribution Frequency
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['monthly', 'quarterly', 'yearly'] as const).map((freq) => (
+                  <button
+                    key={freq}
+                    type="button"
+                    onClick={() => setContributionFrequency(freq)}
+                    className={`py-2 text-xs font-semibold rounded-xl border capitalize transition-all ${
+                      contributionFrequency === freq
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                        : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-400'
+                    }`}
+                  >
+                    {freq}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Expected Annual Return */}
             <SliderField

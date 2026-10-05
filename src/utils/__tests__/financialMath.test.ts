@@ -612,4 +612,96 @@ describe('Module 23: Financial Goals & Scenario Comparison', () => {
   });
 });
 
+describe('Module 24: Monthly, Quarterly, and Yearly Frequency Integrations', () => {
+  it('[TC-FREQ-001] calculates loan payments and schedules across monthly, quarterly, and yearly frequencies', () => {
+    const monthlyLoan = calculateLoanPayment(100_000, 10, 5, 'monthly');
+    const quarterlyLoan = calculateLoanPayment(100_000, 10, 5, 'quarterly');
+    const yearlyLoan = calculateLoanPayment(100_000, 10, 5, 'yearly');
+
+    expect(monthlyLoan.amortizationSchedule.length).toBe(60);
+    expect(quarterlyLoan.amortizationSchedule.length).toBe(20);
+    expect(yearlyLoan.amortizationSchedule.length).toBe(5);
+
+    expect(monthlyLoan.periodicPayment).toBeCloseTo(2124.70, 0);
+    expect(quarterlyLoan.periodicPayment).toBeCloseTo(6414.71, 0);
+    expect(yearlyLoan.periodicPayment).toBeCloseTo(26379.75, 0);
+
+    // Total interest reflects compounding differences
+    expect(yearlyLoan.totalInterest).toBeGreaterThan(quarterlyLoan.totalInterest);
+    expect(quarterlyLoan.totalInterest).toBeGreaterThan(monthlyLoan.totalInterest);
+  });
+
+  it('[TC-FREQ-002] alters savings contributions and final balances for monthly, quarterly, and yearly', () => {
+    const monthlySavings = calculateSavingsGrowth(10_000, 1_000, 5, 2, 'monthly', 0, 'monthly');
+    const quarterlySavings = calculateSavingsGrowth(10_000, 1_000, 5, 2, 'monthly', 0, 'quarterly');
+    const yearlySavings = calculateSavingsGrowth(10_000, 1_000, 5, 2, 'monthly', 0, 'yearly');
+
+    expect(monthlySavings.totalContributions).toBe(34_000);
+    expect(quarterlySavings.totalContributions).toBe(18_000);
+    expect(yearlySavings.totalContributions).toBe(12_000);
+
+    expect(monthlySavings.finalBalance).toBeGreaterThan(quarterlySavings.finalBalance);
+    expect(quarterlySavings.finalBalance).toBeGreaterThan(yearlySavings.finalBalance);
+  });
+
+  it('[TC-FREQ-003] alters investment growth and total invested for monthly, quarterly, and yearly', () => {
+    const monthlyInv = calculateInvestment(50_000, 2_000, 8, 3, 0, 'monthly');
+    const quarterlyInv = calculateInvestment(50_000, 2_000, 8, 3, 0, 'quarterly');
+    const yearlyInv = calculateInvestment(50_000, 2_000, 8, 3, 0, 'yearly');
+
+    expect(monthlyInv.totalInvested).toBe(50_000 + 2_000 * 36);
+    expect(quarterlyInv.totalInvested).toBe(50_000 + 2_000 * 12);
+    expect(yearlyInv.totalInvested).toBe(50_000 + 2_000 * 3);
+
+    expect(monthlyInv.futureInvestmentValue).toBeGreaterThan(quarterlyInv.futureInvestmentValue);
+    expect(quarterlyInv.futureInvestmentValue).toBeGreaterThan(yearlyInv.futureInvestmentValue);
+  });
+
+  it('[TC-FREQ-004] alters compound interest deposits and future values for monthly, quarterly, and annually', () => {
+    const monthlyCI = calculateCompoundInterest(20_000, 6, 500, 'monthly', 2, 'monthly');
+    const quarterlyCI = calculateCompoundInterest(20_000, 6, 500, 'quarterly', 2, 'monthly');
+    const annuallyCI = calculateCompoundInterest(20_000, 6, 500, 'annually', 2, 'monthly');
+
+    expect(monthlyCI.totalContributions).toBe(500 * 24);
+    expect(quarterlyCI.totalContributions).toBe(500 * 8);
+    expect(annuallyCI.totalContributions).toBe(500 * 2);
+
+    expect(monthlyCI.futureValue).toBeGreaterThan(quarterlyCI.futureValue);
+    expect(quarterlyCI.futureValue).toBeGreaterThan(annuallyCI.futureValue);
+  });
+
+  it('[TC-FREQ-005] adjusts required savings goal deposit when choosing monthly, quarterly, or yearly', () => {
+    const monthlyGoal = calculateSavingsGoal({
+      targetAmount: 60_000,
+      currentSavings: 10_000,
+      timeframeMonths: 24,
+      annualReturnRate: 6.0,
+      depositFrequency: 'monthly',
+    });
+    const quarterlyGoal = calculateSavingsGoal({
+      targetAmount: 60_000,
+      currentSavings: 10_000,
+      timeframeMonths: 24,
+      annualReturnRate: 6.0,
+      depositFrequency: 'quarterly',
+    });
+    const yearlyGoal = calculateSavingsGoal({
+      targetAmount: 60_000,
+      currentSavings: 10_000,
+      timeframeMonths: 24,
+      annualReturnRate: 6.0,
+      depositFrequency: 'yearly',
+    });
+
+    expect(monthlyGoal.depositFrequency).toBe('monthly');
+    expect(quarterlyGoal.depositFrequency).toBe('quarterly');
+    expect(yearlyGoal.depositFrequency).toBe('yearly');
+
+    // Quarterly periodic deposit is roughly 3x monthly, and yearly is roughly 12x
+    expect(quarterlyGoal.requiredPeriodicDeposit).toBeGreaterThan(monthlyGoal.requiredPeriodicDeposit * 2.8);
+    expect(yearlyGoal.requiredPeriodicDeposit).toBeGreaterThan(monthlyGoal.requiredPeriodicDeposit * 10);
+  });
+});
+
+
 

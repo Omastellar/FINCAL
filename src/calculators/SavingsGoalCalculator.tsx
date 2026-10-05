@@ -32,6 +32,10 @@ export const SavingsGoalCalculator: React.FC = () => {
     const val = initialParams.get('rate');
     return val ? parseFloat(val) : 0;
   });
+  const [depositFrequency, setDepositFrequency] = useState<'monthly' | 'quarterly' | 'yearly'>(() => {
+    const val = initialParams.get('freq') as 'monthly' | 'quarterly' | 'yearly';
+    return val === 'quarterly' || val === 'yearly' ? val : 'monthly';
+  });
 
   useEffect(() => {
     updateUrlParams({
@@ -40,8 +44,9 @@ export const SavingsGoalCalculator: React.FC = () => {
       current: currentSavings,
       months: timeframeMonths,
       rate: annualReturnRate,
+      freq: depositFrequency,
     });
-  }, [targetAmount, currentSavings, timeframeMonths, annualReturnRate, updateUrlParams]);
+  }, [targetAmount, currentSavings, timeframeMonths, annualReturnRate, depositFrequency, updateUrlParams]);
 
   const results = useMemo(() => {
     return calculateSavingsGoal({
@@ -49,15 +54,18 @@ export const SavingsGoalCalculator: React.FC = () => {
       currentSavings,
       timeframeMonths,
       annualReturnRate,
+      depositFrequency,
     });
-  }, [targetAmount, currentSavings, timeframeMonths, annualReturnRate]);
+  }, [targetAmount, currentSavings, timeframeMonths, annualReturnRate, depositFrequency]);
 
   const explainableData: ExplainableResultData = useMemo(() => {
+    const freqLabel = depositFrequency === 'quarterly' ? 'quarterly' : depositFrequency === 'yearly' ? 'yearly' : 'monthly';
+    const capitalizedFreq = depositFrequency.charAt(0).toUpperCase() + depositFrequency.slice(1);
     return {
       title: 'Savings Goal Feasibility & Contribution Strategy',
-      summary: `To achieve your financial goal of ${format(targetAmount)} within ${timeframeMonths} months starting with ${format(currentSavings)} at an expected ${annualReturnRate}% annual return, you must deposit ${format(results.requiredMonthlyDeposit)} monthly. Over the term, compounding will generate ${format(results.interestEarned)} in interest.`,
+      summary: `To achieve your financial goal of ${format(targetAmount)} within ${timeframeMonths} months starting with ${format(currentSavings)} at an expected ${annualReturnRate}% annual return, you must deposit ${format(results.requiredPeriodicDeposit)} ${freqLabel}. Over the term, compounding will generate ${format(results.interestEarned)} in interest.`,
       keyFigures: [
-        { label: 'Required Monthly Deposit', value: format(results.requiredMonthlyDeposit), highlight: true },
+        { label: `Required ${capitalizedFreq} Deposit`, value: format(results.requiredPeriodicDeposit), highlight: true },
         { label: 'Goal Target Amount', value: format(targetAmount) },
         { label: 'Current Progress', value: `${results.progressPercentage.toFixed(1)}%` },
         { label: 'Total You Will Deposit', value: format(results.totalDeposited) },
@@ -66,16 +74,16 @@ export const SavingsGoalCalculator: React.FC = () => {
       ],
       assumptions: [
         { label: 'Time Horizon', value: `${timeframeMonths} Months (${(timeframeMonths / 12).toFixed(1)} years)` },
-        { label: 'Reinvestment Rate', value: `${annualReturnRate}% annual yield compounded monthly` },
-        { label: 'Contribution Timing', value: 'Regular deposits made at the beginning of each monthly cycle' },
+        { label: 'Reinvestment Rate', value: `${annualReturnRate}% annual yield compounded ${depositFrequency === 'yearly' ? 'annually' : depositFrequency === 'quarterly' ? 'quarterly' : 'monthly'}` },
+        { label: 'Contribution Timing', value: `Regular deposits made at each ${freqLabel} cycle` },
       ],
       methodology: 'Future Value of Annuity formula back-solving periodic payment (PMT) with starting capital compounding.',
       formulaSteps: [
         {
-          name: 'Required Monthly Contribution (PMT)',
+          name: `Required ${capitalizedFreq} Contribution (PMT)`,
           formula: 'PMT = [Target - Current * (1 + r)^n] / [((1 + r)^n - 1) / r]',
-          substituted: `[${format(targetAmount)} - ${format(currentSavings)} * (1 + ${(annualReturnRate / 1200).toFixed(5)})^${timeframeMonths}] / ...`,
-          result: format(results.requiredMonthlyDeposit),
+          substituted: `[${format(targetAmount)} - ${format(currentSavings)} * (1 + r)^n] / ...`,
+          result: format(results.requiredPeriodicDeposit),
           explanation: 'Calculates the exact periodic liquidity required to meet the terminal balance target.',
         },
       ],
@@ -84,7 +92,7 @@ export const SavingsGoalCalculator: React.FC = () => {
         'Inflation will erode nominal purchasing power over extended multi-year horizons.',
       ],
     };
-  }, [results, targetAmount, currentSavings, timeframeMonths, annualReturnRate, format]);
+  }, [results, targetAmount, currentSavings, timeframeMonths, annualReturnRate, depositFrequency, format]);
 
   return (
     <div className="space-y-8 animate-fade-in pb-12">
@@ -113,10 +121,20 @@ export const SavingsGoalCalculator: React.FC = () => {
       {/* Top Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          label="Required Monthly Deposit"
-          value={format(results.requiredMonthlyDeposit)}
+          label={
+            depositFrequency === 'quarterly'
+              ? 'Required Quarterly Deposit'
+              : depositFrequency === 'yearly'
+              ? 'Required Yearly Deposit'
+              : 'Required Monthly Deposit'
+          }
+          value={format(results.requiredPeriodicDeposit)}
           icon={<Target className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
-          subValue={`For next ${timeframeMonths} months`}
+          subValue={
+            depositFrequency === 'monthly'
+              ? `For next ${timeframeMonths} months`
+              : `Approx. ${format(results.requiredMonthlyDeposit)}/mo equivalent`
+          }
           variant="primary"
         />
         <MetricCard
@@ -223,6 +241,29 @@ export const SavingsGoalCalculator: React.FC = () => {
                   step={1}
                   suffix=" mo"
                 />
+              </div>
+
+              {/* Deposit Frequency */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Deposit Frequency
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['monthly', 'quarterly', 'yearly'] as const).map((freq) => (
+                    <button
+                      key={freq}
+                      type="button"
+                      onClick={() => setDepositFrequency(freq)}
+                      className={`py-2 text-xs font-semibold rounded-lg border capitalize transition-all ${
+                        depositFrequency === freq
+                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
+                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-500'
+                      }`}
+                    >
+                      {freq}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </Card>

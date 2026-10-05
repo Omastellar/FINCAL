@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { TrendingUp, RotateCcw, Zap, Sparkles } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
 import { calculateCompoundInterest } from '../utils/financialMath';
-import { CompoundingFrequency } from '../types/calculators';
+import { CompoundingFrequency, ContributionFrequency } from '../types/calculators';
 import { Card } from '../components/common/Card';
 import { SliderField } from '../components/common/SliderField';
 import { MetricCard } from '../components/common/MetricCard';
@@ -31,9 +31,9 @@ export const CompoundInterestCalculator: React.FC = () => {
     const val = initialParams.get('contrib');
     return val ? parseFloat(val) : 0;
   });
-  const [contributionFrequency, setContributionFrequency] = useState<'monthly' | 'annually'>(() => {
-    const val = initialParams.get('freq') as 'monthly' | 'annually';
-    return val === 'annually' ? 'annually' : 'monthly';
+  const [contributionFrequency, setContributionFrequency] = useState<ContributionFrequency>(() => {
+    const val = initialParams.get('freq') as ContributionFrequency;
+    return val === 'quarterly' || val === 'annually' || val === 'yearly' ? val : 'monthly';
   });
   const [investmentPeriodYears, setInvestmentPeriodYears] = useState<number>(() => {
     const val = initialParams.get('years');
@@ -205,8 +205,8 @@ export const CompoundInterestCalculator: React.FC = () => {
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Deposit Frequency
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                {(['monthly', 'annually'] as const).map((freq) => (
+              <div className="grid grid-cols-3 gap-2">
+                {(['monthly', 'quarterly', 'annually'] as const).map((freq) => (
                   <button
                     key={freq}
                     type="button"

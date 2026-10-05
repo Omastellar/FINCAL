@@ -17,6 +17,7 @@ import {
   DebtTimelinePoint,
   ExpenseCategoryBreakdown,
   PaymentFrequency,
+  ContributionFrequency,
   CompoundingFrequency,
   CurrencyConversionInputs,
   CurrencyConversionResults,
@@ -68,6 +69,10 @@ export function getPeriodsPerYear(frequency: PaymentFrequency): number {
       return 52;
     case 'bi-weekly':
       return 26;
+    case 'quarterly':
+      return 4;
+    case 'yearly':
+      return 1;
     case 'monthly':
     default:
       return 12;
@@ -326,10 +331,11 @@ export function calculateSavingsGrowth(
   annualRatePct: number,
   savingsPeriodYears: number,
   compoundingFrequency: 'monthly' | 'quarterly' | 'annually' = 'monthly',
-  annualInflationRatePct: number = 0
+  annualInflationRatePct: number = 0,
+  contributionFrequency: ContributionFrequency = 'monthly'
 ): SavingsResults {
   const initial = sanitizeNumber(initialDeposit, 0, 0);
-  const monthly = sanitizeNumber(monthlyContribution, 0, 0);
+  const contribution = sanitizeNumber(monthlyContribution, 0, 0);
   const rate = sanitizeNumber(annualRatePct, 0, 0);
   const inflation = sanitizeNumber(annualInflationRatePct, 0, 0);
   const years = Math.max(1, Math.round(sanitizeNumber(savingsPeriodYears, 1, 1)));
@@ -355,8 +361,19 @@ export function calculateSavingsGrowth(
   let totalContributed = initial;
 
   for (let month = 1; month <= totalMonths; month++) {
-    currentBalance += monthly;
-    totalContributed += monthly;
+    let isDepositMonth = false;
+    if (contributionFrequency === 'monthly') {
+      isDepositMonth = true;
+    } else if (contributionFrequency === 'quarterly') {
+      isDepositMonth = month % 3 === 0;
+    } else if (contributionFrequency === 'annually' || contributionFrequency === 'yearly') {
+      isDepositMonth = month % 12 === 0;
+    }
+
+    if (isDepositMonth) {
+      currentBalance += contribution;
+      totalContributed += contribution;
+    }
 
     if (rate > 0) {
       currentBalance += currentBalance * monthlyRate;
@@ -407,7 +424,7 @@ export function calculateCompoundInterest(
   principalInput: number,
   ratePctInput: number,
   additionalContribution: number,
-  contributionFreq: 'monthly' | 'annually' = 'monthly',
+  contributionFreq: ContributionFrequency = 'monthly',
   periodYears: number = 5,
   compoundingFreq: CompoundingFrequency = 'monthly',
   annualInflationRatePct: number = 0
@@ -419,8 +436,6 @@ export function calculateCompoundInterest(
   const years = Math.max(1, Math.round(sanitizeNumber(periodYears, 1, 1)));
 
   const n = getCompoundingTimes(compoundingFreq);
-  const annualContrib = contributionFreq === 'monthly' ? contribution * 12 : contribution;
-  const periodicContrib = contributionFreq === 'monthly' ? contribution : contribution / 12;
 
   const totalMonths = years * 12;
   const nominalRate = ratePct > 0 ? (ratePct / 100) : 0;
@@ -440,8 +455,19 @@ export function calculateCompoundInterest(
   let totalInvested = principal;
 
   for (let m = 1; m <= totalMonths; m++) {
-    currentBalance += periodicContrib;
-    totalInvested += periodicContrib;
+    let isDepositMonth = false;
+    if (contributionFreq === 'monthly') {
+      isDepositMonth = true;
+    } else if (contributionFreq === 'quarterly') {
+      isDepositMonth = m % 3 === 0;
+    } else if (contributionFreq === 'annually' || contributionFreq === 'yearly') {
+      isDepositMonth = m % 12 === 0;
+    }
+
+    if (isDepositMonth) {
+      currentBalance += contribution;
+      totalInvested += contribution;
+    }
 
     if (monthlyRate > 0) {
       currentBalance += currentBalance * monthlyRate;
@@ -478,10 +504,11 @@ export function calculateInvestment(
   monthlyContribution: number,
   expectedAnnualReturnPct: number,
   investmentDurationYears: number,
-  annualInflationRatePct: number = 0
+  annualInflationRatePct: number = 0,
+  contributionFrequency: ContributionFrequency = 'monthly'
 ): InvestmentResults {
   const initial = sanitizeNumber(initialInvestment, 0, 0);
-  const monthly = sanitizeNumber(monthlyContribution, 0, 0);
+  const contribution = sanitizeNumber(monthlyContribution, 0, 0);
   const returnRate = sanitizeNumber(expectedAnnualReturnPct, 0, 0);
   const inflation = sanitizeNumber(annualInflationRatePct, 0, 0);
   const years = Math.max(1, Math.round(sanitizeNumber(investmentDurationYears, 1, 1)));
@@ -503,8 +530,19 @@ export function calculateInvestment(
   let totalInvested = initial;
 
   for (let m = 1; m <= totalMonths; m++) {
-    currentBalance += monthly;
-    totalInvested += monthly;
+    let isDepositMonth = false;
+    if (contributionFrequency === 'monthly') {
+      isDepositMonth = true;
+    } else if (contributionFrequency === 'quarterly') {
+      isDepositMonth = m % 3 === 0;
+    } else if (contributionFrequency === 'annually' || contributionFrequency === 'yearly') {
+      isDepositMonth = m % 12 === 0;
+    }
+
+    if (isDepositMonth) {
+      currentBalance += contribution;
+      totalInvested += contribution;
+    }
 
     if (monthlyRate > 0) {
       currentBalance += currentBalance * monthlyRate;
@@ -1134,6 +1172,11 @@ export function calculateSavingsGoal(inputs: SavingsGoalInputs): SavingsGoalResu
   const currentSavings = sanitizeNumber(inputs.currentSavings, 0, 0);
   const timeframeMonths = Math.max(1, sanitizeNumber(inputs.timeframeMonths, 12, 1));
   const annualReturnRate = sanitizeNumber(inputs.annualReturnRate, 0, 0);
+  const depositFrequency = inputs.depositFrequency || 'monthly';
+
+  const periodsPerYear = depositFrequency === 'quarterly' ? 4 : depositFrequency === 'yearly' ? 1 : 12;
+  const totalPeriods = Math.max(1, Math.round((timeframeMonths / 12) * periodsPerYear));
+  const periodicRate = annualReturnRate > 0 ? (annualReturnRate / 100) / periodsPerYear : 0;
   const monthlyRate = annualReturnRate > 0 ? (annualReturnRate / 100) / 12 : 0;
 
   const progressPercentage = targetAmount > 0 ? Math.min(100, (currentSavings / targetAmount) * 100) : 0;
@@ -1141,28 +1184,45 @@ export function calculateSavingsGoal(inputs: SavingsGoalInputs): SavingsGoalResu
     ? targetAmount / Math.pow(1 + monthlyRate, timeframeMonths)
     : targetAmount;
 
-  let requiredMonthlyDeposit = 0;
-  if (monthlyRate === 0) {
-    requiredMonthlyDeposit = Math.max(0, (targetAmount - currentSavings) / timeframeMonths);
+  let requiredPeriodicDeposit = 0;
+  if (periodicRate === 0) {
+    requiredPeriodicDeposit = Math.max(0, (targetAmount - currentSavings) / totalPeriods);
   } else {
-    const futureValueOfInitial = currentSavings * Math.pow(1 + monthlyRate, timeframeMonths);
+    const futureValueOfInitial = currentSavings * Math.pow(1 + periodicRate, totalPeriods);
     const shortfall = Math.max(0, targetAmount - futureValueOfInitial);
-    const annuityFactor = (Math.pow(1 + monthlyRate, timeframeMonths) - 1) / monthlyRate;
-    requiredMonthlyDeposit = shortfall / annuityFactor;
+    const annuityFactor = (Math.pow(1 + periodicRate, totalPeriods) - 1) / periodicRate;
+    requiredPeriodicDeposit = shortfall / annuityFactor;
   }
+
+  const requiredMonthlyDeposit = depositFrequency === 'monthly'
+    ? requiredPeriodicDeposit
+    : (requiredPeriodicDeposit * periodsPerYear) / 12;
 
   const monthlySchedule: Array<{ month: number; deposit: number; interest: number; balance: number }> = [];
   let balance = currentSavings;
   let totalDeposited = currentSavings;
 
   for (let m = 1; m <= timeframeMonths; m++) {
+    let depositThisMonth = 0;
+    if (depositFrequency === 'monthly') {
+      depositThisMonth = requiredPeriodicDeposit;
+    } else if (depositFrequency === 'quarterly') {
+      if (m % 3 === 0) {
+        depositThisMonth = requiredPeriodicDeposit;
+      }
+    } else if (depositFrequency === 'yearly') {
+      if (m % 12 === 0) {
+        depositThisMonth = requiredPeriodicDeposit;
+      }
+    }
+
     const interest = balance * monthlyRate;
-    balance += requiredMonthlyDeposit + interest;
-    totalDeposited += requiredMonthlyDeposit;
+    balance += depositThisMonth + interest;
+    totalDeposited += depositThisMonth;
 
     monthlySchedule.push({
       month: m,
-      deposit: Math.round(requiredMonthlyDeposit * 100) / 100,
+      deposit: Math.round(depositThisMonth * 100) / 100,
       interest: Math.round(interest * 100) / 100,
       balance: Math.round(balance * 100) / 100,
     });
@@ -1172,6 +1232,8 @@ export function calculateSavingsGoal(inputs: SavingsGoalInputs): SavingsGoalResu
 
   return {
     requiredMonthlyDeposit,
+    requiredPeriodicDeposit,
+    depositFrequency,
     totalDeposited,
     interestEarned,
     lumpSumNeededToday,

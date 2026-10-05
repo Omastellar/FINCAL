@@ -10,7 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
-import { calculateLoanPayment, calculateLoanWithPrepayment } from '../utils/financialMath';
+import { calculateLoanPayment, calculateLoanWithPrepayment, getPeriodsPerYear } from '../utils/financialMath';
 import { exportAmortizationCSV } from '../utils/exportUtils';
 import { PaymentFrequency } from '../types/calculators';
 import { Card } from '../components/common/Card';
@@ -43,7 +43,7 @@ export const LoanCalculator: React.FC = () => {
   });
   const [paymentFrequency, setPaymentFrequency] = useState<PaymentFrequency>(() => {
     const val = initialParams.get('freq') as PaymentFrequency;
-    return val === 'bi-weekly' || val === 'weekly' ? val : 'monthly';
+    return val === 'quarterly' || val === 'yearly' || val === 'bi-weekly' || val === 'weekly' ? val : 'monthly';
   });
 
   // Prepayment Simulator State
@@ -256,7 +256,7 @@ export const LoanCalculator: React.FC = () => {
                 Payment Frequency
               </label>
               <div className="grid grid-cols-3 gap-2">
-                {(['monthly', 'bi-weekly', 'weekly'] as PaymentFrequency[]).map((freq) => (
+                {(['monthly', 'quarterly', 'yearly'] as PaymentFrequency[]).map((freq) => (
                   <button
                     key={freq}
                     type="button"
@@ -392,7 +392,7 @@ export const LoanCalculator: React.FC = () => {
           {/* Hero Metrics Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <MetricCard
-              label={`${paymentFrequency} Payment`}
+              label={`${paymentFrequency.charAt(0).toUpperCase() + paymentFrequency.slice(1)} Payment`}
               value={format(
                 hasActivePrepayment
                   ? standardResults.periodicPayment + extraPayment
@@ -401,7 +401,9 @@ export const LoanCalculator: React.FC = () => {
               subValue={
                 hasActivePrepayment && extraPayment > 0
                   ? `Includes ${format(extraPayment)} extra principal`
-                  : undefined
+                  : paymentFrequency !== 'monthly'
+                  ? `Approx. ${format(standardResults.monthlyEquivalentPayment)}/mo equivalent`
+                  : `${loanTermYears * 12} total monthly payments`
               }
               variant="primary"
             />
@@ -433,7 +435,7 @@ export const LoanCalculator: React.FC = () => {
               label="Payoff Timeline"
               value={
                 hasActivePrepayment
-                  ? `${(prepaymentResults.acceleratedPeriods / (paymentFrequency === 'monthly' ? 12 : paymentFrequency === 'bi-weekly' ? 26 : 52)).toFixed(1)} Years`
+                  ? `${(prepaymentResults.acceleratedPeriods / getPeriodsPerYear(paymentFrequency)).toFixed(1)} Years`
                   : `${loanTermYears} Years`
               }
               subValue={
