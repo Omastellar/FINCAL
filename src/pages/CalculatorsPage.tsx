@@ -88,7 +88,10 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
   };
 
   const [activeCalcId, setActiveCalcId] = useState<CalculatorId | null>(() => {
-    return initialCalculatorId !== undefined ? initialCalculatorId : getCalcFromUrl();
+    if (initialCalculatorId) return initialCalculatorId;
+    const fromUrl = getCalcFromUrl();
+    if (fromUrl) return fromUrl;
+    return 'loan';
   });
 
   const categories = [
@@ -97,9 +100,6 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
     'Savings & Investments',
     'Budget & Debt',
     'Planning & Decisions',
-    'Borrowing',
-    'Growth',
-    'Planning',
   ] as const;
 
   type CategoryTab = (typeof categories)[number];
@@ -108,7 +108,7 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
   useEffect(() => {
-    if (initialCalculatorId !== undefined) {
+    if (initialCalculatorId !== undefined && initialCalculatorId !== null) {
       setActiveCalcId(initialCalculatorId);
     }
   }, [initialCalculatorId]);
@@ -119,10 +119,7 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
     if (selectedCategory === 'Savings & Investments') return calc.suite === 'Savings & Investments';
     if (selectedCategory === 'Budget & Debt') return calc.suite === 'Budget & Debt';
     if (selectedCategory === 'Planning & Decisions') return calc.suite === 'Planning & Decisions';
-    if (selectedCategory === 'Growth') return calc.category === 'Growing' || calc.suite === 'Savings & Investments';
-    if (selectedCategory === 'Borrowing') return calc.category === 'Borrowing' || calc.suite === 'Loans';
-    if (selectedCategory === 'Planning') return calc.category === 'Planning' || calc.suite === 'Planning & Decisions';
-    return calc.category === selectedCategory || calc.suite === selectedCategory;
+    return true;
   });
 
   const handleCategoryClick = (cat: CategoryTab) => {
@@ -248,6 +245,47 @@ export const CalculatorsPage: React.FC<CalculatorsPageProps> = ({
           </button>
         </div>
       )}
+
+      {/* 1-Tap Quick Switch Bar */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 shadow-xs">
+        <div className="flex items-center justify-between mb-2 px-1">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+            <Zap className="w-3.5 h-3.5 text-amber-500" />
+            Popular Calculators
+          </span>
+          <span className="text-[11px] text-slate-400 hidden sm:inline">1-tap instant switch</span>
+        </div>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {[
+            { id: 'loan', label: 'Loan Calculator', icon: <CreditCard className="w-3.5 h-3.5 text-emerald-500" /> },
+            { id: 'savings', label: 'Savings Growth', icon: <PiggyBank className="w-3.5 h-3.5 text-teal-500" /> },
+            { id: 'investment', label: 'Investment & Return', icon: <TrendingUp className="w-3.5 h-3.5 text-blue-500" /> },
+            { id: 'mortgage', label: 'Mortgage & Home', icon: <Home className="w-3.5 h-3.5 text-indigo-500" /> },
+            { id: 'personal-loan', label: 'Personal Loan', icon: <Wallet className="w-3.5 h-3.5 text-purple-500" /> },
+            { id: 'budget', label: '50/30/20 Budget', icon: <BarChart3 className="w-3.5 h-3.5 text-rose-500" /> },
+          ].map((item) => {
+            const isActive = activeCalcId === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setActiveCalcId(item.id as CalculatorId);
+                  onSelectCalculator?.(item.id as CalculatorId);
+                }}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Category Pills & Quick Selector */}
       <div className="space-y-4">

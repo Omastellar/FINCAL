@@ -35,10 +35,38 @@ export const InvestmentCalculator: React.FC = () => {
     const val = initialParams.get('returnRate');
     return val ? parseFloat(val) : 0;
   });
-  const [investmentDurationYears, setInvestmentDurationYears] = useState<number>(() => {
-    const val = initialParams.get('duration');
-    return val ? parseFloat(val) : 0;
+  const [termUnit, setTermUnit] = useState<'months' | 'years'>(() => {
+    const unit = initialParams.get('termUnit');
+    return unit === 'years' ? 'years' : 'months';
   });
+  const [investmentDurationMonths, setInvestmentDurationMonths] = useState<number>(() => {
+    const m = initialParams.get('months');
+    if (m) return parseInt(m, 10);
+    const y = initialParams.get('duration');
+    if (y) return Math.round(parseFloat(y) * 12);
+    return 0;
+  });
+  const [investmentDurationYears, setInvestmentDurationYears] = useState<number>(() => {
+    const y = initialParams.get('duration');
+    if (y) return parseFloat(y);
+    const m = initialParams.get('months');
+    if (m) return parseFloat((parseInt(m, 10) / 12).toFixed(2));
+    return 0;
+  });
+
+  const handleMonthsChange = (months: number) => {
+    setInvestmentDurationMonths(months);
+    setInvestmentDurationYears(months > 0 ? parseFloat((months / 12).toFixed(2)) : 0);
+  };
+
+  const handleYearsChange = (years: number) => {
+    setInvestmentDurationYears(years);
+    setInvestmentDurationMonths(years > 0 ? Math.round(years * 12) : 0);
+  };
+
+  const effectiveTermYears = termUnit === 'months'
+    ? (investmentDurationMonths > 0 ? investmentDurationMonths / 12 : 0)
+    : investmentDurationYears;
 
   // Inflation State
   const [adjustInflation, setAdjustInflation] = useState<boolean>(() => {
@@ -58,6 +86,8 @@ export const InvestmentCalculator: React.FC = () => {
       c_freq: contributionFrequency,
       returnRate: expectedAnnualReturn,
       duration: investmentDurationYears,
+      months: investmentDurationMonths,
+      termUnit: termUnit,
       inflation: adjustInflation ? '1' : '',
       inflationRate: adjustInflation ? inflationRate : '',
     });
@@ -67,6 +97,8 @@ export const InvestmentCalculator: React.FC = () => {
     contributionFrequency,
     expectedAnnualReturn,
     investmentDurationYears,
+    investmentDurationMonths,
+    termUnit,
     adjustInflation,
     inflationRate,
     updateUrlParams,
@@ -78,7 +110,7 @@ export const InvestmentCalculator: React.FC = () => {
       initialInvestment,
       monthlyContribution,
       expectedAnnualReturn,
-      investmentDurationYears,
+      effectiveTermYears,
       adjustInflation ? inflationRate : 0,
       contributionFrequency
     );
@@ -86,7 +118,7 @@ export const InvestmentCalculator: React.FC = () => {
     initialInvestment,
     monthlyContribution,
     expectedAnnualReturn,
-    investmentDurationYears,
+    effectiveTermYears,
     adjustInflation,
     inflationRate,
     contributionFrequency,
@@ -109,8 +141,11 @@ export const InvestmentCalculator: React.FC = () => {
   // Plain-English insights
   const insights = useMemo(() => {
     const list: string[] = [];
+    const durationLabel = investmentDurationMonths > 0
+      ? `${investmentDurationMonths} months (${effectiveTermYears.toFixed(1)} years)`
+      : `${investmentDurationYears} years`;
     list.push(
-      `Based on an expected annual return of ${expectedAnnualReturn}%, your estimated future nominal investment value is ${format(results.futureInvestmentValue)}.`
+      `Based on an expected annual return of ${expectedAnnualReturn}%, your estimated future nominal investment value over ${durationLabel} is ${format(results.futureInvestmentValue)}.`
     );
     list.push(
       `Your total invested capital is ${format(results.totalInvested)}, while projected portfolio gains represent ${format(results.estimatedGrowth)}.`
@@ -121,14 +156,16 @@ export const InvestmentCalculator: React.FC = () => {
       );
     }
     return list;
-  }, [results, expectedAnnualReturn, adjustInflation, inflationRate, finalRealPower, format]);
+  }, [results, expectedAnnualReturn, investmentDurationMonths, investmentDurationYears, effectiveTermYears, adjustInflation, inflationRate, finalRealPower, format]);
 
   const resetDefaults = () => {
     setInitialInvestment(0);
     setMonthlyContribution(0);
     setContributionFrequency('monthly');
     setExpectedAnnualReturn(0);
+    setInvestmentDurationMonths(0);
     setInvestmentDurationYears(0);
+    setTermUnit('months');
     setAdjustInflation(false);
     setInflationRate(0);
   };
@@ -225,16 +262,82 @@ export const InvestmentCalculator: React.FC = () => {
               helperText="Benchmark: Index funds 10-15%"
             />
 
-            {/* Investment Duration */}
-            <SliderField
-              label="Investment Duration (Years)"
-              value={investmentDurationYears}
-              onChange={setInvestmentDurationYears}
-              min={0}
-              max={40}
-              step={1}
-              suffix=" yrs"
-            />
+            {/* Investment Duration Selector */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Investment Duration
+                </label>
+                <div className="flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-slate-700 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setTermUnit('months')}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
+                      termUnit === 'months'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    Months
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTermUnit('years')}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
+                      termUnit === 'years'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    Years
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Months Chips */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[6, 12, 18, 24, 36, 48, 60].map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => {
+                      setTermUnit('months');
+                      handleMonthsChange(m);
+                    }}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                      investmentDurationMonths === m
+                        ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-700 dark:text-emerald-300 shadow-xs'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                    }`}
+                  >
+                    {m} Mo
+                  </button>
+                ))}
+              </div>
+
+              {termUnit === 'months' ? (
+                <SliderField
+                  label="Duration in Months"
+                  value={investmentDurationMonths}
+                  onChange={handleMonthsChange}
+                  min={0}
+                  max={480}
+                  step={1}
+                  suffix=" mo"
+                  helperText={investmentDurationMonths > 0 ? `${(investmentDurationMonths / 12).toFixed(1)} years` : undefined}
+                />
+              ) : (
+                <SliderField
+                  label="Duration in Years"
+                  value={investmentDurationYears}
+                  onChange={handleYearsChange}
+                  min={0}
+                  max={40}
+                  step={1}
+                  suffix=" yrs"
+                />
+              )}
+            </div>
           </Card>
 
           {/* Inflation Adjuster Card */}

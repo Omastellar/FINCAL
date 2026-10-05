@@ -338,13 +338,13 @@ export function calculateSavingsGrowth(
   const contribution = sanitizeNumber(monthlyContribution, 0, 0);
   const rate = sanitizeNumber(annualRatePct, 0, 0);
   const inflation = sanitizeNumber(annualInflationRatePct, 0, 0);
-  const years = Math.max(1, Math.round(sanitizeNumber(savingsPeriodYears, 1, 1)));
+  const safeYears = sanitizeNumber(savingsPeriodYears, 1, 0.08);
+  const totalMonths = Math.max(1, Math.round(safeYears * 12));
 
   let compoundTimesPerYear = 12;
   if (compoundingFrequency === 'quarterly') compoundTimesPerYear = 4;
   if (compoundingFrequency === 'annually') compoundTimesPerYear = 1;
 
-  const totalMonths = years * 12;
   const monthlyRate = (rate / 100) / 12;
 
   const growthTimeline: GrowthPoint[] = [
@@ -380,14 +380,14 @@ export function calculateSavingsGrowth(
     }
 
     if (month % 12 === 0 || month === totalMonths) {
-      const yearNumber = Math.ceil(month / 12);
+      const yearNumber = month % 12 === 0 ? month / 12 : Math.round((month / 12) * 10) / 10;
       const interestSoFar = Math.max(0, currentBalance - totalContributed);
       growthTimeline.push({
         year: yearNumber,
         principalInvested: Math.round(totalContributed * 100) / 100,
         totalInterest: Math.round(interestSoFar * 100) / 100,
         totalBalance: Math.round(currentBalance * 100) / 100,
-        realPurchasingPower: Math.round(calculateRealPurchasingPower(currentBalance, inflation, yearNumber) * 100) / 100,
+        realPurchasingPower: Math.round(calculateRealPurchasingPower(currentBalance, inflation, month / 12) * 100) / 100,
       });
     }
   }
@@ -433,11 +433,11 @@ export function calculateCompoundInterest(
   const ratePct = sanitizeNumber(ratePctInput, 0, 0);
   const contribution = sanitizeNumber(additionalContribution, 0, 0);
   const inflation = sanitizeNumber(annualInflationRatePct, 0, 0);
-  const years = Math.max(1, Math.round(sanitizeNumber(periodYears, 1, 1)));
+  const safeYears = sanitizeNumber(periodYears, 1, 0.08);
+  const totalMonths = Math.max(1, Math.round(safeYears * 12));
 
   const n = getCompoundingTimes(compoundingFreq);
 
-  const totalMonths = years * 12;
   const nominalRate = ratePct > 0 ? (ratePct / 100) : 0;
   const monthlyRate = nominalRate > 0 ? Math.pow(1 + nominalRate / n, n / 12) - 1 : 0;
 
@@ -473,14 +473,14 @@ export function calculateCompoundInterest(
       currentBalance += currentBalance * monthlyRate;
     }
 
-    if (m % 12 === 0) {
-      const year = m / 12;
+    if (m % 12 === 0 || m === totalMonths) {
+      const year = m % 12 === 0 ? m / 12 : Math.round((m / 12) * 10) / 10;
       growthTimeline.push({
         year,
         principalInvested: Math.round(totalInvested * 100) / 100,
         totalInterest: Math.max(0, Math.round((currentBalance - totalInvested) * 100) / 100),
         totalBalance: Math.round(currentBalance * 100) / 100,
-        realPurchasingPower: Math.round(calculateRealPurchasingPower(currentBalance, inflation, year) * 100) / 100,
+        realPurchasingPower: Math.round(calculateRealPurchasingPower(currentBalance, inflation, m / 12) * 100) / 100,
       });
     }
   }
@@ -511,9 +511,8 @@ export function calculateInvestment(
   const contribution = sanitizeNumber(monthlyContribution, 0, 0);
   const returnRate = sanitizeNumber(expectedAnnualReturnPct, 0, 0);
   const inflation = sanitizeNumber(annualInflationRatePct, 0, 0);
-  const years = Math.max(1, Math.round(sanitizeNumber(investmentDurationYears, 1, 1)));
-
-  const totalMonths = years * 12;
+  const safeYears = sanitizeNumber(investmentDurationYears, 1, 0.08);
+  const totalMonths = Math.max(1, Math.round(safeYears * 12));
   const monthlyRate = returnRate > 0 ? (returnRate / 100) / 12 : 0;
 
   const growthTimeline: GrowthPoint[] = [
@@ -548,14 +547,14 @@ export function calculateInvestment(
       currentBalance += currentBalance * monthlyRate;
     }
 
-    if (m % 12 === 0) {
-      const year = m / 12;
+    if (m % 12 === 0 || m === totalMonths) {
+      const year = m % 12 === 0 ? m / 12 : Math.round((m / 12) * 10) / 10;
       growthTimeline.push({
         year,
         principalInvested: Math.round(totalInvested * 100) / 100,
         totalInterest: Math.max(0, Math.round((currentBalance - totalInvested) * 100) / 100),
         totalBalance: Math.round(currentBalance * 100) / 100,
-        realPurchasingPower: Math.round(calculateRealPurchasingPower(currentBalance, inflation, year) * 100) / 100,
+        realPurchasingPower: Math.round(calculateRealPurchasingPower(currentBalance, inflation, m / 12) * 100) / 100,
       });
     }
   }

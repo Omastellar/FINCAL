@@ -124,6 +124,61 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         </div>
       </section>
 
+      {/* Instant 1-Tap Quick Start Calculators */}
+      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Zap className="w-5 h-5 text-amber-500" />
+              Quick Start Calculators
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Jump straight into our most popular financial calculators with custom month and year selection.
+            </p>
+          </div>
+          <button
+            onClick={() => onNavigate('calculators')}
+            className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 shrink-0"
+          >
+            <span>See all 18 engines</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            { id: 'loan', title: 'Loan Calculator', desc: 'Choose months or years', icon: <CreditCard className="w-5 h-5 text-emerald-600" /> },
+            { id: 'savings', title: 'Savings Growth', desc: 'Monthly & quarterly', icon: <PiggyBank className="w-5 h-5 text-teal-600" /> },
+            { id: 'investment', title: 'Investment', desc: 'Compound returns', icon: <TrendingUp className="w-5 h-5 text-blue-600" /> },
+            { id: 'mortgage', title: 'Mortgage & Home', desc: 'PITI & amortization', icon: <Home className="w-5 h-5 text-indigo-600" /> },
+            { id: 'personal-loan', title: 'Personal Loan', desc: 'APR & net cash', icon: <Wallet className="w-5 h-5 text-purple-600" /> },
+            { id: 'budget', title: '50/30/20 Budget', desc: 'Income allocation', icon: <BarChart3 className="w-5 h-5 text-rose-600" /> },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => onNavigate('calculators', item.id as CalculatorId)}
+              className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-500/50 transition-all text-left group cursor-pointer flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 shadow-xs flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                  {item.icon}
+                </div>
+                <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                  {item.title}
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+                  {item.desc}
+                </div>
+              </div>
+              <div className="mt-3 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                <span>Start</span>
+                <ArrowRight className="w-3 h-3" />
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
+
       {/* Value Pillars */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">

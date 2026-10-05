@@ -37,14 +37,42 @@ export const LoanCalculator: React.FC = () => {
     const val = initialParams.get('rate');
     return val ? parseFloat(val) : 0;
   });
+  const [termUnit, setTermUnit] = useState<'months' | 'years'>(() => {
+    const unit = initialParams.get('termUnit');
+    return unit === 'years' ? 'years' : 'months';
+  });
+  const [loanTermMonths, setLoanTermMonths] = useState<number>(() => {
+    const m = initialParams.get('months');
+    if (m) return parseInt(m, 10);
+    const y = initialParams.get('term');
+    if (y) return Math.round(parseFloat(y) * 12);
+    return 0;
+  });
   const [loanTermYears, setLoanTermYears] = useState<number>(() => {
-    const val = initialParams.get('term');
-    return val ? parseInt(val, 10) : 0;
+    const y = initialParams.get('term');
+    if (y) return parseFloat(y);
+    const m = initialParams.get('months');
+    if (m) return parseFloat((parseInt(m, 10) / 12).toFixed(2));
+    return 0;
   });
   const [paymentFrequency, setPaymentFrequency] = useState<PaymentFrequency>(() => {
     const val = initialParams.get('freq') as PaymentFrequency;
     return val === 'quarterly' || val === 'yearly' || val === 'bi-weekly' || val === 'weekly' ? val : 'monthly';
   });
+
+  const handleMonthsChange = (months: number) => {
+    setLoanTermMonths(months);
+    setLoanTermYears(months > 0 ? parseFloat((months / 12).toFixed(2)) : 0);
+  };
+
+  const handleYearsChange = (years: number) => {
+    setLoanTermYears(years);
+    setLoanTermMonths(years > 0 ? Math.round(years * 12) : 0);
+  };
+
+  const effectiveTermYears = termUnit === 'months'
+    ? (loanTermMonths > 0 ? loanTermMonths / 12 : 0)
+    : loanTermYears;
 
   // Prepayment Simulator State
   const [showPrepayment, setShowPrepayment] = useState<boolean>(() => {
@@ -75,6 +103,8 @@ export const LoanCalculator: React.FC = () => {
       amount: loanAmount,
       rate: interestRate,
       term: loanTermYears,
+      months: loanTermMonths,
+      termUnit: termUnit,
       freq: paymentFrequency,
       extra: extraPayment > 0 ? extraPayment : '',
       lump: lumpSumAmount > 0 ? lumpSumAmount : '',
@@ -84,6 +114,8 @@ export const LoanCalculator: React.FC = () => {
     loanAmount,
     interestRate,
     loanTermYears,
+    loanTermMonths,
+    termUnit,
     paymentFrequency,
     extraPayment,
     lumpSumAmount,
@@ -93,21 +125,21 @@ export const LoanCalculator: React.FC = () => {
 
   // Standard calculation
   const standardResults = useMemo(() => {
-    return calculateLoanPayment(loanAmount, interestRate, loanTermYears, paymentFrequency);
-  }, [loanAmount, interestRate, loanTermYears, paymentFrequency]);
+    return calculateLoanPayment(loanAmount, interestRate, effectiveTermYears, paymentFrequency);
+  }, [loanAmount, interestRate, effectiveTermYears, paymentFrequency]);
 
   // Accelerated calculation with prepayments
   const prepaymentResults = useMemo(() => {
     return calculateLoanWithPrepayment(
       loanAmount,
       interestRate,
-      loanTermYears,
+      effectiveTermYears,
       paymentFrequency,
       extraPayment,
       lumpSumAmount,
       lumpSumYear
     );
-  }, [loanAmount, interestRate, loanTermYears, paymentFrequency, extraPayment, lumpSumAmount, lumpSumYear]);
+  }, [loanAmount, interestRate, effectiveTermYears, paymentFrequency, extraPayment, lumpSumAmount, lumpSumYear]);
 
   const hasActivePrepayment = extraPayment > 0 || lumpSumAmount > 0;
 
@@ -166,7 +198,9 @@ export const LoanCalculator: React.FC = () => {
   const resetDefaults = () => {
     setLoanAmount(0);
     setInterestRate(0);
+    setLoanTermMonths(0);
     setLoanTermYears(0);
+    setTermUnit('months');
     setPaymentFrequency('monthly');
     setExtraPayment(0);
     setLumpSumAmount(0);
@@ -239,16 +273,83 @@ export const LoanCalculator: React.FC = () => {
               helperText="0% supported"
             />
 
-            {/* Loan Term */}
-            <SliderField
-              label="Loan Term (Years)"
-              value={loanTermYears}
-              onChange={setLoanTermYears}
-              min={0}
-              max={30}
-              step={1}
-              suffix=" yrs"
-            />
+            {/* Loan Duration Selector */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Loan Duration
+                </label>
+                <div className="flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-slate-700 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setTermUnit('months')}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
+                      termUnit === 'months'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    Months
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTermUnit('years')}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
+                      termUnit === 'years'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    Years
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Months Chips */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[6, 12, 18, 24, 36, 48, 60].map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => {
+                      setTermUnit('months');
+                      handleMonthsChange(m);
+                    }}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                      loanTermMonths === m
+                        ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-700 dark:text-emerald-300 shadow-xs'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                    }`}
+                  >
+                    {m} Mo
+                  </button>
+                ))}
+              </div>
+
+              {termUnit === 'months' ? (
+                <SliderField
+                  label="Duration in Months"
+                  value={loanTermMonths}
+                  onChange={handleMonthsChange}
+                  min={0}
+                  max={360}
+                  step={1}
+                  suffix=" mo"
+                  helperText={loanTermMonths > 0 ? `${(loanTermMonths / 12).toFixed(1)} years` : undefined}
+                />
+              ) : (
+                <SliderField
+                  label="Duration in Years"
+                  value={loanTermYears}
+                  onChange={handleYearsChange}
+                  min={0}
+                  max={30}
+                  step={0.5}
+                  suffix=" yrs"
+                  helperText={loanTermYears > 0 ? `${Math.round(loanTermYears * 12)} months` : undefined}
+                />
+              )}
+            </div>
 
             {/* Payment Frequency */}
             <div className="space-y-2">
@@ -436,6 +537,8 @@ export const LoanCalculator: React.FC = () => {
               value={
                 hasActivePrepayment
                   ? `${(prepaymentResults.acceleratedPeriods / getPeriodsPerYear(paymentFrequency)).toFixed(1)} Years`
+                  : loanTermMonths > 0
+                  ? `${loanTermMonths} Mo (${effectiveTermYears.toFixed(1)} Yrs)`
                   : `${loanTermYears} Years`
               }
               subValue={

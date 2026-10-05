@@ -195,19 +195,25 @@ export const PersonalLoanCalculator: React.FC = () => {
                 helperText={`Fee amount: ${format(results.originationFeeAmount)}`}
               />
 
-              <div>
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1.5">
-                  Term Length
-                </label>
-                <div className="grid grid-cols-5 gap-1.5">
-                  {[12, 24, 36, 48, 60].map((term) => (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Loan Term Length
+                  </label>
+                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    {loanTermMonths} Mo ({loanTermMonths > 0 ? (loanTermMonths / 12).toFixed(1) : '0'} Yrs)
+                  </span>
+                </div>
+                {/* Quick Months Chips */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[6, 12, 18, 24, 36, 48, 60, 84].map((term) => (
                     <button
                       key={term}
                       type="button"
                       onClick={() => setLoanTermMonths(term)}
-                      className={`py-2 text-xs font-semibold rounded-lg border transition-all ${
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                         loanTermMonths === term
-                          ? 'bg-emerald-600 border-emerald-600 text-white'
+                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
                           : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-500'
                       }`}
                     >
@@ -215,6 +221,16 @@ export const PersonalLoanCalculator: React.FC = () => {
                     </button>
                   ))}
                 </div>
+                <SliderField
+                  label="Select Months"
+                  value={loanTermMonths}
+                  onChange={setLoanTermMonths}
+                  min={0}
+                  max={120}
+                  step={1}
+                  suffix=" mo"
+                  helperText={loanTermMonths > 0 ? `${(loanTermMonths / 12).toFixed(1)} years` : undefined}
+                />
               </div>
             </div>
           </Card>

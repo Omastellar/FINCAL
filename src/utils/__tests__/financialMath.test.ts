@@ -703,5 +703,45 @@ describe('Module 24: Monthly, Quarterly, and Yearly Frequency Integrations', () 
   });
 });
 
+describe('Direct Month Selection & Sub-Annual Term Verification', () => {
+  it('[TC-MONTHS-001] calculates accurate amortization for 6-month loan (0.5 years)', () => {
+    const result = calculateLoanPayment(600_000, 10, 0.5, 'monthly');
+    expect(result.amortizationSchedule.length).toBe(6);
+    expect(result.amortizationSchedule[5].remainingBalance).toBe(0);
+    expect(result.periodicPayment).toBeGreaterThan(100_000);
+    expect(result.totalRepayment).toBeCloseTo(result.periodicPayment * 6, 1);
+  });
+
+  it('[TC-MONTHS-002] calculates accurate amortization for 18-month loan (1.5 years)', () => {
+    const result = calculateLoanPayment(1_800_000, 12, 1.5, 'monthly');
+    expect(result.amortizationSchedule.length).toBe(18);
+    expect(result.amortizationSchedule[17].remainingBalance).toBe(0);
+    expect(result.totalInterest).toBeGreaterThan(0);
+  });
+
+  it('[TC-MONTHS-003] supports sub-annual savings growth for 6 months (0.5 years)', () => {
+    const result = calculateSavingsGrowth(50_000, 10_000, 8, 0.5, 'monthly', 0, 'monthly');
+    expect(result.totalContributions).toBe(110_000);
+    expect(result.finalBalance).toBeGreaterThan(110_000);
+    expect(result.growthTimeline.length).toBeGreaterThanOrEqual(1);
+    expect(result.growthTimeline[result.growthTimeline.length - 1].year).toBe(0.5);
+  });
+
+  it('[TC-MONTHS-004] supports sub-annual investment duration for 18 months (1.5 years)', () => {
+    const result = calculateInvestment(100_000, 5_000, 10, 1.5, 0, 'monthly');
+    expect(result.totalInvested).toBe(100_000 + 5_000 * 18);
+    expect(result.estimatedGrowth).toBeGreaterThan(0);
+    expect(result.growthTimeline.length).toBeGreaterThanOrEqual(2);
+    expect(result.growthTimeline[result.growthTimeline.length - 1].year).toBe(1.5);
+  });
+
+  it('[TC-MONTHS-005] supports compound interest with 6-month fractional horizon', () => {
+    const result = calculateCompoundInterest(100_000, 6, 2_000, 'monthly', 0.5, 'monthly');
+    expect(result.totalContributions).toBe(2_000 * 6);
+    expect(result.interestEarned).toBeGreaterThan(0);
+    expect(result.growthTimeline[result.growthTimeline.length - 1].year).toBe(0.5);
+  });
+});
+
 
 

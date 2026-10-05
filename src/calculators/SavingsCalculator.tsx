@@ -34,10 +34,39 @@ export const SavingsCalculator: React.FC = () => {
     const val = initialParams.get('rate');
     return val ? parseFloat(val) : 0;
   });
-  const [savingsPeriodYears, setSavingsPeriodYears] = useState<number>(() => {
-    const val = initialParams.get('years');
-    return val ? parseFloat(val) : 0;
+  const [termUnit, setTermUnit] = useState<'months' | 'years'>(() => {
+    const unit = initialParams.get('termUnit');
+    return unit === 'years' ? 'years' : 'months';
   });
+  const [savingsPeriodMonths, setSavingsPeriodMonths] = useState<number>(() => {
+    const m = initialParams.get('months');
+    if (m) return parseInt(m, 10);
+    const y = initialParams.get('years');
+    if (y) return Math.round(parseFloat(y) * 12);
+    return 0;
+  });
+  const [savingsPeriodYears, setSavingsPeriodYears] = useState<number>(() => {
+    const y = initialParams.get('years');
+    if (y) return parseFloat(y);
+    const m = initialParams.get('months');
+    if (m) return parseFloat((parseInt(m, 10) / 12).toFixed(2));
+    return 0;
+  });
+
+  const handleMonthsChange = (months: number) => {
+    setSavingsPeriodMonths(months);
+    setSavingsPeriodYears(months > 0 ? parseFloat((months / 12).toFixed(2)) : 0);
+  };
+
+  const handleYearsChange = (years: number) => {
+    setSavingsPeriodYears(years);
+    setSavingsPeriodMonths(years > 0 ? Math.round(years * 12) : 0);
+  };
+
+  const effectiveTermYears = termUnit === 'months'
+    ? (savingsPeriodMonths > 0 ? savingsPeriodMonths / 12 : 0)
+    : savingsPeriodYears;
+
   const [compoundingFrequency, setCompoundingFrequency] = useState<'monthly' | 'quarterly' | 'annually'>(() => {
     const val = initialParams.get('freq') as 'monthly' | 'quarterly' | 'annually';
     return val === 'quarterly' || val === 'annually' ? val : 'monthly';
@@ -61,6 +90,8 @@ export const SavingsCalculator: React.FC = () => {
       c_freq: contributionFrequency,
       rate: interestRate,
       years: savingsPeriodYears,
+      months: savingsPeriodMonths,
+      termUnit: termUnit,
       freq: compoundingFrequency,
       inflation: adjustInflation ? '1' : '',
       inflationRate: adjustInflation ? inflationRate : '',
@@ -71,6 +102,8 @@ export const SavingsCalculator: React.FC = () => {
     contributionFrequency,
     interestRate,
     savingsPeriodYears,
+    savingsPeriodMonths,
+    termUnit,
     compoundingFrequency,
     adjustInflation,
     inflationRate,
@@ -83,7 +116,7 @@ export const SavingsCalculator: React.FC = () => {
       initialDeposit,
       monthlyContribution,
       interestRate,
-      savingsPeriodYears,
+      effectiveTermYears,
       compoundingFrequency,
       adjustInflation ? inflationRate : 0,
       contributionFrequency
@@ -92,7 +125,7 @@ export const SavingsCalculator: React.FC = () => {
     initialDeposit,
     monthlyContribution,
     interestRate,
-    savingsPeriodYears,
+    effectiveTermYears,
     compoundingFrequency,
     adjustInflation,
     inflationRate,
@@ -109,8 +142,11 @@ export const SavingsCalculator: React.FC = () => {
   // Plain-English insights
   const insights = useMemo(() => {
     const list: string[] = [];
+    const durationLabel = savingsPeriodMonths > 0
+      ? `${savingsPeriodMonths} months (${effectiveTermYears.toFixed(1)} years)`
+      : `${savingsPeriodYears} years`;
     list.push(
-      `In ${savingsPeriodYears} years, your estimated total savings balance will reach ${format(results.finalBalance)}.`
+      `In ${durationLabel}, your estimated total savings balance will reach ${format(results.finalBalance)}.`
     );
     list.push(
       `Your total deposits equal ${format(results.totalContributions)}, generating ${format(results.interestEarned)} in earned interest.`
@@ -121,14 +157,16 @@ export const SavingsCalculator: React.FC = () => {
       );
     }
     return list;
-  }, [results, savingsPeriodYears, adjustInflation, inflationRate, finalRealPower, format]);
+  }, [results, savingsPeriodMonths, savingsPeriodYears, effectiveTermYears, adjustInflation, inflationRate, finalRealPower, format]);
 
   const resetDefaults = () => {
     setInitialDeposit(0);
     setMonthlyContribution(0);
     setContributionFrequency('monthly');
     setInterestRate(0);
+    setSavingsPeriodMonths(0);
     setSavingsPeriodYears(0);
+    setTermUnit('months');
     setCompoundingFrequency('monthly');
     setAdjustInflation(false);
     setInflationRate(0);
@@ -226,16 +264,83 @@ export const SavingsCalculator: React.FC = () => {
               helperText="0% supported"
             />
 
-            {/* Savings Period */}
-            <SliderField
-              label="Savings Period (Years)"
-              value={savingsPeriodYears}
-              onChange={setSavingsPeriodYears}
-              min={0}
-              max={30}
-              step={1}
-              suffix=" yrs"
-            />
+            {/* Savings Duration Selector */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Savings Duration
+                </label>
+                <div className="flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-slate-700 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setTermUnit('months')}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
+                      termUnit === 'months'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    Months
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTermUnit('years')}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
+                      termUnit === 'years'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    Years
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Months Chips */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[6, 12, 18, 24, 36, 48, 60].map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => {
+                      setTermUnit('months');
+                      handleMonthsChange(m);
+                    }}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                      savingsPeriodMonths === m
+                        ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-700 dark:text-emerald-300 shadow-xs'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                    }`}
+                  >
+                    {m} Mo
+                  </button>
+                ))}
+              </div>
+
+              {termUnit === 'months' ? (
+                <SliderField
+                  label="Duration in Months"
+                  value={savingsPeriodMonths}
+                  onChange={handleMonthsChange}
+                  min={0}
+                  max={360}
+                  step={1}
+                  suffix=" mo"
+                  helperText={savingsPeriodMonths > 0 ? `${(savingsPeriodMonths / 12).toFixed(1)} years` : undefined}
+                />
+              ) : (
+                <SliderField
+                  label="Duration in Years"
+                  value={savingsPeriodYears}
+                  onChange={handleYearsChange}
+                  min={0}
+                  max={30}
+                  step={0.5}
+                  suffix=" yrs"
+                  helperText={savingsPeriodYears > 0 ? `${Math.round(savingsPeriodYears * 12)} months` : undefined}
+                />
+              )}
+            </div>
 
             {/* Compounding Frequency */}
             <div className="space-y-2">

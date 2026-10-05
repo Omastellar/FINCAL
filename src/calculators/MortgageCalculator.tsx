@@ -281,22 +281,25 @@ export const MortgageCalculator: React.FC = () => {
 
               {/* Loan Term Quick Selector */}
               <div>
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1.5">
-                  Mortgage Term
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[15, 20, 30].map((term) => (
+                <div className="flex items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label>Mortgage Term</label>
+                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    {Math.round(loanTermYears * 12)} Months ({loanTermYears} Yrs)
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {[10, 15, 20, 30].map((term) => (
                     <button
                       key={term}
                       type="button"
                       onClick={() => setLoanTermYears(term)}
-                      className={`py-2 px-3 text-xs font-semibold rounded-xl border transition-all ${
+                      className={`py-2 px-1 text-center text-xs font-semibold rounded-xl border transition-all ${
                         loanTermYears === term
                           ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
                           : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-500'
                       }`}
                     >
-                      {term} Years
+                      {term * 12} mo ({term}y)
                     </button>
                   ))}
                 </div>
